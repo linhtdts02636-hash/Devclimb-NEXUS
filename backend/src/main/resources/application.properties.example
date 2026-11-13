@@ -1,0 +1,29 @@
+spring.application.name=backend
+
+# Copy to application.properties (gitignored) and fill in. Put ca.pem next to it.
+spring.datasource.url=jdbc:postgresql://<host>:<port>/defaultdb?sslmode=verify-ca&sslrootcert=src/main/resources/ca.pem
+spring.datasource.username=
+spring.datasource.password=
+
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.open-in-view=false
+
+# Neo4j is switched off until a connection is provided
+spring.autoconfigure.exclude=\
+org.springframework.boot.neo4j.autoconfigure.Neo4jAutoConfiguration,\
+org.springframework.boot.neo4j.autoconfigure.health.Neo4jHealthContributorAutoConfiguration,\
+org.springframework.boot.neo4j.autoconfigure.observation.Neo4jObservationAutoConfiguration,\
+org.springframework.boot.data.neo4j.autoconfigure.DataNeo4jAutoConfiguration,\
+org.springframework.boot.data.neo4j.autoconfigure.DataNeo4jReactiveAutoConfiguration,\
+org.springframework.boot.data.neo4j.autoconfigure.DataNeo4jReactiveRepositoriesAutoConfiguration,\
+org.springframework.boot.data.neo4j.autoconfigure.DataNeo4jRepositoriesAutoConfiguration
+
+firebase.service-account-file=classpath:firebase-service-account.json
+application.cors.allowed-origin=http://localhost:5173
+
+firebase.api-key=
+firebase.auth-domain=
+firebase.project-id=
+firebase.storage-bucket=
+firebase.messaging-sender-id=
+firebase.app-id=

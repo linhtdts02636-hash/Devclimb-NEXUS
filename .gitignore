@@ -3,6 +3,8 @@
 # ============================================================
 HELP.md
 target/
+backend/src/main/resources/application.properties
+backend/src/main/resources/ca.pem
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -58,3 +60,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/src/main/resources/firebase-service-account.json
+.env
+.env.*
+!.env.example

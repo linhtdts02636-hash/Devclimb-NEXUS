@@ -1,0 +1,22 @@
+/* DevClimb Nexus design tokens. Source of truth: DOCS/DESIGN.md */
+:root{
+  --f-head:'Inter Tight',system-ui,sans-serif; --f-mono:'Geist Mono',ui-monospace,monospace;
+  --r-sm:8px; --r:12px; --r-lg:16px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:72px; --s-9:112px;
+  --t-xs:12px; --t-sm:14px; --t-md:16px; --t-lg:18px; --t-xl:clamp(30px,3.6vw,48px); --t-xxl:clamp(38px,5.4vw,68px);
+  --rail:1240px; --ease:cubic-bezier(.2,.7,.2,1); --gut:var(--s-7);
+}
+:root[data-theme=light]{
+  --bg:#f9f9f8; --s1:#ffffff; --s2:#f1f1ef; --s3:#e7e7e4; --line:rgba(20,20,20,.08); --line2:rgba(20,20,20,.14);
+  --tx:#1f1f1e; --tx2:#66665f; --tx3:#a3a39b; --ac:#2554e8; --ac-ink:#ffffff; --ac-soft:rgba(37,84,232,.1);
+  --ok:#14804a; --warn:#9a6a00; --bad:#b4442c; --flash:rgba(20,20,20,.06); --mark:rgba(20,20,20,.07);
+  --code-bg:#1b1b1a; --code-tx:#ecebe6; --syn-k:#8eb0ff; --syn-t:#f0c37a; --syn-c:#9a9991; --syn-n:#7c7b74;
+  --sh-card:0 10px 40px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05); --sh-in:rgba(0,0,0,.18);
+}
+:root[data-theme=dark]{
+  --bg:#0d0d0c; --s1:#151514; --s2:#1c1c1a; --s3:#262624; --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
+  --tx:#ecebe6; --tx2:#9c9b93; --tx3:#5f5e58; --ac:#6f93ff; --ac-ink:#08122e; --ac-soft:rgba(111,147,255,.14);
+  --ok:#4ad08a; --warn:#e7b44c; --bad:#f08a6c; --flash:rgba(255,255,255,.06); --mark:rgba(255,255,255,.09);
+  --code-bg:#080808; --code-tx:#ecebe6; --syn-k:#8eb0ff; --syn-t:#f0c37a; --syn-c:#8f8e87; --syn-n:#55544f;
+  --sh-card:0 10px 40px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4); --sh-in:rgba(0,0,0,.25);
+}
