@@ -20,7 +20,7 @@ async function handleLogout() {
       <AppLogo />
       <NavSearch />
       <ul class="links">
-        <li><RouterLink :to="{ path: '/', hash: '#solve' }">Solve</RouterLink></li>
+        <li><RouterLink :to="{ path: '/puzzles' }">Puzzles</RouterLink></li>
         <li><RouterLink :to="{ path: '/', hash: '#compete' }">Compete</RouterLink></li>
         <li><RouterLink :to="{ path: '/', hash: '#communities' }">Communities</RouterLink></li>
       </ul>

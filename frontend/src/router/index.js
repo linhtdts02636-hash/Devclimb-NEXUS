@@ -6,6 +6,8 @@ export const router = createRouter({
   routes: [
     { path: '/', component: () => import('../pages/guest/LandingPage.vue') },
     { path: '/login', component: () => import('../pages/guest/LoginPage.vue'), meta: { guestOnly: true } },
+    { path: '/puzzles', name: 'puzzles', component: () => import('../pages/user/PuzzlePage.vue') },
+    { path: '/puzzle/:id', name: 'puzzle-solve', component: () => import('../pages/user/PuzzleSolvePage.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior(destination) {

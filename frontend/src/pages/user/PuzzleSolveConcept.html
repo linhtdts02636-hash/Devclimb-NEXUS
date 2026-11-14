@@ -1,0 +1,506 @@
+<!DOCTYPE html><html data-theme="dark" lang="en" class="dark"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>DevClimb Nexus · 1. Two Sum</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter Tight & Geist Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;family=Inter+Tight:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Custom Config -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter Tight"', 'sans-serif'],
+            mono: ['"Geist Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Core Theme Variables and Root Tokens -->
+<style data-purpose="design-tokens">
+    :root {
+      --bg: #f9f9f8;
+      --s1: #ffffff;
+      --s2: #f1f1ef;
+      --line: rgba(20, 20, 20, 0.08);
+      --line2: rgba(20, 20, 20, 0.14);
+      --tx: #1f1f1e;
+      --tx2: #66665f;
+      --ac: #2554e8;
+      --ac-hover: #1e45c4;
+      --ok: #14804a;
+      --ok-bg: rgba(20, 128, 74, 0.12);
+      --code-bg: #121211;
+      --code-tx: #ecebe6;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0d0d0c;
+      --s1: #151514;
+      --s2: #1c1c1a;
+      --line: rgba(255, 255, 255, 0.07);
+      --line2: rgba(255, 255, 255, 0.13);
+      --tx: #ecebe6;
+      --tx2: #9c9b93;
+      --ac: #6f93ff;
+      --ac-hover: #5b80ee;
+      --ok: #4ad08a;
+      --ok-bg: rgba(74, 208, 138, 0.14);
+      --code-bg: #080807;
+      --code-tx: #ecebe6;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--tx);
+      font-family: 'Inter Tight', sans-serif;
+    }
+
+    .font-mono-code {
+      font-family: 'Geist Mono', monospace;
+    }
+  </style>
+<!-- UI & Layout Utility Styles -->
+<style data-purpose="custom-ui-rules">
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--line2);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--tx2);
+    }
+
+    .border-token {
+      border-color: var(--line2);
+    }
+    .border-subtle {
+      border-color: var(--line);
+    }
+    .bg-surface-1 {
+      background-color: var(--s1);
+    }
+    .bg-surface-2 {
+      background-color: var(--s2);
+    }
+    .text-primary-token {
+      color: var(--tx);
+    }
+    .text-secondary-token {
+      color: var(--tx2);
+    }
+    .text-accent-token {
+      color: var(--ac);
+    }
+    .bg-accent-token {
+      background-color: var(--ac);
+    }
+    .text-semantic-ok {
+      color: var(--ok);
+    }
+    .bg-semantic-ok-subtle {
+      background-color: var(--ok-bg);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased select-none">
+<!-- BEGIN: TopNavigationBar -->
+<header class="h-13 bg-surface-1 border-b border-token flex items-center justify-between px-3.5 py-1.5 shrink-0 z-30" data-purpose="top-navigation">
+<!-- Left Navigation & Path Combobox -->
+<div class="flex items-center space-x-3">
+<!-- DevClimb Brand Logo -->
+<a class="flex items-center space-x-2 text-primary-token group hover:opacity-90 transition-opacity" href="#">
+<div class="w-6 h-6 rounded bg-accent-token flex items-center justify-center text-white font-mono font-bold text-xs">
+          ▲
+        </div>
+<span class="font-bold tracking-tight text-sm">DevClimb</span>
+</a>
+<!-- Problem Switcher / Breadcrumb combobox pill -->
+<div class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-surface-2 border border-token text-xs font-mono">
+<span class="text-secondary-token">devclimb.app/problems/</span>
+<span class="font-semibold text-primary-token">two-sum</span>
+<svg class="w-3.5 h-3.5 text-secondary-token ml-1 cursor-pointer hover:text-primary-token" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<!-- Quick Problem Pagination Arrows -->
+<div class="flex items-center space-x-0.5 text-secondary-token">
+<button class="p-1 rounded hover:bg-surface-2 hover:text-primary-token transition-colors" title="Previous Problem">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1 rounded hover:bg-surface-2 hover:text-primary-token transition-colors" title="Next Problem">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- Center Section: Execution Timer & Quick Mode -->
+<div class="hidden md:flex items-center space-x-2 font-mono text-xs text-secondary-token px-2 py-0.5 rounded bg-surface-2/60 border border-subtle">
+<span class="inline-block w-2 h-2 rounded-full bg-semantic-ok-subtle animate-pulse"></span>
+<span class="text-secondary-token">Session:</span>
+<span class="text-primary-token font-medium" id="timer-display">14:32</span>
+</div>
+<!-- Right Controls: Language, Theme Toggle, Run & Submit Actions -->
+<div class="flex items-center space-x-2">
+<!-- Language Selector -->
+<div class="relative inline-block text-left">
+<button class="inline-flex items-center px-2.5 py-1 text-xs font-mono rounded bg-surface-2 border border-token hover:border-accent-token text-primary-token transition-colors" type="button">
+<span>Python 3.12</span>
+<svg class="w-3 h-3 ml-1.5 text-secondary-token" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Theme Switcher (Dark / Light) -->
+<button class="p-1.5 rounded text-secondary-token hover:text-primary-token bg-surface-2 border border-token transition-colors" id="theme-toggle-btn" title="Toggle color scheme">
+<svg class="w-4 h-4 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Primary Action Buttons -->
+<div class="flex items-center space-x-1.5 ml-2">
+<button class="px-3 py-1 text-xs font-mono font-medium rounded border border-token hover:bg-surface-2 text-primary-token flex items-center space-x-1 transition-all" id="quick-run-btn">
+<svg class="w-3.5 h-3.5 text-secondary-token" fill="currentColor" viewBox="0 0 20 20">
+<path clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" fill-rule="evenodd"></path>
+</svg>
+<span>Run</span>
+</button>
+<button class="px-3.5 py-1 text-xs font-mono font-medium rounded bg-[#2554e8] hover:bg-[#1e45c4] dark:bg-[#6f93ff] dark:hover:bg-[#5b80ee] text-white dark:text-black font-semibold shadow-sm transition-all flex items-center space-x-1">
+<span>Submit</span>
+</button>
+</div>
+<!-- User Avatar / Profile -->
+<div class="w-6 h-6 rounded-full bg-surface-2 border border-token flex items-center justify-center text-xs font-mono font-semibold ml-1 cursor-pointer">
+        DC
+      </div>
+</div>
+</header>
+<!-- END: TopNavigationBar -->
+<!-- BEGIN: MainWorkspace -->
+<main class="flex-1 min-h-0 flex overflow-hidden p-2 gap-2 bg-surface-2/40">
+<!-- BEGIN: Panel1_ProblemDescription -->
+<section class="w-4/12 h-full min-h-0 flex flex-col bg-surface-1 rounded-md border border-token overflow-hidden shadow-xs" data-purpose="problem-description-panel">
+<!-- Panel Header & Navigation Tabs -->
+<div class="flex items-center justify-between border-b border-token px-3 pt-2 pb-0 bg-surface-1">
+<nav aria-label="Problem subtabs" class="flex space-x-4 text-xs font-medium">
+<button class="pb-2 border-b-2 border-accent-token text-primary-token font-semibold tracking-tight">Description</button>
+<button class="pb-2 border-b-2 border-transparent text-secondary-token hover:text-primary-token transition-colors">Editorial</button>
+<button class="pb-2 border-b-2 border-transparent text-secondary-token hover:text-primary-token transition-colors">Solutions <span class="text-[10px] font-mono opacity-80">(142)</span></button>
+<button class="pb-2 border-b-2 border-transparent text-secondary-token hover:text-primary-token transition-colors">Submissions</button>
+</nav>
+</div>
+<!-- Problem Content Scroll Area -->
+<div class="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar text-xs leading-relaxed space-y-4">
+<!-- Title and Badges -->
+<div>
+<div class="flex items-center space-x-2">
+<h1 class="text-base font-bold text-primary-token">1. Two Sum</h1>
+<span class="px-2 py-0.5 rounded text-[11px] font-medium font-mono bg-semantic-ok-subtle text-semantic-ok border border-semantic-ok/20">Easy</span>
+</div>
+<!-- Metadata Badges -->
+<div class="flex flex-wrap gap-1.5 mt-2.5">
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-2 text-secondary-token border border-token">Array</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-2 text-secondary-token border border-token">Hash Table</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-2 text-secondary-token border border-token">Time O(N)</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-2 text-secondary-token border border-token">Space O(N)</span>
+</div>
+</div>
+<hr class="border-subtle">
+<!-- Problem Statement -->
+<div class="space-y-2 text-primary-token text-[13px] leading-normal font-sans">
+<p>
+            Given an array of integers <code class="font-mono text-xs px-1 py-0.5 rounded bg-surface-2 border border-token">nums</code> and an integer <code class="font-mono text-xs px-1 py-0.5 rounded bg-surface-2 border border-token">target</code>, return <em>indices of the two numbers such that they add up to <code class="font-mono text-xs px-1 py-0.5 rounded bg-surface-2 border border-token">target</code></em>.
+          </p>
+<p class="text-secondary-token text-xs">
+            You may assume that each input would have <strong>exactly one solution</strong>, and you may not use the same element twice. You can return the answer in any order.
+          </p>
+</div>
+<!-- Examples Block -->
+<div class="space-y-3 font-mono text-[11px]">
+<!-- Example 1 -->
+<div class="p-2.5 rounded bg-surface-2/60 border border-token space-y-1">
+<span class="text-secondary-token font-sans font-semibold text-xs block text-primary-token">Example 1:</span>
+<p><span class="text-secondary-token">Input:</span> nums = [2,7,11,15], target = 9</p>
+<p><span class="text-secondary-token">Output:</span> [0,1]</p>
+<p class="text-secondary-token text-[10px]">Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].</p>
+</div>
+<!-- Example 2 -->
+<div class="p-2.5 rounded bg-surface-2/60 border border-token space-y-1">
+<span class="text-secondary-token font-sans font-semibold text-xs block text-primary-token">Example 2:</span>
+<p><span class="text-secondary-token">Input:</span> nums = [3,2,4], target = 6</p>
+<p><span class="text-secondary-token">Output:</span> [1,2]</p>
+</div>
+<!-- Example 3 -->
+<div class="p-2.5 rounded bg-surface-2/60 border border-token space-y-1">
+<span class="text-secondary-token font-sans font-semibold text-xs block text-primary-token">Example 3:</span>
+<p><span class="text-secondary-token">Input:</span> nums = [3,3], target = 6</p>
+<p><span class="text-secondary-token">Output:</span> [0,1]</p>
+</div>
+</div>
+<!-- Constraints -->
+<div class="space-y-1 text-xs">
+<p class="font-semibold text-primary-token">Constraints:</p>
+<ul class="list-disc list-inside space-y-1 text-secondary-token font-mono text-[11px]">
+<li>2 ≤ nums.length ≤ 10<sup>4</sup></li>
+<li>-10<sup>9</sup> ≤ nums[i] ≤ 10<sup>9</sup></li>
+<li>-10<sup>9</sup> ≤ target ≤ 10<sup>9</sup></li>
+<li>Only one valid answer exists.</li>
+</ul>
+</div>
+<!-- Honest Data Label -->
+<div class="pt-4 border-t border-subtle">
+<p class="text-[10px] font-mono uppercase tracking-wider text-secondary-token/70">Sample data for illustration</p>
+</div>
+</div>
+</section>
+<!-- END: Panel1_ProblemDescription -->
+<!-- BEGIN: Panel2_CodeEditor -->
+<section class="w-5/12 h-full min-h-0 flex flex-col bg-surface-1 rounded-md border border-token overflow-hidden shadow-xs" data-purpose="code-editor-panel">
+<!-- Editor Top Toolbar -->
+<div class="h-9 bg-surface-1 border-b border-token flex items-center justify-between px-3 shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-[10px] font-mono uppercase tracking-widest text-secondary-token font-semibold">Editor · Python</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-2 border border-token text-primary-token">solution.py</span>
+</div>
+<!-- Editor Controls (Reset, Format, Font size) -->
+<div class="flex items-center space-x-1.5 text-secondary-token">
+<button class="p-1 rounded hover:bg-surface-2 hover:text-primary-token transition-colors" title="Reset Code">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="p-1 rounded hover:bg-surface-2 hover:text-primary-token transition-colors" title="Format Code">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<span class="h-3 w-[1px] bg-subtle"></span>
+<span class="text-[10px] font-mono px-1">13px</span>
+</div>
+</div>
+<!-- Editor Code Space (with line numbers & syntax highlights matching Image 1) -->
+<div class="flex-1 min-h-0 overflow-y-auto bg-[#0a0a09] text-[#ecebe6] custom-scrollbar p-3 font-mono text-[13px] leading-relaxed flex select-text">
+<!-- Line Numbers (1 to 12) -->
+<div class="w-7 select-none text-right pr-3 text-[#50504b] font-mono space-y-0.5">
+<div>1</div>
+<div>2</div>
+<div>3</div>
+<div>4</div>
+<div>5</div>
+<div>6</div>
+<div>7</div>
+<div>8</div>
+<div class="text-[#30302d]">9</div>
+<div class="text-[#30302d]">10</div>
+<div class="text-[#30302d]">11</div>
+<div class="text-[#30302d]">12</div>
+</div>
+<!-- Syntax Highlighted Code matching https://lh3.googleusercontent.com/aida-public/AB6AXuBSDYoAKKkO8V0450A2I-LRCDZIevPs9RQDp91eCM5b0euaOHSU2Yt8FrSmyGLqInCYbdhs79h-noOoFw3qSSiGIPP6ZYI5fW6SKklHsAnnpdRxjRzBiRRW--wc5hFZfHg3GcGmaNsDlO89HJzBvXHj3QNnrsXEqjMy594VOIFyhhMMv_ZTBq1nblu1kNqyX5i0kpW7g5mfO00U4lIOPDLD0PLfsxBSOmuOwq9GZ-wdb6W2uSXDp7BAOA -->
+<div class="flex-1 overflow-x-auto space-y-0.5 pl-2 border-l border-[#222220]">
+<!-- Line 1: Comment -->
+<div><span class="text-[#7c7c75] italic"># one pass with a hash map</span></div>
+<!-- Line 2: Function Definition -->
+<div><span class="text-[#6f93ff] font-medium">def</span> <span class="text-[#4ad08a] font-semibold">two_sum</span>(nums, target):</div>
+<!-- Line 3: Dictionary init -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;seen = {}</div>
+<!-- Line 4: Loop enumerate -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#6f93ff]">for</span> i, n <span class="text-[#6f93ff]">in</span> <span class="text-[#4ad08a]">enumerate</span>(nums):</div>
+<!-- Line 5: Conditional check -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#6f93ff]">if</span> target - n <span class="text-[#6f93ff]">in</span> seen:</div>
+<!-- Line 6: Return statement -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#6f93ff]">return</span> [seen[target - n], i]</div>
+<!-- Line 7: Update map -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seen[n] = i</div>
+<!-- Line 8: Fallback return -->
+<div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#6f93ff]">return</span> []</div>
+<!-- Empty lines -->
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+</div>
+</div>
+<!-- Editor Status / Quick Action Footer -->
+<div class="h-7 bg-surface-1 border-t border-token flex items-center justify-between px-3 text-[11px] font-mono text-secondary-token">
+<span>Ln 6, Col 35</span>
+<div class="flex items-center space-x-3">
+<span class="hidden sm:inline">⌘ + Enter to run</span>
+<span>Tab for autocomplete</span>
+</div>
+</div>
+</section>
+<!-- END: Panel2_CodeEditor -->
+<!-- BEGIN: Panel3_TestCases -->
+<section class="w-3/12 h-full min-h-0 flex flex-col bg-surface-1 rounded-md border border-token overflow-hidden shadow-xs" data-purpose="test-cases-panel">
+<!-- Hidden Tests Header matching Image 1 -->
+<div class="h-10 bg-surface-1 border-b border-token flex items-center justify-between px-3 shrink-0">
+<span class="text-[11px] font-mono uppercase tracking-widest text-secondary-token font-semibold">HIDDEN TESTS</span>
+<button class="px-2.5 py-1 text-xs font-mono font-medium rounded bg-[#6f93ff] hover:bg-[#5b80ee] text-black font-semibold shadow-xs transition-colors" id="run-again-btn">
+          Run again
+        </button>
+</div>
+<!-- Test Cases List View (matching exact rows from Image 1) -->
+<div class="flex-1 min-h-0 overflow-y-auto p-3 custom-scrollbar flex flex-col justify-between">
+<div class="space-y-2 font-mono text-xs">
+<!-- Case 1 -->
+<div class="p-2.5 rounded bg-surface-2/70 border border-token flex items-center justify-between hover:bg-surface-2 transition-colors">
+<div class="flex items-center space-x-2 truncate">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a] shrink-0"></span>
+<span class="text-primary-token truncate">case 1 · [2,7,11,15] → [0,1]</span>
+</div>
+<span class="text-secondary-token text-[11px] shrink-0 ml-2">8 ms</span>
+</div>
+<!-- Case 2 -->
+<div class="p-2.5 rounded bg-surface-2/70 border border-token flex items-center justify-between hover:bg-surface-2 transition-colors">
+<div class="flex items-center space-x-2 truncate">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a] shrink-0"></span>
+<span class="text-primary-token truncate">case 2 · [3,2,4] → [1,2]</span>
+</div>
+<span class="text-secondary-token text-[11px] shrink-0 ml-2">9 ms</span>
+</div>
+<!-- Case 3 -->
+<div class="p-2.5 rounded bg-surface-2/70 border border-token flex items-center justify-between hover:bg-surface-2 transition-colors">
+<div class="flex items-center space-x-2 truncate">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a] shrink-0"></span>
+<span class="text-primary-token truncate">case 3 · [3,3] → [0,1]</span>
+</div>
+<span class="text-secondary-token text-[11px] shrink-0 ml-2">10 ms</span>
+</div>
+<!-- Case 4 -->
+<div class="p-2.5 rounded bg-surface-2/70 border border-token flex items-center justify-between hover:bg-surface-2 transition-colors">
+<div class="flex items-center space-x-2 truncate">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a] shrink-0"></span>
+<span class="text-primary-token truncate">case 4 · negatives</span>
+</div>
+<span class="text-secondary-token text-[11px] shrink-0 ml-2">11 ms</span>
+</div>
+<!-- Case 5 -->
+<div class="p-2.5 rounded bg-surface-2/70 border border-token flex items-center justify-between hover:bg-surface-2 transition-colors">
+<div class="flex items-center space-x-2 truncate">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a] shrink-0"></span>
+<span class="text-primary-token truncate">case 5 · n = 10,000</span>
+</div>
+<span class="text-secondary-token text-[11px] shrink-0 ml-2">12 ms</span>
+</div>
+</div>
+<!-- Tests Segmented Progress & Accepted Result -->
+<div class="pt-4 border-t border-subtle mt-4">
+<!-- 5 Segment Indicator -->
+<div class="grid grid-cols-5 gap-1 mb-2.5">
+<div class="h-1 rounded bg-[#4ad08a]"></div>
+<div class="h-1 rounded bg-[#4ad08a]"></div>
+<div class="h-1 rounded bg-[#4ad08a]"></div>
+<div class="h-1 rounded bg-[#4ad08a]"></div>
+<div class="h-1 rounded bg-[#4ad08a]"></div>
+</div>
+<!-- Result Acceptance Text matching Image 1 -->
+<div class="flex items-center justify-between font-mono text-xs">
+<span class="text-[#4ad08a] font-semibold tracking-wide">ACCEPTED 5/5 tests</span>
+<span class="text-secondary-token font-mono">12 ms</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Panel3_TestCases -->
+</main>
+<!-- END: MainWorkspace -->
+<!-- BEGIN: BottomVerdictDock -->
+<footer class="h-14 bg-surface-1 border-t border-token px-4 flex items-center justify-between shrink-0 z-20" data-purpose="bottom-verdict-bar">
+<div class="flex items-center space-x-4">
+<!-- Verdict Chip -->
+<div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-semantic-ok-subtle border border-[#4ad08a]/30">
+<span class="w-2 h-2 rounded-full bg-[#4ad08a]"></span>
+<span class="font-mono text-xs font-semibold text-semantic-ok uppercase tracking-wider">Accepted</span>
+</div>
+<!-- Performance Metrics -->
+<div class="hidden sm:flex items-center space-x-4 text-xs font-mono text-secondary-token">
+<div>
+          Runtime: <span class="text-primary-token font-semibold">12 ms</span> <span class="text-[11px] text-semantic-ok">(beats 94.2%)</span>
+</div>
+<span class="text-subtle">•</span>
+<div>
+          Memory: <span class="text-primary-token font-semibold">17.4 MB</span> <span class="text-[11px] text-semantic-ok">(beats 88.6%)</span>
+</div>
+<span class="text-subtle">•</span>
+<div>
+          Tests: <span class="text-primary-token font-semibold">5 / 5 passed</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center space-x-2">
+<button class="px-3.5 py-1.5 text-xs font-mono font-medium rounded border border-token hover:bg-surface-2 text-primary-token transition-colors flex items-center space-x-1.5">
+<span>Console</span>
+<svg class="w-3 h-3 text-secondary-token" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="px-4 py-1.5 text-xs font-mono font-semibold rounded bg-[#2554e8] hover:bg-[#1e45c4] dark:bg-[#6f93ff] dark:hover:bg-[#5b80ee] text-white dark:text-black transition-colors flex items-center space-x-1 shadow-sm">
+<span>Submit Solution</span>
+</button>
+<button class="px-3.5 py-1.5 text-xs font-mono font-medium rounded border border-token hover:bg-surface-2 text-primary-token transition-colors flex items-center space-x-1">
+<span>Next</span>
+<span class="text-sm">→</span>
+</button>
+</div>
+</footer>
+<!-- END: BottomVerdictDock -->
+<!-- BEGIN: ClientInteractivityScript -->
+<script data-purpose="theme-toggle">
+    // Light / Dark Theme Toggler
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const htmlEl = document.documentElement;
+
+    themeBtn.addEventListener('click', () => {
+      const currentTheme = htmlEl.getAttribute('data-theme');
+      const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      htmlEl.setAttribute('data-theme', targetTheme);
+      if (targetTheme === 'dark') {
+        htmlEl.classList.add('dark');
+      } else {
+        htmlEl.classList.remove('dark');
+      }
+    });
+
+    // Ensure dark class is present by default
+    if (htmlEl.getAttribute('data-theme') === 'dark') {
+      htmlEl.classList.add('dark');
+    }
+  </script>
+<script data-purpose="simple-interactive-triggers">
+    // Run button interactive effect
+    const runButtons = [document.getElementById('quick-run-btn'), document.getElementById('run-again-btn')];
+    runButtons.forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const originalText = btn.innerHTML;
+          btn.innerHTML = `<span class="inline-block animate-spin mr-1">↻</span> Testing...`;
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+          }, 600);
+        });
+      }
+    });
+  </script>
+<!-- END: ClientInteractivityScript -->
+
+
+</body></html>

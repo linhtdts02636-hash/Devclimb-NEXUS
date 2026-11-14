@@ -9,6 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-php": "^6.0.2",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/legacy-modes": "^6.5.5",
+    "@lezer/highlight": "^1.2.5",
     "axios": "^1.21.1",
     "codemirror": "^6.0.2",
     "firebase": "^13.3.0",

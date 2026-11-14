@@ -1,0 +1,574 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "outline-variant": "#434653", "on-primary-container": "#002979", "tertiary": "#ffb952", "border-subtle": "rgba(255, 255, 255, 0.07)", "on-error": "#690005", "on-surface": "#e5e2e0", "surface-card": "#151514", "on-primary-fixed": "#00174c", "on-background": "#e5e2e0", "primary-fixed": "#dbe1ff", "surface-container-highest": "#353533", "surface": "#131312", "surface-track": "#262624", "tertiary-fixed": "#ffddb4", "secondary-container": "#474744", "primary": "#b4c5ff", "surface-container-low": "#1c1c1a", "on-tertiary-container": "#452b00", "status-hard": "#f08a6c", "surface-container-high": "#2a2a29", "inverse-on-surface": "#31302f", "status-medium": "#e7b44c", "on-tertiary-fixed": "#291800", "outline": "#8e909e", "accent-on": "#08122e", "on-secondary-fixed-variant": "#474744", "status-easy": "#4ad08a", "surface-variant": "#353533", "surface-tint": "#b4c5ff", "accent-soft": "rgba(111, 147, 255, 0.14)", "on-secondary": "#31302e", "border-outer": "rgba(255, 255, 255, 0.13)", "on-secondary-fixed": "#1c1c1a", "inverse-surface": "#e5e2e0", "error-container": "#93000a", "primary-container": "#6f93ff", "surface-bright": "#3a3938", "on-error-container": "#ffdad6", "background": "#131312", "surface-dim": "#131312", "secondary": "#c8c6c3", "secondary-fixed": "#e5e2de", "on-primary-fixed-variant": "#063ea7", "surface-container-lowest": "#0e0e0d", "on-surface-variant": "#c4c6d5", "tertiary-container": "#d08a00", "secondary-fixed-dim": "#c8c6c3", "surface-container": "#20201e", "on-tertiary": "#452b00", "on-primary": "#002979", "error": "#ffb4ab", "inverse-primary": "#2f57c0", "on-secondary-container": "#b7b5b1", "on-tertiary-fixed-variant": "#633f00", "tertiary-fixed-dim": "#ffb952", "primary-fixed-dim": "#b4c5ff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "space-xl": "1.5rem", "space-sm": "0.5rem", "margin-desktop": "2rem", "margin": "1rem", "gutter": "1rem", "space-lg": "1rem", "gutter-desktop": "1.5rem", "space-md": "0.75rem", "space-xs": "0.25rem" }, "fontFamily": { "body-lg": [ "Inter" ], "label-code-lg": [ "JetBrains Mono" ], "headline-sm": [ "Inter" ], "headline-xl-mobile": [ "Inter" ], "body-md": [ "Inter" ], "headline-md": [ "Inter" ], "body-sm": [ "Inter" ], "label-code-md": [ "JetBrains Mono" ], "label-code-sm": [ "JetBrains Mono" ], "headline-lg": [ "Inter" ], "headline-xl": [ "Inter" ] }, "fontSize": { "body-lg": [ "15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-code-lg": [ "13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-sm": [ "15px", { "lineHeight": "22px", "letterSpacing": "-0.005em", "fontWeight": "500" } ], "headline-xl-mobile": [ "28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-md": [ "13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-md": [ "18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" } ], "label-code-md": [ "12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "500" } ], "label-code-sm": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" } ], "headline-lg": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "headline-xl": [ "36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "600" } ] } } } };</script></head><body class="bg-surface-container-lowest font-body-md text-body-md text-on-surface antialiased min-h-screen"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-card border-b border-border-outer"><div class="h-12 w-full px-gutter-desktop flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl flex-shrink-0"><div class="flex items-center gap-space-sm"><div class="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-accent-on text-[14px]">terminal</span></div><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">DevClimb</span><span class="font-label-code-sm text-label-code-sm text-on-surface-variant px-1.5 py-0.5 rounded-lg bg-surface-container-low border border-border-subtle">v0.4.2 [OPERATE]</span></div><nav class="hidden lg:flex items-center gap-space-lg h-12" data-active-classes="text-on-surface border-b-2 border-primary-container"><a aria-current="page" class="h-12 flex items-center font-body-md transition-colors text-on-surface border-b-2 border-primary-container" data-path="problems" href="#">Problems</a><a class="h-12 flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="contests" href="#">Contests</a><a class="h-12 flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="discuss" href="#">Discuss</a><a class="h-12 flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="leaderboard" href="#">Leaderboard</a><a class="h-12 flex items-center font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="system-design" href="#">System Design</a></nav></div><div class="flex-1 max-w-md hidden md:block"><div class="relative flex items-center"><span class="material-symbols-outlined text-outline text-[16px] absolute left-3 pointer-events-none">search</span><input class="w-full h-8 pl-8 pr-12 rounded-lg bg-surface-container-low border border-border-outer font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container" placeholder="Search problems, tags, companies..." type="text"><div class="absolute right-2 flex items-center"><kbd class="font-label-code-sm text-label-code-sm px-1.5 py-0.5 rounded-lg bg-surface-card border border-border-subtle text-outline">/</kbd></div></div></div><div class="flex items-center gap-space-md flex-shrink-0"><button class="h-8 px-2 rounded-lg border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center" type="button"><span class="material-symbols-outlined text-[16px]">dark_mode</span></button><div class="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-surface-container-low border border-border-subtle font-label-code-sm text-label-code-sm text-status-medium"><span class="material-symbols-outlined text-status-medium text-[16px]">local_fire_department</span><span>14d</span></div><div class="hidden sm:flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-surface-container-low border border-border-subtle font-label-code-sm text-label-code-sm text-on-surface-variant"><span class="material-symbols-outlined text-status-easy text-[16px]">check_circle</span><span class="text-on-surface">3/5</span><span>solved</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-12 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+<!-- Sub-header & Quick-Access Pills -->
+
+<!-- Workspace Container -->
+<div class="max-w-[1440px] mx-auto w-full px-margin md:px-gutter-desktop py-space-lg flex flex-col gap-space-lg">
+<!-- Top Grid: Daily Challenge Banner + Compact Analytical Stats -->
+<div class="flex overflow-x-auto gap-space-md pb-1 scrollbar-none">
+<!-- Card 1: Daily Challenge -->
+<div class="min-w-[420px] lg:flex-1 rounded-lg bg-surface-card border border-border-outer p-space-md relative overflow-hidden flex flex-col justify-between flex-shrink-0">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm">
+<span class="inline-flex items-center gap-1 text-primary-container font-semibold">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+            DAILY CHALLENGE
+          </span>
+<span class="text-outline-variant">•</span>
+<span class="text-outline">UTC Day 074</span>
+</div>
+<div class="flex items-center gap-space-sm mt-1">
+<span class="font-label-code-md text-label-code-md text-outline font-semibold">#042</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold hover:text-primary-container transition-colors cursor-pointer">
+            Trapping Rain Water
+          </h2>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-code-sm font-medium uppercase tracking-wider bg-[rgba(231,180,76,0.12)] text-status-medium border border-[rgba(231,180,76,0.25)]">
+            Hard
+          </span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 bg-surface-container-low border border-border-subtle rounded px-2.5 py-1.5">
+<span class="font-label-code-sm text-[10px] uppercase text-outline tracking-wider">Resets In</span>
+<div class="font-label-code-md text-label-code-md text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-outline text-[14px]">schedule</span>
+<span class="text-on-surface" id="daily-timer">06:41:54</span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-md mt-space-md pt-space-sm border-t border-border-subtle">
+<div class="flex flex-wrap items-center gap-space-sm font-label-code-sm text-label-code-sm">
+<div class="flex items-center gap-1 text-outline">
+<span>Acceptance:</span>
+<span class="text-on-surface font-medium">61.4%</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-low border border-border-subtle text-on-surface-variant text-[11px]">Two Pointers</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-low border border-border-subtle text-on-surface-variant text-[11px]">Stack</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-low border border-border-subtle text-on-surface-variant text-[11px]">Dynamic Programming</span>
+</div>
+</div>
+<button class="h-8 px-4 rounded bg-primary-container hover:brightness-105 transition-all text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5">
+<span>Solve Challenge</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 2: Weekly Contest 389 -->
+<div class="min-w-[420px] lg:flex-1 rounded-lg bg-surface-card border border-border-outer p-space-md relative overflow-hidden flex flex-col justify-between flex-shrink-0">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm">
+<span class="inline-flex items-center gap-1 text-status-easy font-semibold">
+<span class="material-symbols-outlined text-[14px]">emoji_events</span>
+            RATED CONTEST
+          </span>
+<span class="text-outline-variant">•</span>
+<span class="text-outline">4 Problems</span>
+<span class="text-outline-variant">•</span>
+<span class="text-outline">90 Mins</span>
+</div>
+<div class="flex items-center gap-space-sm mt-1">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold hover:text-primary-container transition-colors cursor-pointer">
+            Weekly Contest 389
+          </h2>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-code-sm font-medium uppercase tracking-wider bg-[rgba(74,208,138,0.12)] text-status-easy border border-[rgba(74,208,138,0.25)]">
+            Open
+          </span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 bg-surface-container-low border border-border-subtle rounded px-2.5 py-1.5">
+<span class="font-label-code-sm text-[10px] uppercase text-outline tracking-wider">Starts In</span>
+<div class="font-label-code-md text-label-code-md text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-outline text-[14px]">timer</span>
+<span class="text-on-surface">01d 14:32:08</span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-md mt-space-md pt-space-sm border-t border-border-subtle">
+<div class="flex flex-wrap items-center gap-space-sm font-label-code-sm text-label-code-sm">
+<div class="flex items-center gap-1 text-outline">
+<span>Registered:</span>
+<span class="text-on-surface font-medium">12,480 devs</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1 text-outline">
+<span>Delta:</span>
+<span class="text-on-surface font-medium">Rating ± 120</span>
+</div>
+</div>
+<button class="h-8 px-4 rounded bg-surface-container-low hover:bg-surface-track border border-border-subtle hover:border-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-colors">
+<span>Register Now</span>
+<span class="material-symbols-outlined text-[14px] text-primary-container">how_to_reg</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Biweekly Contest 126 -->
+<div class="min-w-[420px] lg:flex-1 rounded-lg bg-surface-card border border-border-outer p-space-md relative overflow-hidden flex flex-col justify-between flex-shrink-0">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm font-label-code-sm text-label-code-sm">
+<span class="inline-flex items-center gap-1 text-primary-container font-semibold">
+<span class="material-symbols-outlined text-[14px]">military_tech</span>
+            BIWEEKLY
+          </span>
+<span class="text-outline-variant">•</span>
+<span class="text-outline">Global Series</span>
+</div>
+<div class="flex items-center gap-space-sm mt-1">
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold hover:text-primary-container transition-colors cursor-pointer">
+            Biweekly Contest 126
+          </h2>
+<span class="px-2 py-0.5 rounded text-[11px] font-label-code-sm font-medium uppercase tracking-wider bg-[rgba(111,147,255,0.14)] text-primary-container border border-[rgba(111,147,255,0.25)]">
+            Upcoming
+          </span>
+</div>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 bg-surface-container-low border border-border-subtle rounded px-2.5 py-1.5">
+<span class="font-label-code-sm text-[10px] uppercase text-outline tracking-wider">Starts In</span>
+<div class="font-label-code-md text-label-code-md text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-outline text-[14px]">schedule</span>
+<span class="text-on-surface">05d 20:15:00</span>
+</div>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-md mt-space-md pt-space-sm border-t border-border-subtle">
+<div class="flex flex-wrap items-center gap-space-sm font-label-code-sm text-label-code-sm text-outline">
+<span>4 Problems</span>
+<span class="text-outline-variant">•</span>
+<span>Rating Rated</span>
+<span class="text-outline-variant">•</span>
+<span>6,120 Registered</span>
+</div>
+<button class="h-8 px-4 rounded bg-surface-container-low hover:bg-surface-track border border-border-subtle hover:border-primary-container text-on-surface font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-colors">
+<span>Details</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Filtering & Controls Toolbar -->
+<div class="rounded-lg bg-surface-card border border-border-outer p-space-sm flex flex-col gap-space-sm">
+<!-- Search & High-level Filters -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<!-- Search bar -->
+<div class="flex-1 min-w-[280px] max-w-lg relative flex items-center">
+<span class="material-symbols-outlined text-outline text-[16px] absolute left-2.5 pointer-events-none">search</span>
+<input class="w-full h-8 pl-8 pr-16 rounded bg-surface-container-low border border-border-subtle font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors" id="problem-search" placeholder="Search problems by name, index, or company (e.g. 'Trapping', '#042')..." type="text">
+<div class="absolute right-2 flex items-center gap-1">
+<button class="hidden text-outline hover:text-on-surface text-[14px] items-center justify-center" id="clear-search">
+<span class="material-symbols-outlined text-[14px]">cancel</span>
+</button>
+<kbd class="font-label-code-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-card border border-border-subtle text-outline">⌘K</kbd>
+</div>
+</div>
+<!-- Difficulty Quick Filters -->
+<div class="flex items-center gap-1 bg-surface-container-low p-0.5 rounded border border-border-subtle font-label-code-sm text-label-code-sm">
+<button class="px-2.5 py-1 rounded bg-surface-track text-on-surface font-medium transition-colors">All</button>
+<button class="px-2.5 py-1 rounded hover:bg-surface-track text-status-easy font-medium transition-colors flex items-center gap-1">
+            Easy <span class="text-[10px] text-outline">820</span>
+</button>
+<button class="px-2.5 py-1 rounded hover:bg-surface-track text-primary-container font-medium transition-colors flex items-center gap-1">
+            Medium <span class="text-[10px] text-outline">1,640</span>
+</button>
+<button class="px-2.5 py-1 rounded hover:bg-surface-track text-status-medium font-medium transition-colors flex items-center gap-1">
+            Hard <span class="text-[10px] text-outline">680</span>
+</button>
+</div>
+<!-- Status Filter Dropdown Simulation -->
+<div class="flex items-center gap-1">
+<div class="relative">
+<button class="h-8 px-2.5 rounded bg-surface-container-low border border-border-subtle hover:bg-surface-track text-on-surface font-label-code-sm text-label-code-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[14px] text-outline">check_box</span>
+<span>Status: <strong class="text-on-surface font-semibold">All</strong></span>
+<span class="material-symbols-outlined text-[14px] text-outline">expand_more</span>
+</button>
+</div>
+<!-- Random Action -->
+<button class="h-8 px-3 rounded bg-surface-container-low border border-border-subtle hover:bg-surface-track text-on-surface font-label-code-sm text-label-code-sm flex items-center gap-1.5 transition-colors" title="Pick Random Problem">
+<span class="material-symbols-outlined text-primary-container text-[14px]">shuffle</span>
+<span class="hidden sm:inline">Pick Random</span>
+</button>
+</div>
+</div>
+<!-- Secondary Tag Filter Row & Meta Badges -->
+
+</div>
+<!-- Problems Tabular Workspace -->
+<div class="rounded-lg bg-surface-card border border-border-outer overflow-hidden shadow-sm">
+<div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-container-lowest">
+  <!-- Card 1 -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-outline tracking-tight">
+        <span class="material-symbols-outlined text-[14px] text-primary-container">code</span>
+        <span>recommended problem</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#128</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Longest Consecutive Sequence
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(111,147,255,0.14)] text-primary-container border border-[rgba(111,147,255,0.25)]">Medium</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">hash set</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">array</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">38% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-primary-container/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-primary-container font-semibold">LC</div>
+        <div class="w-5 h-5 rounded-full bg-status-medium/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-medium font-semibold">MT</div>
+        <div class="w-5 h-5 rounded-full bg-status-easy/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-easy font-semibold">HD</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">5 people you follow solved this</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Two Sum -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-status-easy tracking-tight">
+        <span class="material-symbols-outlined text-[14px]">verified</span>
+        <span>community pick</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#001</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Two Sum
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(74,208,138,0.12)] text-status-easy border border-[rgba(74,208,138,0.25)]">Easy</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">array</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">hash table</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">54.2% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-primary-container/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-primary-container font-semibold">AL</div>
+        <div class="w-5 h-5 rounded-full bg-status-easy/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-easy font-semibold">SK</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">Solved by 14 team members</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Trapping Rain Water -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-primary-container tracking-tight">
+        <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+        <span>daily challenge</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#042</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Trapping Rain Water
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(231,180,76,0.12)] text-status-medium border border-[rgba(231,180,76,0.25)]">Hard</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">two pointers</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">stack</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">61.4% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-status-medium/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-medium font-semibold">RN</div>
+        <div class="w-5 h-5 rounded-full bg-primary-container/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-primary-container font-semibold">JD</div>
+        <div class="w-5 h-5 rounded-full bg-status-easy/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-easy font-semibold">KP</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">8 people you follow solved this</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: Add Two Numbers -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-outline tracking-tight">
+        <span class="material-symbols-outlined text-[14px] text-primary-container">code</span>
+        <span>recommended problem</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#002</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Add Two Numbers
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(111,147,255,0.14)] text-primary-container border border-[rgba(111,147,255,0.25)]">Medium</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">linked list</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">math</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">42.8% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-status-easy/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-easy font-semibold">DY</div>
+        <div class="w-5 h-5 rounded-full bg-primary-container/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-primary-container font-semibold">MS</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">Solved by 9 team members</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 5: Longest Substring Without Repeating Characters -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-outline tracking-tight">
+        <span class="material-symbols-outlined text-[14px] text-primary-container">code</span>
+        <span>recommended problem</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#003</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Longest Substring Without Repeating Characters
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(111,147,255,0.14)] text-primary-container border border-[rgba(111,147,255,0.25)]">Medium</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">sliding window</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">hash table</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">35.1% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-primary-container/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-primary-container font-semibold">TY</div>
+        <div class="w-5 h-5 rounded-full bg-status-medium/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-medium font-semibold">BK</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">3 people you follow solved this</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 6: Median of Two Sorted Arrays -->
+  <div class="rounded-xl bg-surface-card border border-border-outer p-5 flex flex-col justify-between gap-3.5 hover:border-outline-variant transition-colors group">
+    <div class="flex items-center justify-between gap-2">
+      <div class="inline-flex items-center gap-1.5 font-label-code-sm text-[11px] text-status-medium tracking-tight">
+        <span class="material-symbols-outlined text-[14px]">bolt</span>
+        <span>interview favorite</span>
+      </div>
+      <button type="button" class="h-6 px-2.5 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-on-surface-variant hover:text-on-surface font-label-code-sm text-[11px] flex items-center gap-1 transition-colors">
+        <span>Why this?</span>
+      </button>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-label-code-sm text-outline text-[11px]">#004</span>
+        <h3 class="font-headline-md text-headline-md text-on-surface font-semibold group-hover:text-primary-container transition-colors cursor-pointer">
+          Median of Two Sorted Arrays
+        </h3>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5 mt-2 font-label-code-sm text-[11px]">
+        <span class="px-2 py-0.5 rounded-full font-medium uppercase tracking-wider bg-[rgba(231,180,76,0.12)] text-status-medium border border-[rgba(231,180,76,0.25)]">Hard</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">binary search</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low border border-border-subtle text-on-surface-variant">divide &amp; conquer</span>
+        <span class="px-2 py-0.5 rounded-full bg-surface-container-low/60 border border-border-subtle text-outline">39.8% acceptance</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 pt-1 border-t border-border-subtle/50">
+      <div class="flex -space-x-1.5 overflow-hidden">
+        <div class="w-5 h-5 rounded-full bg-status-medium/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-medium font-semibold">WR</div>
+        <div class="w-5 h-5 rounded-full bg-status-easy/30 border border-surface-card flex items-center justify-center font-label-code-sm text-[9px] text-status-easy font-semibold">ZX</div>
+      </div>
+      <span class="font-label-code-sm text-[11px] text-outline">Solved by 6 team members</span>
+    </div>
+    <div class="flex items-center justify-between gap-3 pt-1">
+      <button type="button" class="h-8 px-5 rounded-full bg-primary-container hover:brightness-105 text-accent-on font-label-code-sm text-label-code-sm font-semibold tracking-tight flex items-center gap-1.5 transition-all shadow-sm">
+        <span>Solve</span>
+        <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+          <span class="material-symbols-outlined text-[16px]">bookmark</span>
+        </button>
+        <button type="button" class="w-8 h-8 rounded-full border border-border-subtle bg-surface-container-low hover:bg-surface-track text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Dismiss">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Pagination & Table Metadata Footer -->
+<div class="p-space-sm bg-surface-container-low/70 border-t border-border-outer flex flex-col sm:flex-row items-center justify-between gap-space-sm font-label-code-sm text-label-code-sm">
+<div class="flex items-center gap-space-sm text-outline text-[12px]">
+<span>Showing <strong class="text-on-surface font-semibold">1–12</strong> of 3,140 problems</span>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1">
+<span class="text-[11px]">Rows:</span>
+<select class="bg-surface-card border border-border-subtle text-on-surface rounded px-1.5 py-0.5 text-[11px] focus:outline-none">
+<option>12 / page</option>
+<option selected="">50 / page</option>
+<option>100 / page</option>
+</select>
+</div>
+</div>
+<!-- Numerical Page Navigator -->
+<div class="flex items-center gap-1">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-card border border-border-subtle text-outline hover:text-on-surface transition-colors disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-primary-container text-accent-on font-semibold">1</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-card border border-border-subtle text-outline hover:text-on-surface transition-colors">2</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-card border border-border-subtle text-outline hover:text-on-surface transition-colors">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-card border border-border-subtle text-outline hover:text-on-surface transition-colors">262</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-card border border-border-subtle text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+    // Lightweight interactive behaviors: Search filter input toggle & real-time clock decrement simulation
+    (function initProblemDirectory() {
+      const searchInput = document.getElementById('problem-search');
+      const clearBtn = document.getElementById('clear-search');
+      const tableRows = document.querySelectorAll('#problems-table tbody tr');
+
+      if (searchInput && clearBtn) {
+        searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.toLowerCase().trim();
+          if (query.length > 0) {
+            clearBtn.classList.remove('hidden');
+            clearBtn.classList.add('flex');
+          } else {
+            clearBtn.classList.add('hidden');
+            clearBtn.classList.remove('flex');
+          }
+
+          // Live table filter
+          tableRows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+          });
+        });
+
+        clearBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          searchInput.dispatchEvent(new Event('input'));
+          searchInput.focus();
+        });
+      }
+
+      // Live Daily Challenge Countdown simulation
+      const timerElement = document.getElementById('daily-timer');
+      if (timerElement) {
+        let totalSeconds = (6 * 3600) + (42 * 60) + 19;
+        setInterval(() => {
+          if (totalSeconds > 0) {
+            totalSeconds--;
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            timerElement.textContent = `${h}:${m}:${s}`;
+          }
+        }, 1000);
+      }
+    })();
+  </script>
+</div></main><footer class="w-full border-t border-border-subtle bg-surface-card py-6 mt-auto"><div class="w-full px-gutter-desktop flex flex-col sm:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md font-label-code-sm text-label-code-sm text-outline"><span class="text-on-surface font-semibold">DevClimb Engine</span><span>•</span><span>Node us-east.operate</span><span>•</span><span>24ms RTT</span></div><div class="font-label-code-sm text-label-code-sm text-outline">© 2025 DevClimb Nexus. Surgical Competitive Platform.</div></div></footer>
+
+
+
+</body></html>

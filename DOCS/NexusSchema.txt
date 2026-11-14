@@ -1,0 +1,376 @@
+-- =====================================================================
+-- DevClimb Nexus - PostgreSQL schema (v2)
+-- Every table owns a 4-letter column prefix. FK columns keep the PARENT's
+-- PK name, so they carry the parent's prefix.
+--
+--   users=user  community=comm  role=role  permission=perm
+--   user_community=ucom  user_community_role=ucrl
+--   language=lang  puzzle=puzz  testcase=test  submission=subm
+--   ptag=ptag  ptag_puzzle=ptpz  contest=cont  puzzle_contest=pzct
+--   user_contest=ucon  achievement=achi  user_achievement=uach
+--   ctag=ctag  ctag_community=ctcm  post=post  attachment=atta
+--   reaction=reac  warn=warn  appeal=appe  report=repo
+--   follow=foll  notification=noti  announcement=anno  maintenance=main
+--
+-- Composite PRIMARY KEYs on junction tables already guarantee uniqueness
+-- of the pair, so no duplicate rows are possible.
+-- =====================================================================
+
+-- ---------- ENUM TYPES ----------
+CREATE TYPE anno_type_enum AS ENUM ('GENERAL','MAINTENANCE','RELEASE','FEATURE','BUG_FIX','SECURITY','INCIDENT','EVENT');
+CREATE TYPE appe_status_enum AS ENUM ('PENDING','APPROVED','REJECTED');
+CREATE TYPE repo_status_enum AS ENUM ('PENDING','RESOLVED','DISMISSED');
+CREATE TYPE subm_status_enum AS ENUM ('PENDING','ACCEPTED','WRONG_ANSWER','TIME_LIMIT','RUNTIME_ERROR','COMPILE_ERROR');
+CREATE TYPE atta_type_enum AS ENUM ('IMAGE','FILE','VIDEO','GIF');
+CREATE TYPE reac_type_enum AS ENUM ('LIKE','DISLIKE');
+
+-- Shared by report.repo_type and warn.warn_type
+CREATE TYPE violation_type_enum AS ENUM (
+  'SPAM',
+  'HARASSMENT_OR_BULLYING',
+  'HATE_SPEECH_OR_DISCRIMINATION',
+  'THREATS_OR_VIOLENCE',
+  'INAPPROPRIATE_CONTENT',
+  'FRAUD_OR_PHISHING',
+  'MALICIOUS_OR_HARMFUL_CONTENT',
+  'OTHER_VIOLATIONS'
+);
+
+-- =====================================================================
+-- CORE
+-- =====================================================================
+CREATE TABLE users (
+  user_id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_email       VARCHAR(50)  NOT NULL UNIQUE,
+  user_name        VARCHAR(50)  NOT NULL UNIQUE,
+  user_firebaseuid VARCHAR(300) NOT NULL UNIQUE,
+  user_isadmin     BOOLEAN      NOT NULL DEFAULT FALSE,
+  user_image       TEXT,
+  user_bio         TEXT,
+  user_isactive    BOOLEAN      NOT NULL DEFAULT TRUE,
+  user_createdat   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE TABLE community (
+  comm_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  comm_name      VARCHAR(50) NOT NULL UNIQUE,
+  comm_image     TEXT,
+  comm_banner    TEXT,
+  comm_shoutout  TEXT,
+  comm_ispublic  BOOLEAN     NOT NULL DEFAULT TRUE,
+  comm_isactive  BOOLEAN     NOT NULL DEFAULT TRUE,
+  comm_createdat TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE user_community (
+  user_id        INT NOT NULL REFERENCES users (user_id)     ON DELETE CASCADE,
+  comm_id        INT NOT NULL REFERENCES community (comm_id) ON DELETE CASCADE,
+  ucom_joinedat  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ucom_isowner BOOLEAN NOT NULL DEFAULT FALSE;
+  PRIMARY KEY (user_id, comm_id)
+);
+
+CREATE UNIQUE INDEX uq_ucom_one_owner
+ON user_community (comm_id)
+WHERE ucom_isowner;
+
+-- =====================================================================
+-- ROLE & PERMISSION
+-- =====================================================================
+CREATE TABLE role (
+  role_id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  role_name  VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Role 1 : 0..* Permission
+CREATE TABLE permission (
+  perm_id    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  role_id    INT NOT NULL REFERENCES role (role_id) ON DELETE CASCADE,
+  perm_name  VARCHAR(100) NOT NULL,
+  UNIQUE (role_id, perm_name)
+);
+
+-- Roles are assigned per membership (user + community + role)
+CREATE TABLE user_community_role (
+  user_id  INT NOT NULL,
+  comm_id  INT NOT NULL,
+  role_id  INT NOT NULL REFERENCES role (role_id) ON DELETE CASCADE,
+  ucrl_assignedat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, comm_id, role_id),
+  FOREIGN KEY (user_id, comm_id) REFERENCES user_community (user_id, comm_id) ON DELETE CASCADE
+);
+
+-- =====================================================================
+-- PUZZLE SYSTEM
+-- =====================================================================
+CREATE TABLE language (
+  lang_id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  lang_judge0 INT NOT NULL,
+  lang_name   VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE puzzle (
+  puzz_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id        INT NOT NULL REFERENCES users (user_id),
+  comm_id        INT NOT NULL REFERENCES community (comm_id),
+  puzz_function  VARCHAR(50) NOT NULL,
+  puzz_title     TEXT,
+  puzz_content   TEXT        NOT NULL,
+  puzz_createdat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  puzz_difficulty puzz_difficulty_enum NOT NULL DEFAULT 'MEDIUM'
+  
+);
+
+CREATE TABLE puzzle_language (
+  puzz_id INT NOT NULL REFERENCES puzzle (puzz_id)   ON DELETE CASCADE,
+  lang_id INT NOT NULL REFERENCES language (lang_id) ON DELETE RESTRICT,
+  pula_functionheader TEXT NOT NULL,
+  PRIMARY KEY (puzz_id, lang_id)
+);
+
+CREATE TABLE testcase (
+  test_id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  puzz_id     INT  NOT NULL REFERENCES puzzle (puzz_id) ON DELETE CASCADE,
+  test_input  TEXT NOT NULL,
+  test_output TEXT NOT NULL
+);
+
+CREATE TABLE submission (
+  subm_id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  puzz_id     INT NOT NULL REFERENCES puzzle (puzz_id),
+  user_id     INT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  subm_code   TEXT,
+  subm_status subm_status_enum NOT NULL DEFAULT 'PENDING',
+  subm_time   INT,
+  subm_date   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE ptag (
+  ptag_id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  ptag_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE ptag_puzzle (
+  ptag_id INT NOT NULL REFERENCES ptag (ptag_id)    ON DELETE CASCADE,
+  puzz_id INT NOT NULL REFERENCES puzzle (puzz_id)  ON DELETE CASCADE,
+  PRIMARY KEY (ptag_id, puzz_id)
+);
+
+-- =====================================================================
+-- CONTEST & ACHIEVEMENT
+-- =====================================================================
+CREATE TABLE contest (
+  cont_id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  comm_id      INT NOT NULL REFERENCES community (comm_id),
+  cont_title   VARCHAR(250) NOT NULL,
+  cont_content TEXT NOT NULL,
+  cont_image   TEXT,
+  cont_banner  TEXT,
+  cont_start   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  cont_end     TIMESTAMPTZ NOT NULL,
+  CHECK (cont_end > cont_start)
+);
+
+CREATE TABLE puzzle_contest (
+  puzz_id INT NOT NULL REFERENCES puzzle (puzz_id)  ON DELETE CASCADE,
+  cont_id INT NOT NULL REFERENCES contest (cont_id) ON DELETE CASCADE,
+  PRIMARY KEY (puzz_id, cont_id)
+);
+
+CREATE TABLE user_contest (
+  user_id INT NOT NULL REFERENCES users (user_id)    ON DELETE CASCADE,
+  cont_id INT NOT NULL REFERENCES contest (cont_id)  ON DELETE CASCADE,
+  ucon_joinedat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, cont_id)
+);
+
+-- Contest 1 : 0..1 Achievement (UNIQUE = at most one per contest)
+CREATE TABLE achievement (
+  achi_id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  cont_id      INT NOT NULL UNIQUE REFERENCES contest (cont_id) ON DELETE RESTRICT,
+  achi_name    VARCHAR(250) NOT NULL,
+  achi_content TEXT NOT NULL,
+  achi_image   TEXT
+);
+
+CREATE TABLE user_achievement (
+  user_id INT NOT NULL REFERENCES users (user_id)        ON DELETE CASCADE,
+  achi_id INT NOT NULL REFERENCES achievement (achi_id)  ON DELETE CASCADE,
+  uach_awardedat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, achi_id)
+);
+
+-- =====================================================================
+-- COMMUNITY TAGS
+-- =====================================================================
+CREATE TABLE ctag (
+  ctag_id   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  ctag_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE ctag_community (
+  ctag_id INT NOT NULL REFERENCES ctag (ctag_id)      ON DELETE CASCADE,
+  comm_id INT NOT NULL REFERENCES community (comm_id) ON DELETE CASCADE,
+  PRIMARY KEY (ctag_id, comm_id)
+);
+
+-- =====================================================================
+-- POSTS
+-- =====================================================================
+CREATE TABLE post (
+  post_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id        INT NOT NULL REFERENCES users (user_id),
+  comm_id        INT NOT NULL REFERENCES community (comm_id) ON DELETE CASCADE,
+  post_parentid  INT REFERENCES post (post_id) ON DELETE CASCADE,  -- NULL = top-level post, else a reply
+  post_title     VARCHAR(255),
+  post_content   TEXT NOT NULL,
+  post_createdat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  post_updatedat TIMESTAMPTZ,
+  CHECK (post_parentid IS NULL OR post_parentid <> post_id)
+);
+
+CREATE TABLE attachment (
+  atta_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  post_id        INT NOT NULL REFERENCES post (post_id)  ON DELETE CASCADE,
+  user_id        INT NOT NULL REFERENCES users (user_id),
+  atta_url       TEXT NOT NULL,
+  atta_type      atta_type_enum NOT NULL,
+  atta_createdat TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE reaction (
+  post_id        INT NOT NULL REFERENCES post (post_id)   ON DELETE CASCADE,
+  user_id        INT NOT NULL REFERENCES users (user_id)  ON DELETE CASCADE,
+  reac_type      reac_type_enum NOT NULL,
+  reac_createdat TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (post_id, user_id)
+);
+
+-- =====================================================================
+-- MODERATION
+-- =====================================================================
+CREATE TABLE warn (
+  warn_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  comm_id        INT NOT NULL REFERENCES community (comm_id),
+  warn_warnerid  INT NOT NULL REFERENCES users (user_id),
+  warn_warneeid  INT NOT NULL REFERENCES users (user_id),
+  warn_type      violation_type_enum NOT NULL,
+  warn_reason    TEXT NOT NULL,
+  warn_isactive  BOOLEAN NOT NULL DEFAULT TRUE,
+  warn_startdate TIMESTAMPTZ NOT NULL DEFAULT now(),
+  warn_enddate   TIMESTAMPTZ,            -- filled by trigger below when NULL
+  CHECK (warn_enddate IS NULL OR warn_enddate > warn_startdate)
+);
+
+-- A column DEFAULT cannot reference another column, so a trigger sets
+-- warn_enddate = warn_startdate + 3 months when none is supplied.
+CREATE FUNCTION warn_set_enddate() RETURNS trigger AS $$
+BEGIN
+  IF NEW.warn_enddate IS NULL THEN
+    NEW.warn_enddate := NEW.warn_startdate + INTERVAL '3 months';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_warn_enddate
+  BEFORE INSERT ON warn
+  FOR EACH ROW EXECUTE FUNCTION warn_set_enddate();
+
+CREATE TABLE appeal (
+  appe_id         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  warn_id         INT NOT NULL REFERENCES warn (warn_id),
+  user_id         INT NOT NULL REFERENCES users (user_id),
+  appe_content    TEXT NOT NULL,
+  appe_status     appe_status_enum NOT NULL DEFAULT 'PENDING',
+  appe_date       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  appe_reviewedat TIMESTAMPTZ
+);
+
+-- Anonymous: no reporter column. Reported user + reported post only.
+CREATE TABLE report (
+  repo_id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id     INT NOT NULL REFERENCES users (user_id),
+  post_id     INT NOT NULL REFERENCES post (post_id) ON DELETE CASCADE,
+  repo_type   violation_type_enum NOT NULL,
+  repo_reason TEXT,
+  repo_status repo_status_enum NOT NULL DEFAULT 'PENDING',
+  repo_date   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- =====================================================================
+-- USER & SOCIAL
+-- =====================================================================
+CREATE TABLE follow (
+  foll_followerid INT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  foll_followeeid INT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  foll_createdat  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (foll_followerid, foll_followeeid),
+  CHECK (foll_followerid <> foll_followeeid)
+);
+
+-- 1..2 users: recipient (required) + actor (optional)
+CREATE TABLE notification (
+  noti_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  noti_userid    INT NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+  noti_actorid   INT REFERENCES users (user_id) ON DELETE SET NULL,
+  noti_content   TEXT NOT NULL,
+  noti_isread    BOOLEAN NOT NULL DEFAULT FALSE,
+  noti_createdat TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE announcement (
+  anno_id          INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id          INT NOT NULL REFERENCES users (user_id),
+  anno_title       VARCHAR(255) NOT NULL,
+  anno_content     TEXT NOT NULL,
+  anno_type        anno_type_enum,
+  anno_ispinned    BOOLEAN NOT NULL DEFAULT FALSE,
+  anno_ispublished BOOLEAN NOT NULL DEFAULT TRUE,
+  anno_createdat   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  anno_updatedat   TIMESTAMPTZ
+);
+
+-- User 1 : 0..1 Maintenance (UNIQUE = at most one per user)
+CREATE TABLE maintenance (
+  main_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id        INT NOT NULL UNIQUE REFERENCES users (user_id),
+  main_enabled   BOOLEAN NOT NULL DEFAULT FALSE,
+  main_enabledat TIMESTAMPTZ
+);
+
+-- =====================================================================
+-- INDEXES ON FOREIGN KEYS (Postgres does not create these automatically;
+-- leading PK columns of junction tables are already covered by the PK)
+-- =====================================================================
+CREATE INDEX idx_perm_role      ON permission (role_id);
+CREATE INDEX idx_ucrl_role      ON user_community_role (role_id);
+CREATE INDEX idx_ucom_comm      ON user_community (comm_id);
+CREATE INDEX idx_puzz_user      ON puzzle (user_id);
+CREATE INDEX idx_puzz_comm      ON puzzle (comm_id);
+CREATE INDEX idx_puzz_lang      ON puzzle (lang_id);
+CREATE INDEX idx_test_puzz      ON testcase (puzz_id);
+CREATE INDEX idx_subm_puzz      ON submission (puzz_id);
+CREATE INDEX idx_subm_user      ON submission (user_id);
+CREATE INDEX idx_ptpz_puzz      ON ptag_puzzle (puzz_id);
+CREATE INDEX idx_cont_comm      ON contest (comm_id);
+CREATE INDEX idx_pzct_cont      ON puzzle_contest (cont_id);
+CREATE INDEX idx_ucon_cont      ON user_contest (cont_id);
+CREATE INDEX idx_uach_achi      ON user_achievement (achi_id);
+CREATE INDEX idx_ctcm_comm      ON ctag_community (comm_id);
+CREATE INDEX idx_post_user      ON post (user_id);
+CREATE INDEX idx_post_comm      ON post (comm_id);
+CREATE INDEX idx_post_parent    ON post (post_parentid);
+CREATE INDEX idx_atta_post      ON attachment (post_id);
+CREATE INDEX idx_atta_user      ON attachment (user_id);
+CREATE INDEX idx_reac_user      ON reaction (user_id);
+CREATE INDEX idx_warn_comm      ON warn (comm_id);
+CREATE INDEX idx_warn_warner    ON warn (warn_warnerid);
+CREATE INDEX idx_warn_warnee    ON warn (warn_warneeid);
+CREATE INDEX idx_appe_warn      ON appeal (warn_id);
+CREATE INDEX idx_appe_user      ON appeal (user_id);
+CREATE INDEX idx_repo_user      ON report (user_id);
+CREATE INDEX idx_repo_post      ON report (post_id);
+CREATE INDEX idx_foll_followee  ON follow (foll_followeeid);
+CREATE INDEX idx_noti_user      ON notification (noti_userid);
+CREATE INDEX idx_anno_user      ON announcement (user_id);
