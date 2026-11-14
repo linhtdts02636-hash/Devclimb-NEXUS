@@ -1,12 +1,15 @@
-package com.devclimb.post;
+package com.devclimb.post.service;
 
 import com.devclimb.common.exception.ApiException;
 import com.devclimb.common.security.CurrentUser;
 import com.devclimb.community.entity.Community;
 import com.devclimb.community.repository.CommunityRepository;
 import com.devclimb.community.repository.UserCommunityRepository;
-import com.devclimb.user.User;
-import com.devclimb.user.UserRepository;
+import com.devclimb.post.dto.PostResponse;
+import com.devclimb.post.entity.Post;
+import com.devclimb.post.repository.PostRepository;
+import com.devclimb.user.entity.User;
+import com.devclimb.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +36,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostDto createPost(Integer communityId, CurrentUser currentUser, String content) {
+    public PostResponse createPost(Integer communityId, CurrentUser currentUser, String content) {
         if (currentUser == null) {
             throw new ApiException(
                     HttpStatus.UNAUTHORIZED,
@@ -75,11 +78,11 @@ public class PostService {
         post.setCreatedAt(Instant.now());
 
         Post savedPost = postRepository.save(post);
-        return PostDto.from(savedPost);
+        return PostResponse.from(savedPost);
     }
 
     @Transactional(readOnly = true)
-    public List<PostDto> getPosts(Integer communityId, CurrentUser currentUser) {
+    public List<PostResponse> getPosts(Integer communityId, CurrentUser currentUser) {
         Community community = findActiveCommunity(communityId);
 
         if (!community.isPublicCommunity()) {
@@ -100,7 +103,7 @@ public class PostService {
         }
 
         return postRepository.findFeed(communityId).stream()
-                .map(PostDto::from)
+                .map(PostResponse::from)
                 .toList();
     }
 

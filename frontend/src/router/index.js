@@ -6,11 +6,6 @@ export const router = createRouter({
   routes: [
     { path: '/', component: () => import('../pages/guest/LandingPage.vue') },
     { path: '/login', component: () => import('../pages/guest/LoginPage.vue'), meta: { guestOnly: true } },
-    {
-      path: '/communities/:communityId/posts',
-      component: () => import('../pages/user/CommunityFeedPage.vue'),
-      props: true,
-    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior(destination) {

@@ -1,6 +1,9 @@
-package com.devclimb.post;
+package com.devclimb.post.controller;
 
 import com.devclimb.common.security.CurrentUser;
+import com.devclimb.post.dto.CreatePostRequest;
+import com.devclimb.post.dto.PostResponse;
+import com.devclimb.post.service.PostService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,18 +26,18 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseEntity<PostDto> createPost(
+    public ResponseEntity<PostResponse> createPost(
             @PathVariable Integer communityId,
             Authentication authentication,
             @RequestBody(required = false) CreatePostRequest request
     ) {
         String content = request == null ? null : request.content();
-        PostDto response = postService.createPost(communityId, currentUser(authentication), content);
+        PostResponse response = postService.createPost(communityId, currentUser(authentication), content);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<PostDto>> getPosts(
+    public ResponseEntity<List<PostResponse>> getPosts(
             @PathVariable Integer communityId,
             Authentication authentication
     ) {

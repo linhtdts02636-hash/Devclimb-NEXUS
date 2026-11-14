@@ -1,4 +1,4 @@
-package com.devclimb.post;
+package com.devclimb.post.dto;
 
 public record CreatePostRequest(String content) {
 }

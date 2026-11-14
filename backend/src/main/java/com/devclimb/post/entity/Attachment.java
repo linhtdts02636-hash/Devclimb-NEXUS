@@ -1,7 +1,6 @@
-package com.devclimb.attachment;
+package com.devclimb.post.entity;
 
-import com.devclimb.post.Post;
-import com.devclimb.user.User;
+import com.devclimb.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -1,4 +1,4 @@
-package com.devclimb.attachment;
+package com.devclimb.post.entity;
 
 public enum AttachmentType {
     IMAGE,

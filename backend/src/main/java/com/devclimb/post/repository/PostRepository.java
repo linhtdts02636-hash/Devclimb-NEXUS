@@ -1,5 +1,6 @@
-package com.devclimb.post;
+package com.devclimb.post.repository;
 
+import com.devclimb.post.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,8 +1,7 @@
-package com.devclimb.post;
+package com.devclimb.post.entity;
 
-import com.devclimb.attachment.Attachment;
 import com.devclimb.community.entity.Community;
-import com.devclimb.user.User;
+import com.devclimb.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

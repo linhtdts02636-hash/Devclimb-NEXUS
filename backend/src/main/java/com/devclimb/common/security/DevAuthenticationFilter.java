@@ -1,7 +1,7 @@
 package com.devclimb.common.security;
 
-import com.devclimb.user.User;
-import com.devclimb.user.UserRepository;
+import com.devclimb.user.entity.User;
+import com.devclimb.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,7 +53,7 @@ public class DevAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void authenticate(HttpServletRequest request, User user) {
-        CurrentUser principal = new CurrentUser(user.getId(), user.getName(), user.getImageUrl());
+        CurrentUser principal = new CurrentUser(user.getId(), user.getName(), user.getImage());
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, List.of());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
