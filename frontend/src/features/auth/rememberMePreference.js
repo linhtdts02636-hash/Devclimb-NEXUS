@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'dc-remember-me'
 
+// Mặc định là ghi nhớ đăng nhập khi chưa có lựa chọn nào được lưu.
 export function loadRememberMePreference() {
   try {
     return localStorage.getItem(STORAGE_KEY) !== 'false'
@@ -12,6 +13,6 @@ export function saveRememberMePreference(isRemembered) {
   try {
     localStorage.setItem(STORAGE_KEY, String(isRemembered))
   } catch {
-    // Storage is blocked in private windows; the choice then only lasts for this visit.
+    // Trình duyệt ẩn danh có thể chặn localStorage; lựa chọn khi đó chỉ có hiệu lực trong lần truy cập này.
   }
 }

@@ -14,15 +14,11 @@ import {
 } from 'firebase/auth'
 import { auth } from '../../config/firebase'
 
-export const SocialProvider = Object.freeze({
-  GOOGLE: 'google',
-  GITHUB: 'github',
-})
-
 const PASSWORD_PROVIDER_ID = 'password'
 
+// socialProvider là 'google' hoặc 'github'
 function createSocialAuthProvider(socialProvider) {
-  if (socialProvider === SocialProvider.GOOGLE) {
+  if (socialProvider === 'google') {
     return new GoogleAuthProvider()
   }
   const githubProvider = new GithubAuthProvider()

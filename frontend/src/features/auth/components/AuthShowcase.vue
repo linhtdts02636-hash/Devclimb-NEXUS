@@ -36,7 +36,7 @@ function rasterizeWordmark() {
   columnCount = Math.max(MINIMUM_COLUMNS, Math.floor(availableWidth / CELL_SIZE))
   rowCount = Math.round(columnCount * ROW_TO_COLUMN_RATIO)
 
-  // Drawing the text at one pixel per cell and reading it back turns the font outline into the square grid.
+  // Vẽ chữ với mỗi ô là một pixel rồi đọc lại, để chuyển nét chữ thành lưới ô vuông.
   const offscreenCanvas = document.createElement('canvas')
   offscreenCanvas.width = columnCount
   offscreenCanvas.height = rowCount
@@ -117,4 +117,68 @@ onBeforeUnmount(() => {
   </aside>
 </template>
 
-<style scoped src="./AuthShowcase.css"></style>
+<style scoped>
+.visual-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--s-8) var(--s-7);
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle, color-mix(in srgb, var(--tx3) 70%, transparent) 1.5px, transparent 2px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 104px 104px;
+}
+
+.corner-label {
+  position: absolute;
+  padding: 2px var(--s-1);
+  background: var(--bg);
+  font: 400 var(--t-xs) var(--f-mono);
+  letter-spacing: 0.04em;
+  color: var(--tx2);
+}
+
+.top-left {
+  top: var(--s-4);
+  left: var(--s-4);
+}
+
+.top-right {
+  top: var(--s-4);
+  right: var(--s-4);
+}
+
+.bottom-left {
+  bottom: var(--s-4);
+  left: var(--s-4);
+}
+
+.bottom-right {
+  bottom: var(--s-4);
+  right: var(--s-4);
+}
+
+.wordmark-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  max-width: 100%;
+  padding: var(--s-5);
+  background: var(--bg);
+}
+
+.wordmark {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.tagline {
+  font-size: var(--t-sm);
+  color: var(--tx2);
+  text-align: center;
+}
+</style>

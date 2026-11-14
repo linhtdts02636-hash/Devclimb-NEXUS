@@ -60,4 +60,81 @@ defineExpose({ focus: () => inputElement.value?.focus() })
   </div>
 </template>
 
-<style scoped src="./TextField.css"></style>
+<style scoped>
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+label {
+  font: 500 var(--t-sm) var(--f-head);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.control:focus-within {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--ac-soft);
+}
+
+.control.invalid {
+  border-color: var(--bad);
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--tx);
+  caret-color: var(--ac);
+  font: 400 var(--t-sm) var(--f-head);
+  outline: none;
+}
+
+input::placeholder {
+  color: var(--tx2);
+}
+
+.visibility-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 100%;
+  color: var(--tx2);
+}
+
+.visibility-toggle:hover {
+  color: var(--tx);
+}
+
+.visibility-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.message {
+  font-size: var(--t-xs);
+  color: var(--tx2);
+}
+
+.message-error {
+  color: var(--bad);
+}
+</style>

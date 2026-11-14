@@ -1,9 +1,8 @@
 html:has(.landing-page){scroll-behavior:smooth}
-/* Nested so the landing styles cannot leak into other routes of the single-page app. */
+/* Lồng trong .landing-page để style của trang landing không ảnh hưởng tới các route khác của SPA. */
 .landing-page{
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-.member-name{font:400 var(--t-sm) var(--f-head);color:var(--tx2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:var(--r-sm)}
 .btn{display:inline-flex;align-items:center;gap:var(--s-2);font:500 var(--t-sm)/1 var(--f-head);padding:var(--s-3) var(--s-4);border-radius:10px;background:var(--s2);color:var(--tx);transition:background .2s,transform .12s;white-space:nowrap}
@@ -13,41 +12,10 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .btn.sm{padding:var(--s-2) var(--s-3);font-size:var(--t-xs)}
 .link{color:var(--ac);font-size:var(--t-sm);font-weight:500}
 .link:hover{text-decoration:underline;text-underline-offset:3px}
-/* ---------- announcement + nav ---------- */
+/* ---------- thanh thông báo (navbar nằm trong components/layouts) ---------- */
 .announce{display:block;max-width:var(--rail);margin:var(--s-2) auto 0;background:var(--ac);color:var(--ac-ink);text-align:center;font-size:var(--t-sm);padding:var(--s-2) var(--s-4);border-radius:var(--r-sm)}
 .announce u{text-underline-offset:3px}
-nav{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px)}
-nav .in{max-width:var(--rail);margin:0 auto;display:flex;align-items:center;gap:var(--s-6);height:68px;padding:0 var(--s-6);border-inline:1px solid var(--line)}
-.logo{display:flex;align-items:center;gap:var(--s-2);font:600 var(--t-lg) var(--f-head);letter-spacing:-.02em}
-.logo svg{width:22px;height:22px;stroke:var(--ac);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.logo small{font:400 var(--t-xs) var(--f-mono);color:var(--tx2);letter-spacing:0;border:1px solid var(--line2);border-radius:999px;padding:1px var(--s-2)}
-nav ul{display:flex;gap:var(--s-5);list-style:none;font-size:var(--t-sm);color:var(--tx2);margin-left:auto}nav ul a:hover{color:var(--tx)}
-nav .r{display:flex;gap:var(--s-2);align-items:center}
-nav .in{position:relative}
-/* ---------- navbar search (combobox) ---------- */
-.srch{position:relative;flex:1;max-width:420px;display:flex;align-items:center;gap:var(--s-1);height:40px;padding:0 var(--s-2) 0 var(--s-1);background:var(--s1);border:1px solid var(--line2);border-radius:10px;transition:border-color .2s,box-shadow .2s}
-.srch:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-soft)}
-.srch svg,.sugg svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.sbtn{width:32px;height:32px;display:grid;place-items:center;color:var(--tx2);border-radius:8px;flex:none}
-.srch input{flex:1;min-width:0;height:100%;border:0;background:none;font:400 var(--t-sm) var(--f-head);color:var(--tx);outline:none}
-.srch input::placeholder{color:var(--tx2)}
-.srch input::-webkit-search-cancel-button{display:none}
-.srch kbd{font:400 11px var(--f-mono);color:var(--tx2);border:1px solid var(--line2);border-radius:5px;padding:1px 6px}
-.srch:focus-within kbd{display:none}
-.sugg{position:absolute;left:-1px;right:-1px;top:calc(100% + 8px);list-style:none;background:var(--s1);border:1px solid var(--line2);border-radius:var(--r-lg);box-shadow:var(--sh-card);padding:var(--s-2);max-height:min(70vh,480px);overflow:auto;z-index:50}
-.sugg .grp{font:400 11px var(--f-mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;padding:var(--s-3) var(--s-3) var(--s-1)}
-.sugg .grp:first-child{padding-top:var(--s-1)}
-.sugg [role=option]{display:flex;align-items:center;gap:var(--s-3);padding:9px var(--s-3);border-radius:var(--r-sm);font-size:var(--t-sm);color:var(--tx2);cursor:pointer}
-.sugg [role=option] b{color:var(--tx);font-weight:500}
-.sugg .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sugg [role=option] mark{background:none;color:var(--ac)}
-.sugg [aria-selected=true]{background:var(--s2)}
-.sugg .meta{margin-left:auto;font:400 var(--t-xs) var(--f-mono);color:var(--tx2);white-space:nowrap}
-.sugg .ent{font:400 11px var(--f-mono);color:var(--tx2);visibility:hidden}
-.sugg [aria-selected=true] .ent{visibility:visible}
-.sugg .none{padding:var(--s-3);font-size:var(--t-sm);color:var(--tx2)}
-.sugg .ft{display:flex;gap:var(--s-4);border-top:1px solid var(--line);margin-top:var(--s-2);padding:var(--s-3) var(--s-3) var(--s-1);font:400 11px var(--f-mono);color:var(--tx2)}
-/* ---------- frame ---------- */
+/* ---------- khung trang ---------- */
 .frame{max-width:var(--rail);margin:0 auto;border-inline:1px solid var(--line);position:relative}
 .sec{position:relative;border-top:1px solid var(--line);padding:var(--s-9) var(--gut)}
 .sec.flush{padding-bottom:0}
@@ -60,10 +28,10 @@ h2{font:500 var(--t-xl)/1.08 var(--f-head);letter-spacing:-.025em;max-width:16ch
 h2 .ac{color:var(--ac)}
 .lead{color:var(--tx2);font-size:var(--t-lg);max-width:44ch}
 .note{font:400 var(--t-xs) var(--f-mono);color:var(--tx2);padding:var(--s-3) 0}
-/* split section header: heading left, lead + link right (Firecrawl stacks these centered) */
+/* tiêu đề mục chia đôi: tiêu đề bên trái, mô tả + liên kết bên phải (Firecrawl xếp chồng ở giữa) */
 .sh{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--s-7);align-items:end}
 .sh .r{display:grid;gap:var(--s-3);justify-items:start;padding-bottom:6px}
-/* ---------- hero ---------- */
+/* ---------- phần hero ---------- */
 .hero{position:relative;overflow:hidden;min-height:640px;display:flex;align-items:center;justify-content:center;border-top:1px solid var(--line)}
 .cells{position:absolute;left:0;top:0;display:grid;pointer-events:none}
 .cell{position:relative;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -82,7 +50,7 @@ h2 .ac{color:var(--ac)}
 .hero h1 .l2{color:var(--ac);display:block}
 .hero .sub{font-size:var(--t-lg);color:var(--tx2);max-width:46ch;margin:var(--s-5) auto var(--s-6)}
 .cta-row{display:flex;gap:var(--s-3);justify-content:center;flex-wrap:wrap}
-/* ---------- anatomy ---------- */
+/* ---------- quét cấu trúc trang ---------- */
 .anat{padding:0 var(--gut) var(--s-9);position:relative}
 .browser{background:var(--s1);border:1px solid var(--line2);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-card)}
 .chrome{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);border-bottom:1px solid var(--line)}
@@ -108,7 +76,7 @@ h2 .ac{color:var(--ac)}
 .el.verdict{grid-column:1/-1;display:flex;align-items:center;gap:var(--s-4)}
 .pillok{height:22px;width:110px;border-radius:999px;background:color-mix(in srgb,var(--ok) 30%,var(--s3))}
 .anat-cap{display:flex;justify-content:space-between;font:400 var(--t-xs) var(--f-mono);color:var(--tx2);margin-top:var(--s-3);gap:var(--s-3)}
-/* ---------- 01 solve: problem strip + vertical language rail + code + test rows ---------- */
+/* ---------- 01 giải bài: dải đề bài + thanh ngôn ngữ dọc + mã nguồn + các dòng test ---------- */
 .pstrip{display:flex;align-items:baseline;gap:var(--s-4);padding:var(--s-4) var(--gut);border-bottom:1px solid var(--line);flex-wrap:wrap}
 .pstrip h3{font:500 var(--t-lg) var(--f-head)}
 .pstrip p{font-size:var(--t-sm);color:var(--tx2);flex:1;min-width:24ch}
@@ -137,7 +105,7 @@ h2 .ac{color:var(--ac)}
 .vline{margin-top:auto;display:flex;align-items:center;gap:var(--s-3);font:500 var(--t-sm) var(--f-mono);padding-top:var(--s-3);border-top:1px solid var(--line);min-height:40px}
 .vline b{color:var(--ok);font-weight:500}
 .vline span{color:var(--tx2);font-variant-numeric:tabular-nums}
-/* ---------- 02 judge: diagram + verdict feed side by side ---------- */
+/* ---------- 02 chấm bài: sơ đồ và luồng kết quả đặt cạnh nhau ---------- */
 .jband{display:grid;grid-template-columns:1.3fr 1fr}
 .diag{padding:var(--s-7) var(--gut);display:grid;place-items:center}
 .flow{display:grid;grid-template-columns:auto auto auto auto auto;align-items:center;justify-content:center}
@@ -162,7 +130,7 @@ h2 .ac{color:var(--ac)}
 .feed .rw b{font-weight:500}
 .feed .rw span:last-child{color:var(--tx2);font:400 var(--t-xs) var(--f-mono);font-variant-numeric:tabular-nums;align-self:center}
 .v{font:400 var(--t-xs) var(--f-mono);align-self:center;color:var(--bad)}.v.ok{color:var(--ok)}
-/* ---------- 03 compete: asymmetric bento ---------- */
+/* ---------- 03 thi đấu: bố cục bento bất đối xứng ---------- */
 .bento{display:grid;grid-template-columns:1.15fr 1fr;gap:var(--s-4);margin-top:var(--s-7)}
 .card{background:var(--s1);border:1px solid var(--line2);border-radius:var(--r-lg);padding:var(--s-5);display:flex;flex-direction:column;gap:var(--s-3);min-height:250px;overflow:hidden}
 .card.tall{grid-row:span 2}
@@ -181,7 +149,7 @@ h2 .ac{color:var(--ac)}
 .lockv svg{overflow:visible;width:38px;height:38px;stroke:var(--ac);fill:none;stroke-width:1.8;flex:none}
 .bub{display:grid;gap:6px;flex:1}
 .bub span{display:block;background:var(--s2);border-radius:var(--r);padding:7px var(--s-3);font-size:13px;color:var(--tx2)}
-/* ---------- 04 communities: chips + community card ---------- */
+/* ---------- 04 cộng đồng: các chip + thẻ cộng đồng ---------- */
 .cm-tabs{display:flex;gap:var(--s-2);flex-wrap:wrap;margin-top:var(--s-7)}
 .cmt{position:relative;overflow:hidden;font:500 var(--t-sm) var(--f-head);padding:var(--s-2) var(--s-4);border:1px solid var(--line2);border-radius:999px;background:var(--s1);color:var(--tx2);transition:color .2s,border-color .2s}
 .cmt:hover{color:var(--tx)}
@@ -199,7 +167,7 @@ h2 .ac{color:var(--ac)}
 .cm-rows div{display:grid;grid-template-columns:1fr auto;gap:var(--s-4);padding:var(--s-3) 0;border-bottom:1px solid var(--line);font-size:var(--t-sm)}
 .cm-rows div:last-child{border-bottom:0}
 .cm-rows b{font:400 var(--t-sm) var(--f-mono);color:var(--ac);font-variant-numeric:tabular-nums}
-/* ---------- 05 faq ---------- */
+/* ---------- 05 câu hỏi thường gặp ---------- */
 .faq{display:grid;grid-template-columns:1fr 1.4fr;gap:var(--s-7)}
 .faq .stick{position:sticky;top:100px;align-self:start}
 .qa{border-top:1px solid var(--line2)}.qa:last-child{border-bottom:1px solid var(--line2)}
@@ -210,7 +178,7 @@ h2 .ac{color:var(--ac)}
 .qa.open .a{grid-template-rows:1fr}
 .qa .a>div{overflow:hidden;min-height:0;color:var(--tx2)}
 .qa .a p{padding-bottom:var(--s-4);max-width:56ch}
-/* ---------- ready: split box ---------- */
+/* ---------- bắt đầu: hộp chia đôi ---------- */
 .ready{display:grid;grid-template-columns:1.2fr 1fr;gap:var(--s-7);align-items:center}
 .ready h2{margin-bottom:var(--s-4)}
 .ready p{color:var(--tx2);margin-bottom:var(--s-6);max-width:42ch}
@@ -222,19 +190,11 @@ h2 .ac{color:var(--ac)}
 .start div.st.ok i{background:var(--ok)}
 .start div.st small{margin-left:auto;color:var(--syn-c);font:inherit}
 .start div.st.ok small{color:var(--ok)}
-/* ---------- footer ---------- */
-.foot{border-top:1px solid var(--line);padding:var(--s-8) var(--gut) var(--s-6);position:relative}
-.cols{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:var(--s-6);font-size:var(--t-sm)}
-.cols h3{font:400 var(--t-xs) var(--f-mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--s-3)}
-.cols a{display:block;color:var(--tx2);padding:3px 0}.cols a:hover{color:var(--tx)}
-.cols p{color:var(--tx2);max-width:32ch;margin-top:var(--s-3)}
-#word{display:block;width:100%;margin-top:var(--s-8)}
-.legal{display:flex;justify-content:space-between;font:400 var(--t-xs) var(--f-mono);color:var(--tx2);margin-top:var(--s-5);flex-wrap:wrap;gap:var(--s-3)}
 .rv{opacity:0;transform:translateY(18px)}
 .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease),transform .7s var(--ease)}
 .sh>*,.faq>*,.bento>*,.pg-body>*,.jband>*,.cm>*,.ready>*{min-width:0}
-/* ---------- responsive ---------- */
-@media(max-width:1000px){nav ul{display:none}.ascii{display:none}}
+/* ---------- responsive (đáp ứng kích thước màn hình) ---------- */
+@media(max-width:1000px){.ascii{display:none}}
 @media(max-width:900px){
   &{--gut:var(--s-5)}
   .sh,.faq,.bento,.pg-body,.jband,.cm,.ready{grid-template-columns:1fr}
@@ -251,22 +211,15 @@ h2 .ac{color:var(--ac)}
   .flow{grid-template-columns:1fr;gap:var(--s-3)}.wire{width:2px;height:32px;margin:0 auto}.wire i{left:-3px;top:0}
   .page{grid-template-columns:1fr;min-height:0}.el.prob{display:none}
   .anat{padding-bottom:var(--s-8)}
-  .cols{grid-template-columns:1fr 1fr}.cols>div:first-child{grid-column:1/-1}
 }
 @media(max-width:600px){
-  nav .in{padding:0 var(--s-4);gap:var(--s-3)}
-  .srch{flex:0 0 40px;padding:0;justify-content:center;margin-left:auto}
-  .srch input,.srch kbd{display:none}
-  .srch.open{position:absolute;left:var(--s-4);right:var(--s-4);top:14px;max-width:none;justify-content:flex-start;padding:0 var(--s-2) 0 var(--s-1);z-index:5}
-  .srch.open input{display:block}
-  .sugg .ft{display:none}nav .r .btn:not(.p):not([data-theme-toggle]):not([data-logout]){display:none}.member-name{display:none}.logo small{display:none}
   .announce{margin:var(--s-2) var(--s-4) 0;font-size:var(--t-xs)}
   .hero{min-height:0}.hero-in{padding:var(--s-8) var(--s-4) var(--s-7)}
   .corner-l{font-size:11px}
   .feed .hd,.feed .rw{padding:var(--s-3) var(--s-4);grid-template-columns:1.3fr 1.1fr .8fr}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.cell{--dot:1}.pix i{opacity:1;transform:none}}
-/* ---------- mockup helpers (were inline style attributes) ---------- */
+/* ---------- class hỗ trợ cho mockup (trước đây là thuộc tính style inline) ---------- */
 .sk.brand-bar{width:70px}
 .sk.indent-1{margin-left:16px}.sk.indent-2{margin-left:32px}.sk.indent-3{margin-left:48px}
 .sk.flush{margin:0}

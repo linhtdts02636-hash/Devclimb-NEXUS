@@ -102,7 +102,7 @@ public class AuthenticationService {
 			return firstCandidate;
 		}
 
-		// user_name is UNIQUE in the schema but display names are not, so a clash gets a random numeric suffix.
+		// user_name là UNIQUE trong schema nhưng tên hiển thị thì không, nên khi trùng sẽ thêm hậu tố số ngẫu nhiên.
 		String suffixedBaseName = truncate(baseName, MAXIMUM_NAME_LENGTH - NAME_SUFFIX_LENGTH);
 		for (int attempt = 0; attempt < MAXIMUM_NAME_ATTEMPTS; attempt++) {
 			String candidate = suffixedBaseName + "-"

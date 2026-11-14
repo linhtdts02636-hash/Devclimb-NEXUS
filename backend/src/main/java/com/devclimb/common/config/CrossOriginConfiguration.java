@@ -27,7 +27,7 @@ public class CrossOriginConfiguration {
 
 		FilterRegistrationBean<CorsFilter> registration = new FilterRegistrationBean<>(
 				new CorsFilter(configurationSource));
-		// Must run before the authentication filter so that 401 responses still carry CORS headers.
+		// Phải chạy trước filter xác thực để phản hồi 401 vẫn có header CORS.
 		registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
 		return registration;
 	}

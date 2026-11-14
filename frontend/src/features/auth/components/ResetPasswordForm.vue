@@ -54,4 +54,30 @@ function handleSubmit() {
   </div>
 </template>
 
-<style scoped src="./ResetPasswordForm.css"></style>
+<style scoped>
+.reset-password,
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.sent-notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--r-sm);
+  background: var(--s2);
+  font-size: var(--t-sm);
+}
+
+.form-error {
+  padding: var(--s-3);
+  border: 1px solid var(--bad);
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm);
+  color: var(--bad);
+}
+</style>

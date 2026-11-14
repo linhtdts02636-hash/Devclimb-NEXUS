@@ -5,20 +5,14 @@ import { auth } from '../config/firebase'
 import { createSession } from '../features/auth/authApi'
 import { requiresEmailVerification, signOutCurrentUser } from '../features/auth/authService'
 
-export const AuthStatus = Object.freeze({
-  UNKNOWN: 'unknown',
-  SIGNED_OUT: 'signedOut',
-  NEEDS_EMAIL_VERIFICATION: 'needsEmailVerification',
-  AUTHENTICATED: 'authenticated',
-})
-
 function isClientError(error) {
   const statusCode = error?.response?.status
   return statusCode >= 400 && statusCode < 500
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const status = ref(AuthStatus.UNKNOWN)
+  // Trạng thái: 'unknown' | 'signedOut' | 'needsEmailVerification' | 'authenticated'
+  const status = ref('unknown')
   const profile = ref(null)
   const pendingVerificationEmail = ref('')
   let initialization = null
@@ -26,7 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
   function markSignedOut() {
     profile.value = null
     pendingVerificationEmail.value = ''
-    status.value = AuthStatus.SIGNED_OUT
+    status.value = 'signedOut'
   }
 
   async function resolveSession() {
@@ -39,16 +33,16 @@ export const useAuthStore = defineStore('auth', () => {
     if (requiresEmailVerification(firebaseUser)) {
       profile.value = null
       pendingVerificationEmail.value = firebaseUser.email
-      status.value = AuthStatus.NEEDS_EMAIL_VERIFICATION
+      status.value = 'needsEmailVerification'
       return
     }
 
     try {
       profile.value = await createSession()
       pendingVerificationEmail.value = ''
-      status.value = AuthStatus.AUTHENTICATED
+      status.value = 'authenticated'
     } catch (error) {
-      // A rejected session (disabled account, invalid token) must not leave a Firebase login behind.
+      // Phiên bị từ chối (tài khoản bị khóa, token không hợp lệ) thì không được để lại phiên đăng nhập Firebase.
       if (isClientError(error)) {
         await signOutCurrentUser()
       }
@@ -79,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (requiresEmailVerification(firebaseUser)) {
       return false
     }
-    // The backend reads email_verified from the token, so the cached token has to be replaced.
+    // Backend đọc email_verified từ token, nên phải thay token đang được lưu cache.
     await firebaseUser.getIdToken(true)
     await resolveSession()
     return true

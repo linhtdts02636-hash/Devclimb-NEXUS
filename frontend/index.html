@@ -5,7 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DevClimb Nexus</title>
-    <script src="/_shared/theme.js"></script>
+    <script>
+      // Áp dụng giao diện đã lưu trước lần vẽ đầu tiên để trang không bị nháy sai màu.
+      try {
+        const savedTheme = localStorage.getItem('dc-theme')
+        document.documentElement.dataset.theme = savedTheme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+      } catch {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

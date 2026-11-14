@@ -1,9 +1,8 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { LANDING_PAGE_PATH } from '../../config/applicationPaths'
-import ThemeToggle from '../../components/ThemeToggle.vue'
-import { describeAuthError, ErrorTarget } from '../../features/auth/authErrors'
+import GuestNavbar from '../../components/layouts/guest/GuestNavbar.vue'
+import { describeAuthError } from '../../features/auth/authErrors'
 import {
   resendVerificationEmail,
   sendPasswordReset,
@@ -17,18 +16,18 @@ import CredentialsForm from '../../features/auth/components/CredentialsForm.vue'
 import ResetPasswordForm from '../../features/auth/components/ResetPasswordForm.vue'
 import SocialSignInButtons from '../../features/auth/components/SocialSignInButtons.vue'
 import VerifyEmailPanel from '../../features/auth/components/VerifyEmailPanel.vue'
-import { AuthStatus, useAuthStore } from '../../stores/authStore'
+import { useAuthStore } from '../../stores/authStore'
 
-const Mode = Object.freeze({ LOGIN: 'login', SIGN_UP: 'signup', RESET_PASSWORD: 'reset' })
+// mode là 'login', 'signup' hoặc 'reset'
 const TAB_MODES = [
-  { mode: Mode.LOGIN, label: 'Log in' },
-  { mode: Mode.SIGN_UP, label: 'Sign up' },
+  { mode: 'login', label: 'Log in' },
+  { mode: 'signup', label: 'Sign up' },
 ]
 
 const authStore = useAuthStore()
 const router = useRouter()
 
-const mode = ref(Mode.LOGIN)
+const mode = ref('login')
 const rememberMe = ref(loadRememberMePreference())
 const isBusy = ref(false)
 const formError = ref('')
@@ -39,19 +38,19 @@ const tabButtons = []
 
 watch(rememberMe, saveRememberMePreference)
 
-const needsEmailVerification = computed(() => authStore.status === AuthStatus.NEEDS_EMAIL_VERIFICATION)
-const isResettingPassword = computed(() => !needsEmailVerification.value && mode.value === Mode.RESET_PASSWORD)
+const needsEmailVerification = computed(() => authStore.status === 'needsEmailVerification')
+const isResettingPassword = computed(() => !needsEmailVerification.value && mode.value === 'reset')
 
 const heading = computed(() => {
   if (needsEmailVerification.value) return 'Verify your email'
-  if (mode.value === Mode.RESET_PASSWORD) return 'Reset your password'
-  return mode.value === Mode.SIGN_UP ? 'Create your account' : 'Log in to DevClimb'
+  if (mode.value === 'reset') return 'Reset your password'
+  return mode.value === 'signup' ? 'Create your account' : 'Log in to DevClimb'
 })
 
 const lead = computed(() => {
   if (needsEmailVerification.value) return ''
-  if (mode.value === Mode.RESET_PASSWORD) return 'Enter your account email and we will send you a reset link.'
-  return mode.value === Mode.SIGN_UP
+  if (mode.value === 'reset') return 'Enter your account email and we will send you a reset link.'
+  return mode.value === 'signup'
     ? 'One account for every community you join.'
     : 'Use your email, Google or GitHub.'
 })
@@ -66,7 +65,7 @@ function clearMessages() {
 function showError(error) {
   const description = describeAuthError(error)
   if (!description) return
-  if (description.target === ErrorTarget.FORM) {
+  if (description.target === 'form') {
     formError.value = description.message
     return
   }
@@ -108,14 +107,14 @@ function handleTabKeydown(event, tabIndex) {
 
 async function finishSignIn() {
   await authStore.resolveSession()
-  if (authStore.status === AuthStatus.AUTHENTICATED) {
-    router.push(LANDING_PAGE_PATH)
+  if (authStore.status === 'authenticated') {
+    router.push('/')
   }
 }
 
 function handleCredentialsSubmit({ displayName, email, password }) {
   runAuthAction(async () => {
-    if (mode.value === Mode.SIGN_UP) {
+    if (mode.value === 'signup') {
       await signUpWithEmail({ displayName, email, password, rememberMe: rememberMe.value })
       await authStore.resolveSession()
       return
@@ -146,7 +145,7 @@ function handleVerificationConfirm() {
       formError.value = 'We cannot see a verified email yet. Open the link in the email, then try again.'
       return
     }
-    router.push(LANDING_PAGE_PATH)
+    router.push('/')
   })
 }
 
@@ -160,25 +159,13 @@ function handleVerificationResend() {
 async function handleUseDifferentAccount() {
   clearMessages()
   await authStore.logout()
-  selectMode(Mode.LOGIN)
+  selectMode('login')
 }
 </script>
 
 <template>
   <div class="auth-page">
-    <nav class="top-bar">
-      <div class="top-bar-inner">
-        <RouterLink class="logo" :to="LANDING_PAGE_PATH">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 10 7l4 7 3-4 4 10z" /></svg>
-          DevClimb
-          <small>nexus</small>
-        </RouterLink>
-        <div class="top-bar-actions">
-          <RouterLink class="btn back-link" :to="LANDING_PAGE_PATH">Back to home</RouterLink>
-          <ThemeToggle />
-        </div>
-      </div>
-    </nav>
+    <GuestNavbar />
 
     <main class="frame">
       <span class="plus left" aria-hidden="true">+</span>
@@ -209,7 +196,7 @@ async function handleUseDifferentAccount() {
             :sent-to-email="resetEmailSentTo"
             @submit="handleResetSubmit"
             @edit="clearMessages"
-            @back="selectMode(Mode.LOGIN)"
+            @back="selectMode('login')"
           />
 
           <template v-else>
@@ -240,7 +227,7 @@ async function handleUseDifferentAccount() {
                 :form-error="formError"
                 :server-errors="serverErrors"
                 @submit="handleCredentialsSubmit"
-                @forgot-password="selectMode(Mode.RESET_PASSWORD)"
+                @forgot-password="selectMode('reset')"
                 @edit="clearMessages"
               />
 

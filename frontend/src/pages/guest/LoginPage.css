@@ -1,58 +1,7 @@
 .auth-page {
+  /* Bằng chiều cao 68px của GuestNavbar. */
   --top-bar-height: 68px;
   min-height: 100svh;
-}
-
-.top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(8px);
-}
-
-.top-bar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: var(--rail);
-  height: var(--top-bar-height);
-  margin: 0 auto;
-  padding: 0 var(--s-6);
-  border-inline: 1px solid var(--line);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  font: 600 var(--t-lg) var(--f-head);
-  letter-spacing: -0.02em;
-}
-
-.logo svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: var(--ac);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.logo small {
-  padding: 1px var(--s-2);
-  border: 1px solid var(--line2);
-  border-radius: 999px;
-  font: 400 var(--t-xs) var(--f-mono);
-  letter-spacing: 0;
-  color: var(--tx2);
-}
-
-.top-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
 }
 
 .frame {
@@ -179,15 +128,6 @@ h1 {
 }
 
 @media (max-width: 640px) {
-  .top-bar-inner {
-    padding: 0 var(--s-4);
-  }
-
-  .back-link,
-  .logo small {
-    display: none;
-  }
-
   .form-side {
     align-items: flex-start;
     padding: var(--s-6) var(--s-4) var(--s-7);

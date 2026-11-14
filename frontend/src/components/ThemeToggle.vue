@@ -13,7 +13,7 @@ function toggleTheme() {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
   } catch {
-    // Storage is blocked in private windows; the theme still applies for this visit.
+    // Trình duyệt ẩn danh có thể chặn localStorage; giao diện vẫn được áp dụng trong lần truy cập này.
   }
 }
 </script>
@@ -32,4 +32,29 @@ function toggleTheme() {
   </button>
 </template>
 
-<style scoped src="./ThemeToggle.css"></style>
+<style scoped>
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  color: var(--tx2);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.theme-toggle:hover {
+  background: var(--s2);
+  color: var(--tx);
+}
+
+svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+</style>

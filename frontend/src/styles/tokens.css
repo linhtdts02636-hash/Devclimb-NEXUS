@@ -1,4 +1,4 @@
-/* DevClimb Nexus design tokens. Source of truth: DOCS/DESIGN.md */
+/* Design token của DevClimb Nexus. Nguồn chuẩn: DOCS/DESIGN.md */
 :root{
   --f-head:'Inter Tight',system-ui,sans-serif; --f-mono:'Geist Mono',ui-monospace,monospace;
   --r-sm:8px; --r:12px; --r-lg:16px;

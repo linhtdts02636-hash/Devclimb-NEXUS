@@ -1,14 +1,13 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import ThemeToggle from '../../components/ThemeToggle.vue'
-import { LOGIN_PAGE_PATH } from '../../config/applicationPaths'
-import { AuthStatus, useAuthStore } from '../../stores/authStore'
+import GuestNavbar from '../../components/layouts/guest/GuestNavbar.vue'
+import SiteFooter from '../../components/layouts/SiteFooter.vue'
+import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
+import { useAuthStore } from '../../stores/authStore'
 import { mountLandingAnimations } from './landingAnimations'
 
 const authStore = useAuthStore()
-const router = useRouter()
-const isSignedIn = computed(() => authStore.status === AuthStatus.AUTHENTICATED)
+const isSignedIn = computed(() => authStore.status === 'authenticated')
 let unmountLandingAnimations = null
 
 onMounted(() => {
@@ -17,32 +16,16 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => unmountLandingAnimations?.())
-
-async function handleLogout() {
-  await authStore.logout()
-  router.push(LOGIN_PAGE_PATH)
-}
 </script>
 
 <template>
 <div class="landing-page">
 <a class="announce" href="#communities">DevClimb Nexus beta: every community gets its own problems, roles and contests. <u>See how it works</u></a>
-<nav><div class="in">
-  <a class="logo" href="#"><svg viewBox="0 0 24 24"><path d="M3 20 10 7l4 7 3-4 4 10z"/></svg>DevClimb <small>nexus</small></a>
-  <div class="srch" id="srch">
-    <button class="sbtn" id="sbtn" type="button" aria-label="Search" tabindex="-1"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-    <input id="q" type="search" placeholder="Search problems, communities, people" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="sugg" aria-autocomplete="list" aria-label="Search DevClimb">
-    <kbd aria-hidden="true">/</kbd>
-    <div class="sugg" id="sugg" role="listbox" aria-label="Search suggestions" hidden></div>
-  </div>
-  <ul><li><a href="#solve">Solve</a></li><li><a href="#judge">Judge</a></li><li><a href="#compete">Compete</a></li><li><a href="#communities">Communities</a></li><li><a href="#faq">FAQ</a></li></ul>
-  <div class="r"><ThemeToggle />
-    <template v-if="isSignedIn"><span class="member-name">{{ authStore.profile?.name }}</span><button class="btn" type="button" @click="handleLogout">Log out</button></template>
-    <template v-else><RouterLink class="btn" :to="LOGIN_PAGE_PATH">Log in</RouterLink><RouterLink class="btn p" :to="LOGIN_PAGE_PATH">Start climbing</RouterLink></template></div>
-</div></nav>
+<UserNavbar v-if="isSignedIn" />
+<GuestNavbar v-else />
 
 <main class="frame">
-<!-- =================== HERO =================== -->
+<!-- =================== PHẦN HERO =================== -->
 <header class="hero" id="hero">
   <div class="cells" id="cells" aria-hidden="true"></div>
   <span class="corner-l" id="cl1">[ 200 OK ]</span><span class="corner-l" id="cl2">[ ACCEPTED ]</span>
@@ -51,11 +34,11 @@ async function handleLogout() {
     <pre class="ascii l" id="asL" aria-hidden="true"></pre><pre class="ascii r" id="asR" aria-hidden="true"></pre>
     <h1 id="h1"><span class="l1">Climb with your</span><span class="l2">coding community</span></h1>
     <p class="sub">Solve problems, run contests and grow a shared problem library with the people you code with.</p>
-    <div class="cta-row"><RouterLink class="btn p" :to="LOGIN_PAGE_PATH">Start climbing</RouterLink><a class="btn" href="#communities">Browse communities</a></div>
+    <div class="cta-row"><RouterLink class="btn p" to="/login">Start climbing</RouterLink><a class="btn" href="#communities">Browse communities</a></div>
   </div>
 </header>
 
-<!-- =================== ANATOMY SCAN =================== -->
+<!-- =================== QUÉT CẤU TRÚC TRANG =================== -->
 <section class="anat" id="anat" aria-label="Anatomy of the DevClimb solve page">
   <div class="browser" data-ui>
     <div class="chrome"><span class="d"><i></i><i></i><i></i></span><span class="url">devclimb.app/problems/two-sum</span></div>
@@ -70,7 +53,7 @@ async function handleLogout() {
   <div class="anat-cap"><span>fig. 1: anatomy of a solve page</span><span id="anatStat">scanning…</span></div>
 </section>
 
-<!-- =================== 01 · SOLVE =================== -->
+<!-- =================== 01 · GIẢI BÀI =================== -->
 <section class="sec flush" id="solve"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div class="sh">
     <div><div class="label"><b>[ 01 / 05 ]</b> solve</div><h2 class="rv">Write it, run it, <span class="ac">see every test</span></h2></div>
@@ -93,7 +76,7 @@ async function handleLogout() {
   </div>
 </section>
 
-<!-- =================== 02 · JUDGE =================== -->
+<!-- =================== 02 · CHẤM BÀI =================== -->
 <section class="sec flush" id="judge"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div class="sh">
     <div><div class="label"><b>[ 02 / 05 ]</b> judge</div><h2 class="rv">One judge, <span class="ac">fair ranks</span></h2></div>
@@ -114,7 +97,7 @@ async function handleLogout() {
   <p class="note">sample data for illustration</p>
 </section>
 
-<!-- =================== 03 · COMPETE & DISCUSS =================== -->
+<!-- =================== 03 · THI ĐẤU & THẢO LUẬN =================== -->
 <section class="sec" id="compete"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div class="sh">
     <div><div class="label"><b>[ 03 / 05 ]</b> compete</div><h2 class="rv">Race the clock, <span class="ac">then compare notes</span></h2></div>
@@ -128,7 +111,7 @@ async function handleLogout() {
   <p class="note">sample data for illustration</p>
 </section>
 
-<!-- =================== 04 · COMMUNITIES =================== -->
+<!-- =================== 04 · CỘNG ĐỒNG =================== -->
 <section class="sec flush" id="communities"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div class="sh">
     <div><div class="label"><b>[ 04 / 05 ]</b> communities</div><h2 class="rv">Every community runs <span class="ac">its own climb</span></h2></div>
@@ -142,7 +125,7 @@ async function handleLogout() {
   <p class="note">example communities for illustration</p>
 </section>
 
-<!-- =================== 05 · FAQ =================== -->
+<!-- =================== 05 · CÂU HỎI THƯỜNG GẶP =================== -->
 <section class="sec" id="faq"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div class="faq">
     <div class="stick"><div class="label"><b>[ 05 / 05 ]</b> faq</div><h2 class="rv">Questions, <span class="ac">answered</span></h2></div>
@@ -155,12 +138,12 @@ async function handleLogout() {
   </div>
 </section>
 
-<!-- =================== READY =================== -->
+<!-- =================== BẮT ĐẦU =================== -->
 <section class="sec ready" id="ready"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
   <div>
     <h2 class="rv">Find your community and <span class="ac">start climbing</span></h2>
     <p class="rv">Create an account, join a community, and submit your first solution.</p>
-    <div class="cta-row rv"><RouterLink class="btn p" :to="LOGIN_PAGE_PATH">Create account</RouterLink><a class="btn" href="#communities">Browse communities</a></div>
+    <div class="cta-row rv"><RouterLink class="btn p" to="/login">Create account</RouterLink><a class="btn" href="#communities">Browse communities</a></div>
   </div>
   <div class="start rv" id="start" aria-label="Getting started checklist">
     <div class="h">// getting started</div>
@@ -170,16 +153,7 @@ async function handleLogout() {
   </div>
 </section>
 
-<footer class="foot"><span class="plus l" aria-hidden="true">+</span><span class="plus r" aria-hidden="true">+</span>
-  <div class="cols">
-    <div><a class="logo" href="#"><svg viewBox="0 0 24 24"><path d="M3 20 10 7l4 7 3-4 4 10z"/></svg>DevClimb</a><p>A competitive programming platform run by its communities.</p></div>
-    <div><h3>Product</h3><a href="#solve">Problems</a><a href="#compete">Contests</a><a href="#compete">Leaderboards</a><a href="#communities">Communities</a></div>
-    <div><h3>Help</h3><a href="#faq">FAQ</a><a href="#">Docs</a><a href="#">Changelog</a></div>
-    <div><h3>Project</h3><a href="#">JAV102 · LKH Studio</a><a href="#">Contact</a></div>
-  </div>
-  <canvas id="word" aria-label="DEVCLIMB" role="img"></canvas>
-  <div class="legal"><span>© 2026 DevClimb Nexus</span><span>build a41f9c2</span></div>
-</footer>
+<SiteFooter />
 </main>
 </div>
 </template>

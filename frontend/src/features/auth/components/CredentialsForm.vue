@@ -21,7 +21,7 @@ const emit = defineEmits(['submit', 'forgot-password', 'update:rememberMe', 'edi
 
 const FIELD_ORDER = ['displayName', 'email', 'password', 'passwordConfirmation']
 
-// Each tab keeps its own values, so a stray click on the other tab neither loses nor leaks what was typed.
+// Mỗi tab giữ dữ liệu riêng, nên lỡ bấm sang tab kia cũng không làm mất hay lẫn dữ liệu đã nhập.
 const fieldsByMode = {
   login: reactive({ displayName: '', email: '', password: '', passwordConfirmation: '' }),
   signup: reactive({ displayName: '', email: '', password: '', passwordConfirmation: '' }),
@@ -144,4 +144,52 @@ watch(
   </form>
 </template>
 
-<style scoped src="./CredentialsForm.css"></style>
+<style scoped>
+.credentials-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  color: var(--tx2);
+  cursor: pointer;
+}
+
+.remember-me input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--ac);
+}
+
+.text-button {
+  font: 500 var(--t-sm) var(--f-head);
+  color: var(--ac);
+}
+
+.text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.form-error {
+  padding: var(--s-3);
+  border: 1px solid var(--bad);
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm);
+  color: var(--bad);
+}
+</style>
