@@ -8,8 +8,6 @@ public class DevClimbApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DevClimbApplication.class, args);
-		System.out.println("hello world");
-
 	}
 
 }

@@ -15,7 +15,7 @@ The visual language is borrowed from firecrawl.dev (warm off-white, hairline gri
 
 ## 2. Tokens
 
-Defined on `:root`, with the colour set swapped by `data-theme="light|dark"` on `<html>`. The toggle and its persistence live in `design-lab/_shared/theme.js` (button attribute `data-theme-toggle`).
+Defined on `:root`, with the colour set swapped by `data-theme="light|dark"` on `<html>`. A small inline script in `frontend/index.html` applies the saved theme before first paint; the toggle button and its persistence (`localStorage['dc-theme']`) live in `frontend/src/components/ThemeToggle.vue`.
 
 ### Colour
 

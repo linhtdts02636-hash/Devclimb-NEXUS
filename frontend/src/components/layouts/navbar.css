@@ -1,0 +1,66 @@
+/* Dùng chung cho guest/GuestNavbar.vue và user/UserNavbar.vue. */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.navbar-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  max-width: var(--rail);
+  height: 68px;
+  margin: 0 auto;
+  padding: 0 var(--s-6);
+  border-inline: 1px solid var(--line);
+}
+
+.links {
+  display: flex;
+  gap: var(--s-5);
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  font-size: var(--t-sm);
+  color: var(--tx2);
+}
+
+.links a:hover {
+  color: var(--tx);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.member-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 var(--t-sm) var(--f-head);
+  color: var(--tx2);
+}
+
+@media (max-width: 1000px) {
+  .links {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar-inner {
+    gap: var(--s-3);
+    padding: 0 var(--s-4);
+  }
+
+  .hide-on-phone {
+    display: none;
+  }
+}

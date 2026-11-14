@@ -1,0 +1,133 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html {
+  scrollbar-color: var(--s3) var(--bg);
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  font: 400 var(--t-md) / 1.55 var(--f-head);
+  background: var(--bg);
+  color: var(--tx);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+::selection {
+  background: var(--ac-soft);
+  color: var(--tx);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: 40px;
+  padding: 0 var(--s-4);
+  border-radius: 10px;
+  background: var(--s2);
+  color: var(--tx);
+  font: 500 var(--t-sm) / 1 var(--f-head);
+  white-space: nowrap;
+  transition: background 0.2s var(--ease), transform 0.12s var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--s3);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+}
+
+.btn.p {
+  background: var(--ac);
+  color: var(--ac-ink);
+  box-shadow: inset 0 -6px 12px var(--sh-in);
+}
+
+.btn.p:hover:not(:disabled) {
+  background: var(--ac);
+  filter: brightness(1.07);
+}
+
+.btn.wide {
+  width: 100%;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
