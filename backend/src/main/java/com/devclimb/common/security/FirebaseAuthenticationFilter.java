@@ -28,14 +28,17 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 	private static final String SIGN_IN_PROVIDER_CLAIM = "sign_in_provider";
 
 	private final FirebaseAuth firebaseAuth;
+	private final boolean devHeaderEnabled;
 
-	public FirebaseAuthenticationFilter(FirebaseAuth firebaseAuth) {
+	public FirebaseAuthenticationFilter(FirebaseAuth firebaseAuth, boolean devHeaderEnabled) {
 		this.firebaseAuth = firebaseAuth;
+		this.devHeaderEnabled = devHeaderEnabled;
 	}
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		return HttpMethod.OPTIONS.matches(request.getMethod());
+		// In dev/test the X-Dev-User-Id header is the authentication mechanism.
+		return devHeaderEnabled || HttpMethod.OPTIONS.matches(request.getMethod());
 	}
 
 	@Override
@@ -43,7 +46,8 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 			FilterChain filterChain) throws ServletException, IOException {
 		String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-			reject(response, ErrorCode.MISSING_TOKEN);
+			// Let Spring Security handle protected endpoints and let public endpoints stay anonymous.
+			filterChain.doFilter(request, response);
 			return;
 		}
 
