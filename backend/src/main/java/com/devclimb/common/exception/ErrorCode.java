@@ -12,6 +12,13 @@ public enum ErrorCode {
 	ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "This account has been disabled."),
 	ACCOUNT_CONFLICT(HttpStatus.CONFLICT, "An account with these details already exists."),
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "No account found for this session. Sign in again."),
+	PUZZLE_LANGUAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "This puzzle does not support the selected language."),
+	TESTCASES_NOT_FOUND(HttpStatus.NOT_FOUND, "This puzzle has no test cases yet."),
+	LANGUAGE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "This language is not supported for submissions yet."),
+	INVALID_FUNCTION_HEADER(HttpStatus.BAD_REQUEST, "The puzzle function header is invalid."),
+	INVALID_SOURCE_CODE(HttpStatus.BAD_REQUEST, "The submitted source code is not valid for this language."),
+	JUDGE0_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "The code runner is unavailable. Try again in a moment."),
+	JUDGE0_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "The code runner took too long. Try again in a moment."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong on our side. Try again in a moment.");
 
 	private final HttpStatus httpStatus;

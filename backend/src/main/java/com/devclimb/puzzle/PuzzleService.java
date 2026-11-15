@@ -1,9 +1,11 @@
 package com.devclimb.puzzle;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.devclimb.auth.AuthenticationService;
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
+import com.devclimb.tag.PtagPuzzleRepository;
 import com.devclimb.user.User;
 
 @Service
@@ -24,10 +27,18 @@ public class PuzzleService {
 	private static final int DEFAULT_COMMUNITY_ID = 1;
 
 	private final PuzzleRepository puzzleRepository;
+	private final PuzzleLanguageRepository puzzleLanguageRepository;
+	private final PtagPuzzleRepository ptagPuzzleRepository;
 	private final AuthenticationService authenticationService;
 
-	public PuzzleService(PuzzleRepository puzzleRepository, AuthenticationService authenticationService) {
+	public PuzzleService(
+			PuzzleRepository puzzleRepository,
+			PuzzleLanguageRepository puzzleLanguageRepository,
+			PtagPuzzleRepository ptagPuzzleRepository,
+			AuthenticationService authenticationService) {
 		this.puzzleRepository = puzzleRepository;
+		this.puzzleLanguageRepository = puzzleLanguageRepository;
+		this.ptagPuzzleRepository = ptagPuzzleRepository;
 		this.authenticationService = authenticationService;
 	}
 
@@ -61,17 +72,52 @@ public class PuzzleService {
 			}
 		}
 
-		return puzzleRepository.search(
+		List<Puzzle> puzzles = puzzleRepository.search(
 				String.join(" ", nameParts),
 				parseDifficulty(difficulty),
 				String.join(",", requiredLanguages),
 				String.join(",", optionalLanguages),
 				String.join(",", requiredTags),
 				String.join(",", optionalTags),
-				PageRequest.of(page, size))
-				.stream()
-				.map(PuzzleDTO::from)
+				PageRequest.of(page, size));
+		if (puzzles.isEmpty()) {
+			return List.of();
+		}
+
+		List<Integer> puzzleIds = puzzles.stream()
+				.map(Puzzle::getId)
 				.toList();
+		Map<Integer, List<PuzzleLanguage>> languagesByPuzzle = new HashMap<>();
+		for (PuzzleLanguage puzzleLanguage : puzzleLanguageRepository
+				.findByPuzzle_IdInOrderByPuzzle_IdAscLanguage_IdAsc(puzzleIds)) {
+			languagesByPuzzle.computeIfAbsent(puzzleLanguage.getPuzzle().getId(), key -> new ArrayList<>())
+					.add(puzzleLanguage);
+		}
+
+		Map<Integer, List<String>> tagsByPuzzle = new HashMap<>();
+		for (Object[] row : ptagPuzzleRepository.findTagNamesByPuzzleIds(puzzleIds)) {
+			tagsByPuzzle.computeIfAbsent((Integer) row[0], key -> new ArrayList<>())
+					.add((String) row[1]);
+		}
+
+		return puzzles.stream()
+				.map(puzzle -> PuzzleDTO.from(
+						puzzle,
+						languagesByPuzzle.getOrDefault(puzzle.getId(), List.of()),
+						tagsByPuzzle.getOrDefault(puzzle.getId(), List.of())))
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public PuzzleDTO findPuzzle(Integer id) {
+		return puzzleRepository.findById(id)
+				.map(puzzle -> PuzzleDTO.from(
+						puzzle,
+						puzzleLanguageRepository.findByPuzzle_IdOrderByLanguage_IdAsc(id),
+						ptagPuzzleRepository.findTagNamesByPuzzleIds(List.of(id)).stream()
+								.map(row -> (String) row[1])
+								.toList()))
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Puzzle not found."));
 	}
 
 	@Transactional

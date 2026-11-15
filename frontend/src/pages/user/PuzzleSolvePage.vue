@@ -1,33 +1,72 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
-import { EDITOR_LANGUAGES, createCodeEditor, getEditorLanguage } from '../../features/editor/codeEditor'
+import { EDITOR_LANGUAGES, buildStarter, createCodeEditor, getEditorLanguage } from '../../features/editor/codeEditor'
+import { fetchPuzzle } from '../../features/puzzle/puzzleApi'
+import { getBackendLanguageId } from '../../features/submission/submissionApi'
+import { usePuzzleSubmission } from '../../features/submission/usePuzzleSubmission'
 
 const editorHost = ref(null)
 const selectedLanguage = ref('python')
 const cursorLine = ref(1)
 const cursorColumn = ref(1)
-const runHint = ref('Ctrl+Enter to run')
+const runHint = 'Ctrl+Enter to submit'
 
 let editor = null
-let runTimer = 0
 let activeLanguage = 'python'
+// Giữ code riêng cho từng ngôn ngữ khi đổi qua lại.
 const languageDrafts = new Map()
 
+// Chỉ hiện ngôn ngữ backend có wrapper chấm bài.
+const submissionLanguages = computed(() =>
+  EDITOR_LANGUAGES.filter((language) => getBackendLanguageId(language.id) != null),
+)
 const selectedLanguageInfo = computed(() => getEditorLanguage(selectedLanguage.value))
 const fileTag = computed(() => selectedLanguageInfo.value.fileName)
+const puzzle = ref(null)
+const puzzleLoading = ref(true)
+const puzzleError = ref('')
+const difficultyLabel = computed(() => {
+  const difficulty = puzzle.value?.difficulty
+  if (!difficulty) return ''
+  return difficulty.charAt(0) + difficulty.slice(1).toLowerCase()
+})
+const difficultyTone = computed(() => puzzle.value?.difficulty?.toLowerCase() ?? '')
+const functionHeaders = computed(() => {
+  const headers = new Map()
+  for (const language of puzzle.value?.languages ?? []) {
+    if (language.languageName) {
+      headers.set(language.languageName.toLowerCase(), language.functionHeader)
+    }
+  }
+  return headers
+})
+const {
+  authReady,
+  puzzleId,
+  submission,
+  isSubmitting,
+  testRows,
+  verdictTone,
+  verdictLabel,
+  summaryLabel,
+  runtimeLabel,
+  memoryLabel,
+  progressStyle,
+  resultDetails,
+  submit,
+} = usePuzzleSubmission({
+  getCode: () => editor?.getValue() ?? '',
+  getLanguageId: () => getBackendLanguageId(selectedLanguage.value),
+})
 
 function handleUpdate({ line, column }) {
   cursorLine.value = line
   cursorColumn.value = column
 }
 
-function handleRun() {
-  runHint.value = 'Run requested'
-  clearTimeout(runTimer)
-  runTimer = window.setTimeout(() => {
-    runHint.value = 'Ctrl+Enter to run'
-  }, 1400)
+function starterFor(languageId) {
+  return buildStarter(languageId, functionHeaders.value.get(languageId))
 }
 
 function handleLanguageChange(event) {
@@ -37,28 +76,61 @@ function handleLanguageChange(event) {
   languageDrafts.set(activeLanguage, editor.getValue())
   activeLanguage = selectedLanguage.value
   editor.setLanguage(activeLanguage)
-  editor.setValue(languageDrafts.get(activeLanguage) ?? selectedLanguageInfo.value.starter)
+  editor.setValue(languageDrafts.get(activeLanguage) ?? starterFor(activeLanguage))
   nextTick(() => editor?.focus())
 }
 
 function resetCode() {
   if (!editor) return
-  editor.setValue(selectedLanguageInfo.value.starter)
+  editor.setValue(starterFor(selectedLanguage.value))
   editor.focus()
 }
+
+// Bỏ qua phản hồi cũ nếu người dùng đổi puzzle trước khi request trước hoàn tất.
+let puzzleRequest = 0
+async function loadPuzzle() {
+  if (!puzzleId.value) {
+    puzzle.value = null
+    puzzleError.value = 'This puzzle could not be identified.'
+    puzzleLoading.value = false
+    return
+  }
+  if (!(await authReady)) {
+    puzzleLoading.value = false
+    return
+  }
+
+  const token = ++puzzleRequest
+  puzzleLoading.value = true
+  puzzleError.value = ''
+  try {
+    const data = await fetchPuzzle(puzzleId.value)
+    if (token !== puzzleRequest) return
+    puzzle.value = data
+    languageDrafts.clear()
+    editor?.setValue(starterFor(selectedLanguage.value))
+  } catch (error) {
+    if (token !== puzzleRequest) return
+    puzzle.value = null
+    puzzleError.value = error?.response?.data?.message || 'Could not load this puzzle.'
+  } finally {
+    if (token === puzzleRequest) puzzleLoading.value = false
+  }
+}
+
+watch(puzzleId, loadPuzzle, { immediate: true })
 
 onMounted(() => {
   editor = createCodeEditor({
     parent: editorHost.value,
     language: selectedLanguage.value,
-    doc: selectedLanguageInfo.value.starter,
-    onRun: handleRun,
+    doc: starterFor(selectedLanguage.value),
+    onRun: submit,
     onUpdate: handleUpdate,
   })
 })
 
 onBeforeUnmount(() => {
-  clearTimeout(runTimer)
   editor?.destroy()
   editor = null
 })
@@ -80,61 +152,21 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="panel-scroll problem-scroll">
-          <div class="problem-title-row">
-            <h1>1. Two Sum</h1>
-            <span class="difficulty easy">Easy</span>
-          </div>
+          <div v-if="puzzleLoading" class="problem-state">Loading puzzle...</div>
+          <div v-else-if="puzzleError" class="problem-state problem-error">{{ puzzleError }}</div>
 
-          <div class="problem-tags">
-            <span>Array</span>
-            <span>Hash Table</span>
-            <span>Time O(N)</span>
-            <span>Space O(N)</span>
-          </div>
-
-          <hr class="rule" />
-
-          <div class="statement">
-            <p>
-              Given an array of integers <code>nums</code> and an integer <code>target</code>, return
-              <em>indices of the two numbers such that they add up to <code>target</code></em>.
-            </p>
-            <p class="muted">
-              You may assume that each input would have <strong>exactly one solution</strong>, and you may not use
-              the same element twice. You can return the answer in any order.
-            </p>
-          </div>
-
-          <div class="examples">
-            <div class="example">
-              <span class="example-label">Example 1:</span>
-              <p><span class="example-key">Input:</span> nums = [2,7,11,15], target = 9</p>
-              <p><span class="example-key">Output:</span> [0,1]</p>
-              <p class="example-note">Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].</p>
+          <template v-else-if="puzzle">
+            <div class="problem-title-row">
+              <h1>{{ puzzle.id }}. {{ puzzle.title || 'Untitled puzzle' }}</h1>
+              <span class="difficulty" :class="difficultyTone">{{ difficultyLabel }}</span>
             </div>
-            <div class="example">
-              <span class="example-label">Example 2:</span>
-              <p><span class="example-key">Input:</span> nums = [3,2,4], target = 6</p>
-              <p><span class="example-key">Output:</span> [1,2]</p>
-            </div>
-            <div class="example">
-              <span class="example-label">Example 3:</span>
-              <p><span class="example-key">Input:</span> nums = [3,3], target = 6</p>
-              <p><span class="example-key">Output:</span> [0,1]</p>
-            </div>
-          </div>
 
-          <div class="constraints">
-            <p class="constraints-title">Constraints:</p>
-            <ul>
-              <li>2 ≤ nums.length ≤ 10<sup>4</sup></li>
-              <li>-10<sup>9</sup> ≤ nums[i] ≤ 10<sup>9</sup></li>
-              <li>-10<sup>9</sup> ≤ target ≤ 10<sup>9</sup></li>
-              <li>Only one valid answer exists.</li>
-            </ul>
-          </div>
+            <hr class="rule" />
 
-          <p class="sample-note">Sample data for illustration</p>
+            <div class="statement">
+              <p>{{ puzzle.content }}</p>
+            </div>
+          </template>
         </div>
       </section>
 
@@ -148,7 +180,7 @@ onBeforeUnmount(() => {
                 aria-label="Editor language"
                 @change="handleLanguageChange"
               >
-                <option v-for="language in EDITOR_LANGUAGES" :key="language.id" :value="language.id">
+                <option v-for="language in submissionLanguages" :key="language.id" :value="language.id">
                   {{ language.label }}
                 </option>
               </select>
@@ -164,11 +196,6 @@ onBeforeUnmount(() => {
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <button class="icon-btn" type="button" aria-label="Format code" title="Format code">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-            </button>
             <span class="font-size">13px</span>
           </div>
         </header>
@@ -179,51 +206,48 @@ onBeforeUnmount(() => {
           <span>Ln {{ cursorLine }}, Col {{ cursorColumn }}</span>
           <div>
             <span class="hide-on-small">{{ runHint }}</span>
-            <span>Tab = 4 spaces</span>
           </div>
         </footer>
       </section>
 
-      <section class="panel tests-panel" aria-label="Test cases">
+      <section class="panel tests-panel" aria-label="Test cases" :aria-busy="isSubmitting">
         <header class="panel-head tests-head">
           <span>Testcases</span>
+          <span v-if="testRows.length" class="tests-count">{{ testRows.length }}</span>
         </header>
 
         <div class="panel-scroll tests-scroll">
-          <div class="test-list">
-            <div class="test-row">
-              <div class="test-name"><span class="dot easy"></span><span>case 1 · [2,7,11,15] → [0,1]</span></div>
-              <span class="test-time">8 ms</span>
-            </div>
-            <div class="test-row">
-              <div class="test-name"><span class="dot easy"></span><span>case 2 · [3,2,4] → [1,2]</span></div>
-              <span class="test-time">9 ms</span>
-            </div>
-            <div class="test-row">
-              <div class="test-name"><span class="dot easy"></span><span>case 3 · [3,3] → [0,1]</span></div>
-              <span class="test-time">10 ms</span>
-            </div>
-            <div class="test-row">
-              <div class="test-name"><span class="dot easy"></span><span>case 4 · negatives</span></div>
-              <span class="test-time">11 ms</span>
-            </div>
-            <div class="test-row">
-              <div class="test-name"><span class="dot easy"></span><span>case 5 · n = 10,000</span></div>
-              <span class="test-time">12 ms</span>
+          <div v-if="!testRows.length" class="tests-empty">
+            <p>{{ isSubmitting ? 'Running testcases...' : 'Submit your solution to run the testcases.' }}</p>
+          </div>
+
+          <div v-else class="test-list">
+            <div v-for="test in testRows" :key="test.index" class="test-row">
+              <div class="test-name">
+                <span class="dot" :class="test.passed ? 'easy' : 'bad'"></span>
+                <span>{{ test.label }}</span>
+              </div>
+              <span class="test-time">{{ test.timeLabel }}</span>
             </div>
           </div>
 
+          <div v-if="resultDetails" class="result-output">
+            <span>Details</span>
+            <pre>{{ resultDetails }}</pre>
+          </div>
+
           <div class="tests-summary">
-            <div class="test-progress" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
+            <div
+              v-if="testRows.length"
+              class="test-progress"
+              :style="progressStyle"
+              aria-hidden="true"
+            >
+              <span v-for="test in testRows" :key="test.index" :class="test.passed ? 'pass' : 'fail'"></span>
             </div>
             <div class="tests-result">
-              <span>Accepted 5/5 tests</span>
-              <span>12 ms</span>
+              <span :class="verdictTone">{{ summaryLabel }}</span>
+              <span>{{ runtimeLabel }}</span>
             </div>
           </div>
         </div>
@@ -232,21 +256,30 @@ onBeforeUnmount(() => {
 
     <footer class="verdict-panel" aria-label="Submission verdict">
       <div class="verdict-left">
-        <div class="verdict-chip">
-          <span class="dot easy"></span>
-          <span>Accepted</span>
+        <div class="verdict-chip" :class="verdictTone">
+          <span class="dot" :class="verdictTone === 'accepted' ? 'easy' : verdictTone === 'failed' ? 'bad' : 'idle'"></span>
+          <span>{{ verdictLabel }}</span>
         </div>
-        <div class="verdict-metrics">
-          <span>Runtime: <strong>12 ms</strong> </span>
+        <div v-if="submission" class="verdict-metrics">
+          <span>Runtime: <strong>{{ runtimeLabel }}</strong></span>
           <span class="metric-dot">•</span>
-          <span>Memory: <strong>17.4 MB</strong> </span>
+          <span>Memory: <strong>{{ memoryLabel }}</strong></span>
           <span class="metric-dot">•</span>
-          <span>Tests: <strong>5 / 5 passed</strong></span>
+          <span>Tests: <strong>{{ submission.testPassed }} / {{ submission.testCount }} passed</strong></span>
         </div>
       </div>
 
       <div class="verdict-actions">
-        <button class="primary-btn" type="button">Submit Solution</button>
+        <button
+          class="primary-btn"
+          type="button"
+          :disabled="isSubmitting || !puzzle"
+          :aria-busy="isSubmitting"
+          @click="submit"
+        >
+          <span v-if="isSubmitting" class="spinner"></span>
+          <span>{{ isSubmitting ? 'Submitting...' : 'Submit Solution' }}</span>
+        </button>
       </div>
     </footer>
     </div>
@@ -406,6 +439,32 @@ onBeforeUnmount(() => {
   border-color: color-mix(in srgb, var(--ok) 25%, transparent);
 }
 
+.difficulty.medium {
+  color: var(--ac);
+  background: var(--ac-soft);
+  border-color: color-mix(in srgb, var(--ac) 25%, transparent);
+}
+
+.difficulty.hard {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 25%, transparent);
+}
+
+.problem-state {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: var(--s-4);
+  color: var(--tx2);
+  font: 400 11px/1.6 var(--f-mono);
+  text-align: center;
+}
+
+.problem-error {
+  color: var(--bad);
+}
+
 .problem-tags {
   display: flex;
   flex-wrap: wrap;
@@ -431,6 +490,10 @@ onBeforeUnmount(() => {
 .statement {
   display: grid;
   gap: var(--s-2);
+}
+
+.statement p {
+  white-space: pre-wrap;
 }
 
 .statement code {
@@ -660,21 +723,68 @@ onBeforeUnmount(() => {
   filter: brightness(1.08);
 }
 
+.tests-count {
+  color: var(--tx3);
+  font: 400 10px var(--f-mono);
+}
+
 .tests-scroll {
   display: flex;
   flex-direction: column;
   padding: var(--s-3);
 }
 
+.tests-empty {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  padding: var(--s-4);
+  color: var(--tx2);
+  border: 1px dashed var(--line2);
+  border-radius: var(--r-sm);
+  font: 400 11px/1.6 var(--f-mono);
+  text-align: center;
+}
+
+.result-output {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--s-3);
+}
+
+.result-output > span {
+  color: var(--tx2);
+  font: 600 10px var(--f-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.result-output pre {
+  max-height: 180px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  color: var(--tx);
+  background: var(--code-bg);
+  border: 1px solid var(--line2);
+  border-radius: var(--r-sm);
+  font: 400 10px/1.6 var(--f-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .test-list {
   display: grid;
+  width:100%;
   gap: var(--s-2);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .test-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width:100%;
   gap: var(--s-2);
   padding: 10px;
   background: color-mix(in srgb, var(--s2) 70%, transparent);
@@ -694,11 +804,20 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
+.test-name > span:first-child {
+  flex-shrink: 0;
+}
+
 .test-name > span:last-child {
+    flex: 1; 
+    min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+
 
 .dot {
   display: inline-block;
@@ -710,6 +829,14 @@ onBeforeUnmount(() => {
 
 .dot.easy {
   background: var(--ok);
+}
+
+.dot.bad {
+  background: var(--bad);
+}
+
+.dot.idle {
+  background: var(--tx3);
 }
 
 .test-time {
@@ -726,15 +853,23 @@ onBeforeUnmount(() => {
 
 .test-progress {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(var(--test-count, 5), 1fr);
   gap: 4px;
   margin-top: var(--s-4);
 }
 
 .test-progress span {
   height: 4px;
-  background: var(--ok);
+  background: var(--line2);
   border-radius: 999px;
+}
+
+.test-progress span.pass {
+  background: var(--ok);
+}
+
+.test-progress span.fail {
+  background: var(--bad);
 }
 
 .tests-result {
@@ -747,10 +882,24 @@ onBeforeUnmount(() => {
 }
 
 .tests-result > span:first-child {
-  color: var(--ok);
+  color: var(--tx2);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.tests-result > span:first-child.accepted {
+  color: var(--ok);
+}
+
+.tests-result > span:first-child.failed {
+  color: var(--bad);
+}
+
+.tests-result > span:first-child.idle {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .verdict-panel {
@@ -780,14 +929,31 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: var(--s-2);
   padding: 4px 12px;
-  color: var(--ok);
-  background: color-mix(in srgb, var(--ok) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+  color: var(--tx2);
+  background: var(--s2);
+  border: 1px solid var(--line2);
   border-radius: 999px;
   font: 600 11px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
+}
+
+.verdict-chip.accepted {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 30%, transparent);
+}
+
+.verdict-chip.failed {
+  color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+  border-color: color-mix(in srgb, var(--bad) 30%, transparent);
+}
+
+.verdict-chip.idle {
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .verdict-metrics {
@@ -852,8 +1018,13 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.primary-btn:hover {
+.primary-btn:hover:not(:disabled) {
   filter: brightness(1.08);
+}
+
+.primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .next-arrow {

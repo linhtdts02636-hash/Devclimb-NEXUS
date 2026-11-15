@@ -640,7 +640,7 @@ kbd {
 }
 
 .table-card {
-  overflow: hidden;
+  overflow: visible;
   background: var(--s1);
   border: 1px solid var(--line2);
   border-radius: var(--r);

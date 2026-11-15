@@ -25,6 +25,11 @@ export async function fetchPuzzles({ q = '', difficulty = '', page = 0, size = 1
   return response.data
 }
 
+export async function fetchPuzzle(id) {
+  const response = await apiClient.get(`/puzzle/${id}`)
+  return response.data
+}
+
 export async function createPuzzle(puzzle) {
   const response = await apiClient.post('/puzzle', puzzle)
   return response.data

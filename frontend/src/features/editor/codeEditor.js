@@ -362,3 +362,21 @@ export function createCodeEditor({ parent, language = 'python', doc, onRun, onUp
 export function getEditorLanguage(id) {
   return getLanguage(id)
 }
+
+// Header chỉ là chữ ký nên phải thêm thân hàm tối thiểu để code chạy được ngay.
+export function buildStarter(languageId, functionHeader) {
+  const header = functionHeader?.trim()
+  if (!header) return getLanguage(languageId).starter
+  if (header.includes('\n') || header.endsWith('}')) return header
+
+  switch (languageId) {
+    case 'python':
+      return `${header}\n    # TODO\n    pass`
+    case 'javascript':
+      return `${header}\n  // TODO\n}`
+    case 'java':
+      return `import java.util.*;\n\nclass Solution {\n    ${header}\n        // TODO\n        throw new UnsupportedOperationException("Not implemented");\n    }\n}`
+    default:
+      return getLanguage(languageId).starter
+  }
+}

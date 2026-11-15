@@ -16,6 +16,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "puzzle")
 public class Puzzle {
@@ -33,6 +36,7 @@ public class Puzzle {
 	private Integer communityId; //change this after merging with Khoa's branch!!!!
 
 	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(name = "puzz_difficulty", nullable = false)
 	private PuzzleDifficulty difficulty = PuzzleDifficulty.MEDIUM;
 
