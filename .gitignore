@@ -64,3 +64,4 @@ backend/src/main/resources/firebase-service-account.json
 .env
 .env.*
 !.env.example
+
