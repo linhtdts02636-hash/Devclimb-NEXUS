@@ -29,8 +29,7 @@
   color: var(--tx2);
 }
 
-.links a:hover,
-.links a.router-link-active {
+.links a:hover {
   color: var(--tx);
 }
 

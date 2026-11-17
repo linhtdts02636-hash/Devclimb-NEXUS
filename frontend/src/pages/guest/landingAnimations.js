@@ -236,9 +236,9 @@ function runLandingScript({ trackTicker, afterFontsLoad, addEventListener }) {
 
   /* ========== 04 · CỘNG ĐỒNG ========== */
   const CM = [
-    {n:'FPT Algo Club',u:'devclimb.app/community/fpt-algo-club',vis:'public',d:'Weekly rounds for students who want to get better at algorithms.',roles:[['Owner',1],['Moderators',3],['Problem setters',6],['Members',142]],rows:[['Problems in library',64],['Contributions in review',5],['Contests this term',12],['Next contest','Sat 20:00 · 90 min']]},
-    {n:'SD21304 class',u:'devclimb.app/community/sd21304',vis:'private',d:'One class: weekly assignments and a timed mid-term.',roles:[['Owner',1],['Teaching assistants',2],['Members',38]],rows:[['Problems in library',18],['Contributions in review',2],['Assignment sets',4],['Next contest','Fri 19:00 · 60 min']]},
-    {n:'Java Beginners',u:'devclimb.app/community/java-beginners',vis:'open',d:'Slow-paced problems for people learning their first language.',roles:[['Owner',1],['Moderators',2],['Problem setters',4],['Members',310]],rows:[['Problems in library',41],['Contributions in review',9],['Language','Java only'],['Next contest','Sun 15:00 · 45 min']]}
+    {n:'FPT Algo Club',u:'devclimb.app/c/fpt-algo-club',vis:'public',d:'Weekly rounds for students who want to get better at algorithms.',roles:[['Owner',1],['Moderators',3],['Problem setters',6],['Members',142]],rows:[['Problems in library',64],['Contributions in review',5],['Contests this term',12],['Next contest','Sat 20:00 · 90 min']]},
+    {n:'SD21304 class',u:'devclimb.app/c/sd21304',vis:'private',d:'One class: weekly assignments and a timed mid-term.',roles:[['Owner',1],['Teaching assistants',2],['Members',38]],rows:[['Problems in library',18],['Contributions in review',2],['Assignment sets',4],['Next contest','Fri 19:00 · 60 min']]},
+    {n:'Java Beginners',u:'devclimb.app/c/java-beginners',vis:'open',d:'Slow-paced problems for people learning their first language.',roles:[['Owner',1],['Moderators',2],['Problem setters',4],['Members',310]],rows:[['Problems in library',41],['Contributions in review',9],['Language','Java only'],['Next contest','Sun 15:00 · 45 min']]}
   ];
   const cmTabs = $('#cmTabs');
   let cmCur = 0, cmTl;

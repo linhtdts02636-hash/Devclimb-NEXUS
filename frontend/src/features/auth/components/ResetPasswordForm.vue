@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { validateEmail } from '../validation'
-import TextField from '../../../components/TextField.vue'
+import TextField from './TextField.vue'
 
 defineProps({
   busy: { type: Boolean, default: false },

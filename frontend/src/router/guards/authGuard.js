@@ -1,13 +1,9 @@
 import { useAuthStore } from '../../stores/authStore'
 
-// meta.guestOnly: người đã đăng nhập không cần xem /login. meta.requiresAuth: khách phải đăng nhập trước.
-export async function checkRouteAccess(destination) {
-  const { guestOnly, requiresAuth } = destination.meta
-  if (!guestOnly && !requiresAuth) return true
-
+// Người dùng đã đăng nhập không cần xem các trang chỉ dành cho khách (meta.guestOnly) như /login.
+export async function redirectAuthenticatedGuests(destination) {
+  if (!destination.meta.guestOnly) return true
   const authStore = useAuthStore()
   await authStore.initialize()
-  const isAuthenticated = authStore.status === 'authenticated'
-  if (guestOnly) return isAuthenticated ? '/' : true
-  return isAuthenticated ? true : '/login'
+  return authStore.status === 'authenticated' ? '/' : true
 }

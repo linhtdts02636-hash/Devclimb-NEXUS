@@ -33,10 +33,3 @@ firebase.project-id=
 firebase.storage-bucket=
 firebase.messaging-sender-id=
 firebase.app-id=
-
-# Cloudflare R2
-r2.account-id=
-r2.access-key-id=
-r2.secret-access-key=
-r2.bucket=
-r2.public-base-url=
