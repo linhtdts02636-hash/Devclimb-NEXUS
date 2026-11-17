@@ -1,6 +1,6 @@
 <script setup>
 import Avatar from './Avatar.vue'
-
+// a
 defineProps({
   title: { type: String, default: 'Weekly Contest' },
   status: { type: String, default: 'Open' },
