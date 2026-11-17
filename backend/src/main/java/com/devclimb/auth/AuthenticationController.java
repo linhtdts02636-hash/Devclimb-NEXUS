@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
 import com.devclimb.common.security.FirebaseAuthenticationFilter;
-import com.devclimb.user.UserResponse;
+import com.devclimb.user.UserDTO;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,14 +21,14 @@ public class AuthenticationController {
 	}
 
 	@PostMapping("/session")
-	public UserResponse signIn(
+	public UserDTO signIn(
 			@RequestAttribute(FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE) AuthenticatedFirebaseUser firebaseUser) {
-		return UserResponse.from(authenticationService.signIn(firebaseUser));
+		return UserDTO.from(authenticationService.signIn(firebaseUser));
 	}
 
 	@GetMapping("/me")
-	public UserResponse currentUser(
+	public UserDTO currentUser(
 			@RequestAttribute(FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE) AuthenticatedFirebaseUser firebaseUser) {
-		return UserResponse.from(authenticationService.findCurrentUser(firebaseUser));
+		return UserDTO.from(authenticationService.findCurrentUser(firebaseUser));
 	}
 }
