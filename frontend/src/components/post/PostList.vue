@@ -1,5 +1,5 @@
 <script setup>
-import PostCard from './PostCard.vue'
+import Post from './Post.vue'
 
 defineProps({
   posts: {
@@ -14,9 +14,13 @@ defineProps({
     type: String,
     default: '',
   },
+  currentUserId: {
+    type: Number,
+    default: null,
+  },
 })
 
-defineEmits(['retry'])
+defineEmits(['retry', 'edit', 'delete'])
 </script>
 
 <template>
@@ -48,7 +52,14 @@ defineEmits(['retry'])
     </div>
 
     <template v-else>
-      <PostCard v-for="post in posts" :key="post.id" :post="post" />
+      <Post
+        v-for="post in posts"
+        :key="post.id"
+        :post="post"
+        :current-user-id="currentUserId"
+        @edit="$emit('edit', $event)"
+        @delete="$emit('delete', $event)"
+      />
     </template>
   </div>
 </template>

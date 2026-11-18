@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { auth } from './firebase'
 
 const http = axios.create({
   baseURL: '/api',
@@ -8,10 +9,22 @@ const http = axios.create({
   },
 })
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(async (config) => {
+  const firebaseUser = auth.currentUser
+
+  // Gắn Firebase ID token để backend xác thực các API cần đăng nhập.
+  if (firebaseUser) {
+    try {
+      const idToken = await firebaseUser.getIdToken()
+      config.headers.Authorization = `Bearer ${idToken}`
+    } catch {
+      // Nếu lấy token thất bại, để backend trả 401 thay vì chặn request tại đây.
+    }
+  }
+
   const devUserId = import.meta.env.VITE_DEV_USER_ID
 
-  // Development-only authentication. Production builds never send this header.
+  // Header dev chỉ dùng khi chạy development; production không gửi header này.
   if (import.meta.env.DEV && devUserId) {
     config.headers['X-Dev-User-Id'] = devUserId
   }

@@ -9,10 +9,9 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query("""
-            select distinct p
+            select p
             from Post p
             join fetch p.author
-            left join fetch p.attachments
             where p.community.id = :communityId
               and p.parent is null
             order by p.createdAt desc, p.id desc

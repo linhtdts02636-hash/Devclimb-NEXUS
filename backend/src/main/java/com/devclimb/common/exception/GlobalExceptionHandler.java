@@ -16,7 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-	private static final String REJECTED_REQUEST_MESSAGE = "The request could not be processed.";
+	private static final String REJECTED_REQUEST_MESSAGE = "Yêu cầu không thể được xử lý.";
 
 	@ExceptionHandler(ApiException.class)
 	public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {

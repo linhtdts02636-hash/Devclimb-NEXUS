@@ -19,6 +19,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ObjectProvider<DevAuthenticationFilter> devAuthenticationFilter,
+            ObjectProvider<FirebaseAuthenticationFilter> firebaseAuthenticationFilter,
             JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
@@ -30,13 +31,27 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // Auth xác thực bằng request attribute của Firebase, không dùng SecurityContext.
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/communities/*/posts").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/communities/*/posts").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/communities/by-slug/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/communities/*").permitAll()
+                        .requestMatchers("/api/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler));
+
+        // Firebase filter chạy trong SecurityFilterChain để SecurityContext được thiết lập
+        // trước bước phân quyền của Spring Security.
+        FirebaseAuthenticationFilter firebaseFilter = firebaseAuthenticationFilter.getIfAvailable();
+        if (firebaseFilter != null) {
+            http.addFilterBefore(firebaseFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         DevAuthenticationFilter filter = devAuthenticationFilter.getIfAvailable();
         if (filter != null) {

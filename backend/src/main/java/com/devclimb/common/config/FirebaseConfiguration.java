@@ -4,18 +4,21 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
 import com.devclimb.common.security.FirebaseAuthenticationFilter;
+import com.devclimb.user.UserRepository;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 
 @Configuration
+@ConditionalOnProperty(prefix = "firebase", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class FirebaseConfiguration {
 
 	@Bean
@@ -41,13 +44,20 @@ public class FirebaseConfiguration {
 	}
 
 	@Bean
-	public FilterRegistrationBean<FirebaseAuthenticationFilter> firebaseAuthenticationFilter(
+	public FirebaseAuthenticationFilter firebaseAuthenticationFilter(
 			FirebaseAuth firebaseAuth,
+			UserRepository userRepository,
 			@Value("${app.auth.dev-header.enabled:false}") boolean devHeaderEnabled) {
-		FilterRegistrationBean<FirebaseAuthenticationFilter> registration = new FilterRegistrationBean<>(
-				new FirebaseAuthenticationFilter(firebaseAuth, devHeaderEnabled));
-		// Servlet container chuẩn hóa đường dẫn trước khi so khớp, nên các biến thể mã hóa hoặc có ";param" không thể bỏ qua filter.
-		registration.addUrlPatterns("/api/*");
+		return new FirebaseAuthenticationFilter(firebaseAuth, userRepository, devHeaderEnabled);
+	}
+
+	@Bean
+	public FilterRegistrationBean<FirebaseAuthenticationFilter> firebaseAuthenticationFilterRegistration(
+			FirebaseAuthenticationFilter firebaseAuthenticationFilter) {
+		FilterRegistrationBean<FirebaseAuthenticationFilter> registration =
+				new FilterRegistrationBean<>(firebaseAuthenticationFilter);
+		// Filter được gắn vào SecurityFilterChain, tắt đăng ký tự động của servlet container để tránh chạy hai lần.
+		registration.setEnabled(false);
 		return registration;
 	}
 }

@@ -53,6 +53,7 @@ public class Post {
     @Column(name = "post_updatedat")
     private Instant updatedAt;
 
+    // Giữ quan hệ để xoá attachment cũ khi xoá bài; API bài viết không trả về danh sách này.
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy("createdAt ASC")
     private List<Attachment> attachments = new ArrayList<>();

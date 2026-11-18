@@ -45,7 +45,7 @@ public class DevAuthenticationFilter extends OncePerRequestFilter {
                         .filter(User::isActive)
                         .ifPresent(user -> authenticate(request, user));
             } catch (NumberFormatException ignored) {
-                // Invalid dev headers are treated as unauthenticated.
+                // Header dev không hợp lệ được coi như chưa đăng nhập.
             }
         }
 

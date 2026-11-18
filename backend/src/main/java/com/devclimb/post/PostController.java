@@ -26,10 +26,12 @@ public class PostController {
     public ResponseEntity<PostDto> createPost(
             @PathVariable Integer communityId,
             Authentication authentication,
-            @RequestBody(required = false) CreatePostRequest request
+            @RequestBody(required = false) PostRequest request
     ) {
+        String title = request == null ? null : request.title();
         String content = request == null ? null : request.content();
-        PostDto response = postService.createPost(communityId, currentUser(authentication), content);
+        PostDto response = postService.createPost(
+                communityId, CurrentUser.from(authentication), title, content);
         return ResponseEntity.ok(response);
     }
 
@@ -38,13 +40,7 @@ public class PostController {
             @PathVariable Integer communityId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(postService.getPosts(communityId, currentUser(authentication)));
-    }
-
-    private CurrentUser currentUser(Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof CurrentUser currentUser) {
-            return currentUser;
-        }
-        return null;
+        return ResponseEntity.ok(
+                postService.getPosts(communityId, CurrentUser.from(authentication)));
     }
 }
