@@ -11,7 +11,7 @@ const ICON_PATHS = {
 }
 
 const KINDS = {
-  problem: { label: 'Problems', noun: 'problem', hash: '#solve' },
+  problem: { label: 'Puzzles', noun: 'puzzle', hash: '#solve' },
   community: { label: 'Communities', noun: 'community', hash: '#communities' },
   contest: { label: 'Contests', noun: 'contest', hash: '#compete' },
   person: { label: 'People', noun: 'person', hash: '#compete' },
@@ -67,7 +67,7 @@ const sections = computed(() => {
         items: RECENT_SEARCHES.map((text) => ({ icon: 'recent', ...splitMatch(text, ''), meta: '', hash: '#solve', value: text })),
       },
       {
-        title: 'Popular problems',
+        title: 'Popular puzzles',
         items: SAMPLE_INDEX.filter((entry) => entry.kind === 'problem')
           .slice(0, 3)
           .map((entry) => ({ icon: 'problem', ...splitMatch(entry.name, ''), meta: entry.meta, hash: '#solve', value: entry.name })),
@@ -89,7 +89,7 @@ const sections = computed(() => {
       },
       {
         title: 'Top matches',
-        emptyText: `No matches for “${trimmedQuery}”. Try a problem or community name.`,
+        emptyText: `No matches for “${trimmedQuery}”. Try a puzzle or community name.`,
         items: matches.map((entry) => ({
           icon: entry.kind,
           ...splitMatch(entry.name, lowerQuery),
@@ -178,7 +178,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', handleSlashShortcut)
       ref="inputElement"
       v-model="query"
       type="search"
-      placeholder="Search problems, communities, people"
+      placeholder="Search puzzles, communities, people"
       autocomplete="off"
       spellcheck="false"
       role="combobox"

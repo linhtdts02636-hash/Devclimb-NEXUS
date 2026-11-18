@@ -1,0 +1,22 @@
+import json
+import sys
+
+
+# Judge0 truyền mỗi testcase qua stdin; nhiều dòng nghĩa là nhiều tham số.
+def parse_arguments(raw):
+    trimmed = raw.strip()
+    if not trimmed:
+        return []
+    lines = [line for line in trimmed.splitlines() if line.strip()]
+    if len(lines) > 1:
+        return [json.loads(line) for line in lines]
+    return [json.loads(trimmed)]
+
+
+if __name__ == '__main__':
+    args = parse_arguments(sys.stdin.read())
+    result = {FUNCT}(*args)
+    if result is not None:
+        print(json.dumps(result, separators=(',', ':')))
+    elif args:
+        print(json.dumps(args[0]))

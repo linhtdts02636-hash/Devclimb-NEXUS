@@ -21,6 +21,12 @@ org.springframework.boot.data.neo4j.autoconfigure.DataNeo4jRepositoriesAutoConfi
 firebase.service-account-file=classpath:firebase-service-account.json
 application.cors.allowed-origin=http://localhost:5173
 
+# Judge0 (leave auth-token empty for the public ce.judge0.com endpoint)
+judge0.base-url=https://ce.judge0.com
+judge0.auth-token=
+judge0.poll-interval-ms=500
+judge0.max-poll-attempts=60
+
 firebase.api-key=
 firebase.auth-domain=
 firebase.project-id=

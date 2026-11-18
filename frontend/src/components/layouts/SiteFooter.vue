@@ -116,8 +116,8 @@ onBeforeUnmount(() => stopWordmark?.())
         <p>A competitive programming platform run by its communities.</p>
       </div>
       <div>
-        <h3>Product</h3>
-        <RouterLink :to="{ path: '/', hash: '#solve' }">Problems</RouterLink>
+        <h3>Navigation</h3>
+        <RouterLink :to="{ path: '/', hash: '#solve' }">Puzzles</RouterLink>
         <RouterLink :to="{ path: '/', hash: '#compete' }">Contests</RouterLink>
         <RouterLink :to="{ path: '/', hash: '#compete' }">Leaderboards</RouterLink>
         <RouterLink :to="{ path: '/', hash: '#communities' }">Communities</RouterLink>
@@ -125,8 +125,6 @@ onBeforeUnmount(() => stopWordmark?.())
       <div>
         <h3>Help</h3>
         <RouterLink :to="{ path: '/', hash: '#faq' }">FAQ</RouterLink>
-        <a href="#">Docs</a>
-        <a href="#">Changelog</a>
       </div>
       <div>
         <h3>Project</h3>
@@ -135,7 +133,7 @@ onBeforeUnmount(() => stopWordmark?.())
       </div>
     </div>
     <canvas ref="wordmarkCanvas" class="wordmark" aria-label="DEVCLIMB" role="img"></canvas>
-    <div class="legal"><span>© 2026 DevClimb Nexus</span><span>build a41f9c2</span></div>
+    <div class="legal"><span>© 2026 LKH Studio</span><span>version 0.2.0</span></div>
   </footer>
 </template>
 

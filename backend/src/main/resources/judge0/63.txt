@@ -1,0 +1,22 @@
+const fs = require('fs');
+
+// Judge0 truyền mỗi testcase qua stdin; nhiều dòng nghĩa là nhiều tham số.
+function parseArguments(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+        return [];
+    }
+    const lines = trimmed.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    if (lines.length > 1) {
+        return lines.map((line) => JSON.parse(line));
+    }
+    return [JSON.parse(trimmed)];
+}
+
+const args = parseArguments(fs.readFileSync(0, 'utf8'));
+const result = {FUNCT}(...args);
+if (result !== undefined) {
+    console.log(JSON.stringify(result));
+} else if (args.length) {
+    console.log(JSON.stringify(args[0]));
+}
