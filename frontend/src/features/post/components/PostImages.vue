@@ -52,7 +52,7 @@ const layoutClass = computed(() => {
     class="post-images"
     :class="layoutClass"
     role="group"
-    aria-label="Ảnh trong bài viết"
+    aria-label="Post images"
   >
     <template v-if="normalizedImages.length === 1">
       <img
@@ -81,7 +81,7 @@ const layoutClass = computed(() => {
         <span
           v-if="index === 3 && hiddenCount > 0"
           class="post-images__more"
-          :aria-label="`Còn ${hiddenCount} ảnh khác`"
+          :aria-label="`${hiddenCount} more images`"
         >
           +{{ hiddenCount }}
         </span>

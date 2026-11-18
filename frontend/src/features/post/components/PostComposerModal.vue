@@ -72,7 +72,7 @@ watch(
 
 async function submit() {
   if (trimmedContent.value.length === 0) {
-    error.value = 'Nội dung bài viết không được để trống.'
+    error.value = 'Post content cannot be empty.'
     textareaRef.value?.focus()
     return
   }
@@ -101,7 +101,7 @@ async function submit() {
   }
 
   if (!Number.isInteger(props.communityId) || props.communityId <= 0) {
-    error.value = 'Cộng đồng không hợp lệ.'
+    error.value = 'Invalid community.'
     return
   }
 
@@ -126,7 +126,7 @@ async function submit() {
 <template>
   <BaseModal
     :open="open"
-    :title="isEditing ? 'Chỉnh sửa bài viết' : 'Tạo bài viết'"
+    :title="isEditing ? 'Edit post' : 'Create post'"
     size="md"
     :close-on-backdrop="!submitting"
     @update:open="$emit('update:open', $event)"
@@ -134,15 +134,15 @@ async function submit() {
     <form id="post-composer-form" novalidate @submit.prevent="submit">
       <p class="composer__context">
         <template v-if="isEditing">
-          Chỉnh sửa tiêu đề và nội dung. Bài viết không có phần ảnh.
+          Edit the title and content. Posts have no images.
         </template>
         <template v-else>
-          Đăng trong cộng đồng <span class="mono">#{{ communityId }}</span>
+          Posting in community <span class="mono">#{{ communityId }}</span>
         </template>
       </p>
 
       <div class="composer__field">
-        <label class="composer__label" for="post-title">Tiêu đề</label>
+        <label class="composer__label" for="post-title">Title</label>
         <input
           id="post-title"
           ref="titleInputRef"
@@ -150,23 +150,23 @@ async function submit() {
           class="composer__input"
           type="text"
           maxlength="255"
-          placeholder="Tiêu đề bài viết (không bắt buộc)"
+          placeholder="Post title (optional)"
           :aria-invalid="Boolean(error)"
           @input="error = ''"
           @keydown.ctrl.enter.prevent="submit"
           @keydown.meta.enter.prevent="submit"
         />
-        <span class="composer__hint">Không bắt buộc · {{ title.length }}/255 ký tự</span>
+        <span class="composer__hint">Optional · {{ title.length }}/255 characters</span>
       </div>
 
       <div class="composer__field">
-        <label class="composer__label" for="post-content">Nội dung bài viết</label>
+        <label class="composer__label" for="post-content">Content</label>
         <textarea
           id="post-content"
           ref="textareaRef"
           v-model="content"
           class="composer__textarea"
-          placeholder="Bạn đang nghĩ gì?"
+          placeholder="What's on your mind?"
           :aria-invalid="Boolean(error)"
           @input="error = ''"
           @keydown.ctrl.enter.prevent="submit"
@@ -175,8 +175,8 @@ async function submit() {
       </div>
 
       <div class="composer__meta">
-        <span class="mono">{{ content.length }} ký tự</span>
-        <span class="composer__shortcut">Ctrl/⌘ + Enter để gửi</span>
+        <span class="mono">{{ content.length }} characters</span>
+        <span class="composer__shortcut">Ctrl/⌘ + Enter to submit</span>
       </div>
 
       <p v-if="error" class="composer__error" role="alert">
@@ -191,7 +191,7 @@ async function submit() {
         :disabled="submitting"
         @click="$emit('update:open', false)"
       >
-        Hủy
+        Cancel
       </button>
       <button
         type="submit"
@@ -201,10 +201,10 @@ async function submit() {
       >
         <span v-if="submitting" class="spinner" aria-hidden="true"></span>
         <template v-if="isEditing">
-          {{ submitting ? 'Đang lưu…' : 'Lưu thay đổi' }}
+          {{ submitting ? 'Saving…' : 'Save changes' }}
         </template>
         <template v-else>
-          {{ submitting ? 'Đang đăng…' : 'Đăng bài' }}
+          {{ submitting ? 'Posting…' : 'Post' }}
         </template>
       </button>
     </template>

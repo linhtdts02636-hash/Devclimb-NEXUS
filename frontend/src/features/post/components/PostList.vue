@@ -41,18 +41,18 @@ defineEmits(['retry', 'edit', 'delete'])
         <span class="post-skeleton__line"></span>
         <span class="post-skeleton__line post-skeleton__line--medium"></span>
       </div>
-      <p class="sr-only">Đang tải bài viết…</p>
+      <p class="sr-only">Loading posts…</p>
     </template>
 
     <div v-else-if="error" class="post-state post-state--error" role="alert">
-      <h2 class="post-state__title">Không tải được bài viết</h2>
+      <h2 class="post-state__title">Couldn't load posts</h2>
       <p class="post-state__text">{{ error }}</p>
-      <button type="button" class="btn" @click="$emit('retry')">Thử lại</button>
+      <button type="button" class="btn" @click="$emit('retry')">Try again</button>
     </div>
 
     <div v-else-if="posts.length === 0" class="post-state post-state--empty">
-      <h2 class="post-state__title">Chưa có bài viết nào</h2>
-      <p class="post-state__text">Hãy là người đầu tiên chia sẻ trong cộng đồng này.</p>
+      <h2 class="post-state__title">No posts yet</h2>
+      <p class="post-state__text">Be the first to share in this community.</p>
     </div>
 
     <template v-else>

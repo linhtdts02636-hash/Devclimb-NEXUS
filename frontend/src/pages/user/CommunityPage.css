@@ -133,18 +133,6 @@ h1 {
   border-radius: var(--r);
 }
 
-.composer-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  align-items: center;
-}
-
-.composer-hint {
-  color: var(--tx2);
-  font-size: var(--t-xs);
-}
-
 .sample-note {
   text-align: center;
   font: 400 var(--t-xs) var(--f-mono);

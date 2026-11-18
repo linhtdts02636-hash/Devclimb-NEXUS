@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Avatar from '../../../components/common/Avatar.vue'
 import PostImages from './PostImages.vue'
 import { formatFullDate, formatRelativeTime } from '../../../composables/useRelativeTime'
@@ -23,7 +23,27 @@ const props = defineProps({
 
 defineEmits(['edit', 'delete'])
 
-const authorName = computed(() => props.post.author?.name?.trim() || 'Người dùng')
+const menuOpen = ref(false)
+const rootElement = ref(null)
+
+function closeMenuOnOutsideClick(event) {
+  if (!rootElement.value?.contains(event.target)) menuOpen.value = false
+}
+
+function closeMenuOnEscape(event) {
+  if (event.key === 'Escape') menuOpen.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeMenuOnOutsideClick)
+  document.addEventListener('keydown', closeMenuOnEscape)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', closeMenuOnOutsideClick)
+  document.removeEventListener('keydown', closeMenuOnEscape)
+})
+
+const authorName = computed(() => props.post.author?.name?.trim() || 'User')
 const avatarUrl = computed(() => props.post.author?.imageUrl || '')
 const relativeTime = computed(() => formatRelativeTime(props.post.createdAt))
 const fullDate = computed(() => formatFullDate(props.post.createdAt))
@@ -41,31 +61,26 @@ const canManage = computed(
 <template>
   <article class="post">
     <header class="post__header">
-      <Avatar :src="avatarUrl" :name="authorName" :size="40" type="user" :show-name="false" />
+      <Avatar :src="avatarUrl" :name="authorName" :size="26" type="user" :show-name="false" />
+      <strong class="post__name">{{ authorName }}</strong>
+      <time class="post__time" :datetime="post.createdAt" :title="fullDate">· {{ relativeTime }}</time>
+      <span v-if="editedAt" class="post__edited" :title="editedLabel">edited</span>
 
-      <div class="post__author">
-        <strong class="post__name">{{ authorName }}</strong>
-        <div class="post__meta">
-          <time class="post__time" :datetime="post.createdAt" :title="fullDate">
-            {{ relativeTime }}
-          </time>
-          <span v-if="editedAt" class="post__edited" :title="editedLabel">
-            Đã chỉnh sửa
-          </span>
-        </div>
-      </div>
-
-      <div v-if="canManage" class="post__actions">
-        <button type="button" class="post__action" @click="$emit('edit', post)">
-          Sửa
-        </button>
+      <div v-if="canManage" ref="rootElement" class="post__menu-anchor">
         <button
           type="button"
-          class="post__action post__action--danger"
-          @click="$emit('delete', post)"
+          class="post__menu-button"
+          aria-haspopup="menu"
+          :aria-expanded="menuOpen"
+          aria-label="Post actions"
+          @click.stop="menuOpen = !menuOpen"
         >
-          Xoá
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></svg>
         </button>
+        <div v-show="menuOpen" class="post__menu" role="menu">
+          <button type="button" role="menuitem" @click="menuOpen = false; $emit('edit', post)">Edit</button>
+          <button type="button" role="menuitem" class="post__menu-danger" @click="menuOpen = false; $emit('delete', post)">Delete</button>
+        </div>
       </div>
     </header>
 
@@ -80,7 +95,7 @@ const canManage = computed(
 .post {
   min-width: 0;
   max-width: 100%;
-  padding: 18px 20px;
+  padding: var(--s-4) var(--s-4) var(--s-3);
   border: 1px solid var(--line2);
   border-radius: var(--r);
   background: var(--s1);
@@ -90,116 +105,108 @@ const canManage = computed(
 .post__header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: var(--s-2);
   min-width: 0;
-}
-
-.post__author {
-  display: grid;
-  flex: 1;
-  gap: 2px;
-  min-width: 0;
+  font-size: var(--t-sm);
 }
 
 .post__name {
+  min-width: 0;
   overflow: hidden;
   color: var(--tx);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.post__meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
-}
-
-.post__time {
+.post__time,
+.post__edited {
   color: var(--tx2);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
 }
 
 .post__edited {
-  color: var(--tx2);
-  font-size: 12px;
   font-style: italic;
-  line-height: 1.3;
 }
 
-.post__edited::before {
-  content: '·';
-  margin-right: 6px;
+.post__menu-anchor {
+  position: relative;
+  margin-left: auto;
 }
 
-.post__actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 4px;
-}
-
-.post__action {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
+.post__menu-button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
   color: var(--tx2);
-  font: 500 12px / 1 var(--f-head);
-  white-space: nowrap;
-  transition:
-    background 0.16s var(--ease),
-    color 0.16s var(--ease);
 }
 
-.post__action:hover {
+.post__menu-button:hover {
   background: var(--s2);
   color: var(--tx);
 }
 
-.post__action--danger:hover {
-  background: color-mix(in srgb, var(--bad) 10%, transparent);
+.post__menu-button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.post__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  padding: var(--s-1);
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  box-shadow: var(--sh-card);
+}
+
+.post__menu button {
+  display: flex;
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--s-3);
+  align-items: center;
+  font-size: var(--t-sm);
+  text-align: left;
+  border-radius: var(--r-sm);
+}
+
+.post__menu button:hover {
+  background: var(--s2);
+}
+
+.post__menu .post__menu-danger {
   color: var(--bad);
 }
 
 .post__title {
-  margin-top: 14px;
-  color: var(--tx);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.35;
+  margin: var(--s-2) 0 var(--s-1);
+  font: 500 var(--t-lg) / 1.35 var(--f-head);
   overflow-wrap: anywhere;
 }
 
 .post__content {
-  margin-top: 14px;
-  color: var(--tx);
-  font-size: 15px;
-  line-height: 1.65;
+  color: var(--tx2);
+  font-size: var(--t-sm);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
-.post__title + .post__content {
-  margin-top: 8px;
-}
-
 @media (max-width: 480px) {
   .post {
-    padding: 16px;
+    padding: var(--s-3);
     border-radius: var(--r-sm);
-  }
-
-  .post__action {
-    padding: 0 8px;
   }
 }
 </style>

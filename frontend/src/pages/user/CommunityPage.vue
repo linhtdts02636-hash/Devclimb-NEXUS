@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Avatar from '../../components/common/Avatar.vue'
 import BaseModal from '../../components/common/BaseModal.vue'
-import CreatePostButton from '../../features/post/components/CreatePostButton.vue'
 import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
 import PostList from '../../features/post/components/PostList.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
@@ -126,12 +125,12 @@ function handleEdit(post) {
 
 function handleCreated(post) {
   posts.value = [post, ...posts.value]
-  showToast('Đã đăng bài viết.')
+  showToast('Post created.')
 }
 
 function handleUpdated(updatedPost) {
   posts.value = posts.value.map((post) => (post.id === updatedPost.id ? updatedPost : post))
-  showToast('Đã cập nhật bài viết.')
+  showToast('Post updated.')
 }
 
 function requestDelete(post) {
@@ -166,7 +165,7 @@ async function confirmDelete() {
     await deletePost(postId)
     posts.value = posts.value.filter((post) => post.id !== postId)
     resetDeleteConfirm()
-    showToast('Đã xoá bài viết.')
+    showToast('Post deleted.')
   } catch (error) {
     deleteError.value = describeApiError(error).message
   } finally {
@@ -251,11 +250,6 @@ onBeforeUnmount(() => {
 
             <div v-if="activeTab === 'posts'" role="tabpanel" aria-labelledby="tab-posts" class="posts">
               <PinnedPosts :posts="pinnedPosts" />
-              <div class="composer-row">
-                <CreatePostButton label="Đăng bài" :disabled="!canPost" @click="openComposer" />
-                <p v-if="!isAuthenticated" class="composer-hint">Đăng nhập để đăng bài.</p>
-                <p v-else-if="!isMember" class="composer-hint">Tham gia cộng đồng để đăng bài.</p>
-              </div>
               <PostList
                 :posts="posts"
                 :loading="postsLoading"
@@ -319,20 +313,20 @@ onBeforeUnmount(() => {
 
   <BaseModal
     :open="deleteOpen"
-    title="Xoá bài viết"
+    title="Delete post"
     size="sm"
     :close-on-backdrop="!deleting"
     @update:open="handleDeleteOpenChange"
   >
-    <p class="confirm-text">Bạn có chắc muốn xoá bài viết này? Hành động không thể hoàn tác.</p>
+    <p class="confirm-text">Are you sure you want to delete this post? This cannot be undone.</p>
     <p v-if="deleteTarget?.title" class="confirm-title">"{{ deleteTarget.title }}"</p>
     <p v-if="deleteError" class="confirm-error" role="alert">{{ deleteError }}</p>
 
     <template #footer>
-      <button type="button" class="btn" :disabled="deleting" @click="closeDeleteConfirm">Hủy</button>
+      <button type="button" class="btn" :disabled="deleting" @click="closeDeleteConfirm">Cancel</button>
       <button type="button" class="btn btn--danger" :disabled="deleting" @click="confirmDelete">
         <span v-if="deleting" class="spinner" aria-hidden="true"></span>
-        {{ deleting ? 'Đang xoá…' : 'Xoá bài' }}
+        {{ deleting ? 'Deleting…' : 'Delete post' }}
       </button>
     </template>
   </BaseModal>
