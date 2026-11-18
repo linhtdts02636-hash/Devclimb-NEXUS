@@ -19,6 +19,19 @@ public enum ErrorCode {
 	INVALID_SOURCE_CODE(HttpStatus.BAD_REQUEST, "The submitted source code is not valid for this language."),
 	JUDGE0_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "The code runner is unavailable. Try again in a moment."),
 	JUDGE0_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "The code runner took too long. Try again in a moment."),
+	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "The request could not be understood. Check the details and try again."),
+	TOO_MANY_IDS(HttpStatus.BAD_REQUEST, "Too many communities were requested at once."),
+	COMMUNITY_NOT_FOUND(HttpStatus.NOT_FOUND, "This community does not exist."),
+	COMMUNITY_NAME_TAKEN(HttpStatus.CONFLICT, "A community with this name already exists."),
+	COMMUNITY_NAME_INVALID(HttpStatus.BAD_REQUEST, "Use 3 to 50 lowercase letters, digits or hyphens. Do not start or end with a hyphen."),
+	COMMUNITY_SHOUTOUT_TOO_LONG(HttpStatus.BAD_REQUEST, "The description can be at most 300 characters long."),
+	COMMUNITY_FORBIDDEN(HttpStatus.FORBIDDEN, "Only the owner of this community can do that."),
+	ALREADY_MEMBER(HttpStatus.CONFLICT, "You are already a member of this community."),
+	NOT_A_MEMBER(HttpStatus.NOT_FOUND, "You are not a member of this community."),
+	OWNER_CANNOT_LEAVE(HttpStatus.CONFLICT, "The owner cannot leave. Delete the community instead."),
+	DELETE_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "Type the community name exactly to confirm."),
+	IMAGE_URL_INVALID(HttpStatus.BAD_REQUEST, "This image was not uploaded through DevClimb. Upload it again."),
+	UPLOAD_REJECTED(HttpStatus.BAD_REQUEST, "Use a JPEG, PNG or WebP image within the size limit."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong on our side. Try again in a moment.");
 
 	private final HttpStatus httpStatus;
