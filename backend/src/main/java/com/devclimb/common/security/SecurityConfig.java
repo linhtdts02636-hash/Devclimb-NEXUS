@@ -1,0 +1,54 @@
+package com.devclimb.common.security;
+
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            ObjectProvider<FirebaseAuthenticationFilter> firebaseAuthenticationFilter,
+            JsonAuthenticationEntryPoint authenticationEntryPoint,
+            JsonAccessDeniedHandler accessDeniedHandler
+    ) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        // Auth xác thực bằng request attribute của Firebase, không dùng SecurityContext.
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/communities/*/posts").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/communities/*/posts").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/*").authenticated()
+                        .requestMatchers("/error").permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler));
+
+        // Firebase filter chạy trong SecurityFilterChain để SecurityContext được thiết lập
+        // trước bước phân quyền của Spring Security.
+        FirebaseAuthenticationFilter firebaseFilter = firebaseAuthenticationFilter.getIfAvailable();
+        if (firebaseFilter != null) {
+            http.addFilterBefore(firebaseFilter, UsernamePasswordAuthenticationFilter.class);
+        }
+
+        return http.build();
+    }
+}

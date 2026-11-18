@@ -3,47 +3,60 @@ package com.devclimb.common.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-	private static final String REJECTED_REQUEST_MESSAGE = "The request could not be processed.";
+	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+	private static final String REJECTED_REQUEST_MESSAGE = "Yêu cầu không thể được xử lý.";
+	private static final String VALIDATION_MESSAGE = "Dữ liệu yêu cầu không hợp lệ.";
 
 	@ExceptionHandler(ApiException.class)
-	public ResponseEntity<ApiErrorResponse> handleApiException(ApiException exception) {
-		return respondWith(exception.getErrorCode());
+	public ResponseEntity<ErrorResponse> handleApiException(ApiException exception) {
+		return ResponseEntity
+				.status(exception.getStatus())
+				.body(ErrorResponse.of(exception.getCode(), exception.getMessage()));
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<ApiErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
-		logger.warn("Database constraint violated", exception);
+	public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
+		log.warn("Database constraint violated", exception);
 		return respondWith(ErrorCode.ACCOUNT_CONFLICT);
 	}
 
-	@ExceptionHandler(HttpMessageNotReadableException.class)
-	public ResponseEntity<ApiErrorResponse> handleUnreadableBody() {
-		return respondWith(ErrorCode.INVALID_REQUEST);
+	@ExceptionHandler({
+			HttpMessageNotReadableException.class,
+			MethodArgumentTypeMismatchException.class,
+			MethodArgumentNotValidException.class
+	})
+	public ResponseEntity<ErrorResponse> handleBadRequest(Exception exception) {
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(ErrorResponse.of("VALIDATION_ERROR", VALIDATION_MESSAGE));
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception exception) {
-		if (exception instanceof ErrorResponse frameworkError) {
+	public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception) {
+		if (exception instanceof org.springframework.web.ErrorResponse frameworkError) {
 			HttpStatusCode statusCode = frameworkError.getStatusCode();
 			return ResponseEntity.status(statusCode)
-					.body(new ApiErrorResponse(String.valueOf(statusCode.value()), REJECTED_REQUEST_MESSAGE));
+					.body(ErrorResponse.of(String.valueOf(statusCode.value()), REJECTED_REQUEST_MESSAGE));
 		}
-		logger.error("Unexpected error", exception);
+		log.error("Unhandled server error", exception);
 		return respondWith(ErrorCode.INTERNAL_ERROR);
 	}
 
-	private ResponseEntity<ApiErrorResponse> respondWith(ErrorCode errorCode) {
-		return ResponseEntity.status(errorCode.getHttpStatus()).body(ApiErrorResponse.from(errorCode));
+	private ResponseEntity<ErrorResponse> respondWith(ErrorCode errorCode) {
+		return ResponseEntity
+				.status(errorCode.getHttpStatus())
+				.body(ErrorResponse.of(errorCode.name(), errorCode.getMessage()));
 	}
 }

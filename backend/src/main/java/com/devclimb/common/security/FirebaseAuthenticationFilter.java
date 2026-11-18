@@ -1,14 +1,20 @@
 package com.devclimb.common.security;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.devclimb.common.exception.ErrorCode;
+import com.devclimb.user.User;
+import com.devclimb.user.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -22,24 +28,24 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
 	public static final String AUTHENTICATED_USER_ATTRIBUTE = "authenticatedFirebaseUser";
 
-	private static final String PUBLIC_SUBMISSION_PATH = ""; // For testing, if you don't want to go through auth to test an API, put it here
 	private static final String BEARER_PREFIX = "Bearer ";
 	private static final boolean CHECK_REVOKED = true;
 	private static final String FIREBASE_CLAIM = "firebase";
 	private static final String SIGN_IN_PROVIDER_CLAIM = "sign_in_provider";
 
 	private final FirebaseAuth firebaseAuth;
+	private final UserRepository userRepository;
 
-	public FirebaseAuthenticationFilter(FirebaseAuth firebaseAuth) {
+	public FirebaseAuthenticationFilter(FirebaseAuth firebaseAuth, UserRepository userRepository) {
 		this.firebaseAuth = firebaseAuth;
+		this.userRepository = userRepository;
 	}
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		String servletPath = request.getServletPath();
+		// Các request không thuộc /api không cần xác thực Firebase.
 		return HttpMethod.OPTIONS.matches(request.getMethod())
-				|| PUBLIC_SUBMISSION_PATH.equals(servletPath)
-				|| (PUBLIC_SUBMISSION_PATH + "/").equals(servletPath);
+				|| !request.getRequestURI().startsWith("/api/");
 	}
 
 	@Override
@@ -47,14 +53,27 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 			FilterChain filterChain) throws ServletException, IOException {
 		String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-			reject(response, ErrorCode.MISSING_TOKEN);
+			// Các API auth bắt buộc phải có Firebase token; API công khai có thể chạy ẩn danh.
+			if (request.getRequestURI().startsWith("/api/auth/")) {
+				reject(response, ErrorCode.MISSING_TOKEN);
+				return;
+			}
+			filterChain.doFilter(request, response);
 			return;
 		}
 
 		try {
 			String idToken = authorizationHeader.substring(BEARER_PREFIX.length());
 			FirebaseToken verifiedToken = firebaseAuth.verifyIdToken(idToken, CHECK_REVOKED);
-			request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, toAuthenticatedUser(verifiedToken));
+			AuthenticatedFirebaseUser firebaseUser = toAuthenticatedUser(verifiedToken);
+
+			// Giữ request attribute để các controller hiện có (đặc biệt CommunityController)
+			// vẫn đọc được người dùng Firebase qua @RequestAttribute.
+			request.setAttribute(AUTHENTICATED_USER_ATTRIBUTE, firebaseUser);
+
+			// Đồng thời đưa người dùng trong database vào SecurityContext để các endpoint
+			// dùng Authentication/CurrentUser hoạt động đúng.
+			authenticate(request, firebaseUser);
 		} catch (FirebaseAuthException exception) {
 			logger.warn("Rejected Firebase token: " + exception.getAuthErrorCode());
 			reject(response, ErrorCode.INVALID_TOKEN);
@@ -65,6 +84,24 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		filterChain.doFilter(request, response);
+	}
+
+	private void authenticate(HttpServletRequest request, AuthenticatedFirebaseUser firebaseUser) {
+		if (SecurityContextHolder.getContext().getAuthentication() != null) {
+			return;
+		}
+
+		// Token hợp lệ nhưng user chưa có trong database thì để request chạy tiếp.
+		// /api/auth/session sẽ tự tạo user mới; các API bảo vệ khác sẽ nhận 401.
+		userRepository.findByFirebaseUid(firebaseUser.firebaseUid())
+				.filter(User::isActive)
+				.ifPresent(user -> {
+					CurrentUser principal = new CurrentUser(user.getId(), user.getName(), user.getImageUrl());
+					UsernamePasswordAuthenticationToken authentication =
+							new UsernamePasswordAuthenticationToken(principal, null, List.of());
+					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(authentication);
+				});
 	}
 
 	private AuthenticatedFirebaseUser toAuthenticatedUser(FirebaseToken token) {
