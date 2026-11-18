@@ -1,46 +1,55 @@
 package com.devclimb.post;
 
-import com.devclimb.common.security.CurrentUser;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.devclimb.common.security.AuthenticatedFirebaseUser;
+import com.devclimb.common.security.FirebaseAuthenticationFilter;
 
 @RestController
-@RequestMapping("/api/communities/{communityId}/posts")
 public class PostController {
 
-    private final PostService postService;
+	private static final String FIREBASE_USER = FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE;
 
-    public PostController(PostService postService) {
-        this.postService = postService;
-    }
+	private final PostService postService;
 
-    @PostMapping
-    public ResponseEntity<PostDto> createPost(
-            @PathVariable Integer communityId,
-            Authentication authentication,
-            @RequestBody(required = false) PostRequest request
-    ) {
-        String title = request == null ? null : request.title();
-        String content = request == null ? null : request.content();
-        PostDto response = postService.createPost(
-                communityId, CurrentUser.from(authentication), title, content);
-        return ResponseEntity.ok(response);
-    }
+	public PostController(PostService postService) {
+		this.postService = postService;
+	}
 
-    @GetMapping
-    public ResponseEntity<List<PostDto>> getPosts(
-            @PathVariable Integer communityId,
-            Authentication authentication
-    ) {
-        return ResponseEntity.ok(
-                postService.getPosts(communityId, CurrentUser.from(authentication)));
-    }
+	@PostMapping("/api/communities/{communityId}/posts")
+	@ResponseStatus(HttpStatus.CREATED)
+	public PostDTO create(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
+			@PathVariable Integer communityId, @RequestBody CreatePostRequest request) {
+		return postService.create(firebaseUser, communityId, request);
+	}
+
+	@GetMapping("/api/communities/{communityId}/posts")
+	public List<PostDTO> listFeed(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
+			@PathVariable Integer communityId) {
+		return postService.listFeed(firebaseUser, communityId);
+	}
+
+	@PutMapping("/api/posts/{postId}")
+	public PostDTO update(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
+			@PathVariable Integer postId, @RequestBody UpdatePostRequest request) {
+		return postService.update(firebaseUser, postId, request);
+	}
+
+	@DeleteMapping("/api/posts/{postId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
+			@PathVariable Integer postId) {
+		postService.delete(firebaseUser, postId);
+	}
 }

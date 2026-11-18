@@ -19,7 +19,7 @@ import com.devclimb.common.security.FirebaseAuthenticationFilter;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/puzzle")
+@RequestMapping("/api/puzzles")
 public class PuzzleController {
 
 	private final PuzzleService puzzleService;

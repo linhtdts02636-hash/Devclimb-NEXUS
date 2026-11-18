@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import AppLogo from '../AppLogo.vue'
+import AppLogo from '../common/AppLogo.vue'
 
 gsap.registerPlugin(ScrollTrigger)
 

@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
-  src: { type: String, required: true },
+  src: { type: String, default: '' },
   name: { type: String, default: '' },
   type: {
     type: String,
@@ -12,21 +12,52 @@ const props = defineProps({
   size: { type: [Number, String], default: 28 },
   alt: { type: String, default: '' },
   showName: { type: Boolean, default: true },
+  // Mặc định avatar người dùng tròn, avatar cộng đồng vuông; prop này cho phép ghi đè.
+  round: { default: undefined },
 })
 
+const failed = ref(false)
+
 const imageSize = computed(() => (typeof props.size === 'number' ? `${props.size}px` : props.size))
-const isUser = computed(() => props.type === 'user')
+const isRound = computed(() => (props.round === undefined ? props.type === 'user' : props.round))
+const fontSize = computed(() => {
+  const pixels = typeof props.size === 'number' ? props.size : Number.parseFloat(props.size)
+  return Number.isFinite(pixels) ? `${Math.max(11, Math.round(pixels * 0.36))}px` : '11px'
+})
+const initials = computed(() => {
+  const parts = props.name.trim().split(/\s+/).filter(Boolean)
+
+  if (parts.length === 0) {
+    return '?'
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+})
+const showImage = computed(() => Boolean(props.src) && !failed.value)
+
+watch(
+  () => props.src,
+  () => {
+    failed.value = false
+  },
+)
 </script>
 
 <template>
   <div class="avatar">
-    <img
-      class="avatar-image"
-      :class="isUser ? 'is-user' : 'is-community'"
-      :src="src"
-      :alt="alt"
-      :style="{ width: imageSize, height: imageSize }"
-    />
+    <span
+      class="avatar-box"
+      :class="{ 'is-round': isRound }"
+      :style="{ width: imageSize, height: imageSize, fontSize }"
+      aria-hidden="true"
+    >
+      <img v-if="showImage" class="avatar-image" :src="src" :alt="alt" @error="failed = true" />
+      <span v-else class="avatar-fallback">{{ initials }}</span>
+    </span>
     <span v-if="showName && name" class="avatar-name">{{ name }}</span>
   </div>
 </template>
@@ -40,19 +71,33 @@ const isUser = computed(() => props.type === 'user')
   max-width: 100%;
 }
 
-.avatar-image {
+.avatar-box {
+  display: inline-grid;
   flex: none;
-  object-fit: cover;
+  place-items: center;
+  overflow: hidden;
+  color: var(--tx2);
   background: var(--s2);
   border: 1px solid var(--line);
+  border-radius: 2px;
+  font-family: var(--f-mono);
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
 }
 
-.avatar-image.is-user {
+.avatar-box.is-round {
   border-radius: 50%;
 }
 
-.avatar-image.is-community {
-  border-radius: 2px;
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  text-transform: uppercase;
 }
 
 .avatar-name {

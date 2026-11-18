@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import AvatarImage from '../../components/AvatarImage.vue'
+import Avatar from '../../components/common/Avatar.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchMyCommunities } from '../../features/community/communityApi'
@@ -46,7 +46,7 @@ onMounted(async () => {
     <ul v-else class="list">
       <li v-for="community in communities" :key="community.id">
         <RouterLink class="card" :to="`/community/${community.name}`">
-          <AvatarImage :image-url="community.imageUrl" :name="community.name" :size="48" />
+          <Avatar :src="community.imageUrl" :name="community.name" :size="48" :show-name="false" />
           <span class="info">
             <b>{{ community.name }}</b>
             <small>{{ community.memberCount }} {{ community.memberCount === 1 ? 'member' : 'members' }}</small>

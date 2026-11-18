@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
-import AvatarImage from '../../../components/AvatarImage.vue'
-import { sampleMemberNames, sampleRoles } from '../sampleCommunityData'
+import Avatar from '../../../components/common/Avatar.vue'
+import { sampleMemberNames, sampleRoles } from '../../../sample/sampleCommunityData'
 
 const props = defineProps({
   owners: { type: Array, required: true },
@@ -81,7 +81,7 @@ function closeDialog() {
         <input v-model="searchText" type="search" placeholder="Search members" autocomplete="off" aria-label="Search members in this role" />
         <ul class="people">
           <li v-for="person in visiblePeople" :key="person.name">
-            <AvatarImage :image-url="person.imageUrl" :name="person.name" :size="32" is-round />
+            <Avatar :src="person.imageUrl" :name="person.name" :size="32" :round="true" :show-name="false" />
             {{ person.name }}<small>since {{ person.since }}</small>
           </li>
           <li v-if="!visiblePeople.length" class="empty">No one with this role matches that name.</li>

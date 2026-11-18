@@ -1,8 +1,8 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import BaseModal from '../common/BaseModal.vue'
-import { createPost, updatePost } from '../../features/post/api/postApi'
-import { getApiErrorMessage } from '../../features/post/utils/apiError'
+import BaseModal from '../../../components/common/BaseModal.vue'
+import { createPost, updatePost } from '../postApi'
+import { describeApiError } from '../../../config/apiClient'
 
 const props = defineProps({
   open: {
@@ -93,10 +93,7 @@ async function submit() {
       emit('updated', updated)
       emit('update:open', false)
     } catch (requestError) {
-      error.value = getApiErrorMessage(
-        requestError,
-        'Không thể lưu thay đổi. Vui lòng thử lại.',
-      )
+      error.value = describeApiError(requestError).message
     } finally {
       submitting.value = false
     }
@@ -119,10 +116,7 @@ async function submit() {
     emit('created', post)
     emit('update:open', false)
   } catch (requestError) {
-    error.value = getApiErrorMessage(
-      requestError,
-      'Không thể đăng bài viết. Vui lòng thử lại.',
-    )
+    error.value = describeApiError(requestError).message
   } finally {
     submitting.value = false
   }

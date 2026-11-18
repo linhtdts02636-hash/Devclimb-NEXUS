@@ -18,6 +18,10 @@ defineProps({
     type: Number,
     default: null,
   },
+  images: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 defineEmits(['retry', 'edit', 'delete'])
@@ -56,6 +60,7 @@ defineEmits(['retry', 'edit', 'delete'])
         v-for="post in posts"
         :key="post.id"
         :post="post"
+        :images="post.images?.length ? post.images : images"
         :current-user-id="currentUserId"
         @edit="$emit('edit', $event)"
         @delete="$emit('delete', $event)"

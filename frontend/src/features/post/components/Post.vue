@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue'
-import UserAvatar from '../common/UserAvatar.vue'
+import Avatar from '../../../components/common/Avatar.vue'
 import PostImages from './PostImages.vue'
-import { formatFullDate, formatRelativeTime } from '../../composables/useRelativeTime'
+import { formatFullDate, formatRelativeTime } from '../../../composables/useRelativeTime'
 
 const props = defineProps({
   post: {
@@ -14,7 +14,7 @@ const props = defineProps({
     type: Number,
     default: null,
   },
-  // Ảnh mock phục vụ kiểm tra giao diện; bài viết thật không truyền prop này.
+  // Ảnh của bài viết, lấy từ PostDTO.images.
   images: {
     type: Array,
     default: () => [],
@@ -24,7 +24,7 @@ const props = defineProps({
 defineEmits(['edit', 'delete'])
 
 const authorName = computed(() => props.post.author?.name?.trim() || 'Người dùng')
-const avatarUrl = computed(() => props.post.author?.avatarUrl || '')
+const avatarUrl = computed(() => props.post.author?.imageUrl || '')
 const relativeTime = computed(() => formatRelativeTime(props.post.createdAt))
 const fullDate = computed(() => formatFullDate(props.post.createdAt))
 const editedAt = computed(() => props.post.updatedAt || null)
@@ -34,14 +34,14 @@ const canManage = computed(
   () =>
     Number.isInteger(props.currentUserId) &&
     props.currentUserId > 0 &&
-    props.currentUserId === props.post.author?.id,
+    props.currentUserId === props.post.author?.userId,
 )
 </script>
 
 <template>
   <article class="post">
     <header class="post__header">
-      <UserAvatar :src="avatarUrl" :name="authorName" :size="40" />
+      <Avatar :src="avatarUrl" :name="authorName" :size="40" type="user" :show-name="false" />
 
       <div class="post__author">
         <strong class="post__name">{{ authorName }}</strong>

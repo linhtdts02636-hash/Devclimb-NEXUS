@@ -29,7 +29,7 @@ public record PuzzleDTO(
 				puzzle.getTitle(),
 				puzzle.getContent(),
 				puzzle.getDifficulty(),
-				puzzle.getCommunityId(),
+				puzzle.getCommunity().getId(),
 				puzzle.getAuthor().getId(),
 				puzzle.getAuthor().getName(),
 				puzzle.getCreatedAt(),

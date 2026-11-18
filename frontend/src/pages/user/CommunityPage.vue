@@ -1,7 +1,11 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import AvatarImage from '../../components/AvatarImage.vue'
+import Avatar from '../../components/common/Avatar.vue'
+import BaseModal from '../../components/common/BaseModal.vue'
+import CreatePostButton from '../../features/post/components/CreatePostButton.vue'
+import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
+import PostList from '../../features/post/components/PostList.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchCommunity, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
@@ -9,14 +13,15 @@ import CommunityHeaderActions from '../../features/community/components/Communit
 import CommunitySideCards from '../../features/community/components/CommunitySideCards.vue'
 import CommunitySidebar from '../../features/community/components/CommunitySidebar.vue'
 import PinnedPosts from '../../features/community/components/PinnedPosts.vue'
-import PostCard from '../../features/community/components/PostCard.vue'
 import RoleList from '../../features/community/components/RoleList.vue'
-import { samplePosts } from '../../features/community/sampleCommunityData'
+import { deletePost, getPosts } from '../../features/post/postApi'
+import { samplePosts } from '../../sample/sampleCommunityData'
+import { useAuthStore } from '../../stores/authStore'
 
 const route = useRoute()
+const authStore = useAuthStore()
 const dateFormat = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' })
 const pinnedPosts = samplePosts.filter((post) => post.isPinned)
-const feedPosts = samplePosts.filter((post) => !post.isPinned)
 
 const TABS = [
   { id: 'posts', label: 'Posts' },
@@ -33,7 +38,42 @@ const activeTab = ref('posts')
 const isMembershipBusy = ref(false)
 const actionError = ref('')
 
+const posts = ref([])
+const postsLoading = ref(false)
+const postsError = ref('')
+const composerOpen = ref(false)
+const editingPost = ref(null)
+const deleteOpen = ref(false)
+const deleteTarget = ref(null)
+const deleting = ref(false)
+const deleteError = ref('')
+const toast = ref('')
+let toastTimer = null
+
 const owners = computed(() => members.value.filter((member) => member.isOwner))
+const currentUserId = computed(() => authStore.profile?.id ?? null)
+const isAuthenticated = computed(() => authStore.status === 'authenticated')
+const isMember = computed(() => Boolean(community.value?.isMember))
+const canPost = computed(() => isAuthenticated.value && isMember.value && Number.isInteger(community.value?.id))
+
+async function loadFeed() {
+  if (!Number.isInteger(community.value?.id)) {
+    posts.value = []
+    postsLoading.value = false
+    return
+  }
+
+  postsLoading.value = true
+  postsError.value = ''
+  try {
+    posts.value = await getPosts(community.value.id)
+  } catch (error) {
+    posts.value = []
+    postsError.value = describeApiError(error).message
+  } finally {
+    postsLoading.value = false
+  }
+}
 
 async function loadCommunity() {
   loadStatus.value = 'loading'
@@ -43,6 +83,7 @@ async function loadCommunity() {
     community.value = loadedCommunity
     members.value = loadedMembers
     loadStatus.value = 'ready'
+    await loadFeed()
   } catch (error) {
     loadStatus.value = error.response?.status === 404 ? 'missing' : 'failed'
     loadError.value = describeApiError(error).message
@@ -71,15 +112,96 @@ async function changeMembership(action) {
   }
 }
 
+function openComposer() {
+  if (!canPost.value) return
+  editingPost.value = null
+  composerOpen.value = true
+}
+
+function handleEdit(post) {
+  if (post?.author?.userId !== currentUserId.value) return
+  editingPost.value = post
+  composerOpen.value = true
+}
+
+function handleCreated(post) {
+  posts.value = [post, ...posts.value]
+  showToast('Đã đăng bài viết.')
+}
+
+function handleUpdated(updatedPost) {
+  posts.value = posts.value.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+  showToast('Đã cập nhật bài viết.')
+}
+
+function requestDelete(post) {
+  if (post?.author?.userId !== currentUserId.value) return
+  deleteTarget.value = post
+  deleteError.value = ''
+  deleteOpen.value = true
+}
+
+function resetDeleteConfirm() {
+  deleteOpen.value = false
+  deleteTarget.value = null
+  deleteError.value = ''
+}
+
+function closeDeleteConfirm() {
+  if (deleting.value) return
+  resetDeleteConfirm()
+}
+
+function handleDeleteOpenChange(open) {
+  if (!open) closeDeleteConfirm()
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value || deleting.value) return
+
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    const postId = deleteTarget.value.id
+    await deletePost(postId)
+    posts.value = posts.value.filter((post) => post.id !== postId)
+    resetDeleteConfirm()
+    showToast('Đã xoá bài viết.')
+  } catch (error) {
+    deleteError.value = describeApiError(error).message
+  } finally {
+    deleting.value = false
+  }
+}
+
+function showToast(message) {
+  toast.value = message
+  if (toastTimer) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    toast.value = ''
+  }, 5000)
+}
+
 watch(
   () => route.params.name,
   () => {
     activeTab.value = 'posts'
     actionError.value = ''
+    composerOpen.value = false
+    editingPost.value = null
+    resetDeleteConfirm()
     loadCommunity()
   },
   { immediate: true },
 )
+
+onMounted(() => {
+  authStore.initialize()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer) window.clearTimeout(toastTimer)
+})
 </script>
 
 <template>
@@ -109,7 +231,7 @@ watch(
         </div>
 
         <header class="header">
-          <AvatarImage class="community-avatar" :image-url="community.imageUrl" :name="community.name" :size="96" />
+          <Avatar class="community-avatar" :src="community.imageUrl" :name="community.name" :size="96" :show-name="false" />
           <div class="identity">
             <h1><span class="prefix">c/</span>{{ community.name }}</h1>
             <p class="meta">
@@ -117,7 +239,7 @@ watch(
               <span><b>{{ community.memberCount }}</b> {{ community.memberCount === 1 ? 'member' : 'members' }}</span>
             </p>
           </div>
-          <CommunityHeaderActions :community="community" :active-tab="activeTab" :busy="isMembershipBusy" @join="changeMembership(joinCommunity)" @leave="changeMembership(leaveCommunity)" />
+          <CommunityHeaderActions :community="community" :active-tab="activeTab" :busy="isMembershipBusy" @join="changeMembership(joinCommunity)" @leave="changeMembership(leaveCommunity)" @create="openComposer" />
         </header>
         <p v-if="actionError" class="action-error" role="alert">{{ actionError }}</p>
 
@@ -129,12 +251,20 @@ watch(
 
             <div v-if="activeTab === 'posts'" role="tabpanel" aria-labelledby="tab-posts" class="posts">
               <PinnedPosts :posts="pinnedPosts" />
-              <div class="composer">
-                <AvatarImage :name="community.name" :size="32" is-round />
-                <button type="button" disabled>Posting is coming soon</button>
+              <div class="composer-row">
+                <CreatePostButton label="Đăng bài" :disabled="!canPost" @click="openComposer" />
+                <p v-if="!isAuthenticated" class="composer-hint">Đăng nhập để đăng bài.</p>
+                <p v-else-if="!isMember" class="composer-hint">Tham gia cộng đồng để đăng bài.</p>
               </div>
-              <PostCard v-for="post in feedPosts" :key="post.id" :post="post" />
-              <p class="sample-note">sample data for illustration</p>
+              <PostList
+                :posts="posts"
+                :loading="postsLoading"
+                :error="postsError"
+                :current-user-id="currentUserId"
+                @retry="loadFeed"
+                @edit="handleEdit"
+                @delete="requestDelete"
+              />
             </div>
 
             <div v-else-if="activeTab === 'puzzles' || activeTab === 'contests'" role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
@@ -143,7 +273,7 @@ watch(
 
             <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">
               <li v-for="member in members" :key="member.userId">
-                <AvatarImage :image-url="member.imageUrl" :name="member.name" :size="36" is-round />
+                <Avatar :src="member.imageUrl" :name="member.name" :size="36" :round="true" :show-name="false" />
                 <b>{{ member.name }}</b>
                 <span v-if="member.isOwner" class="badge">owner</span>
                 <small>Joined {{ dateFormat.format(new Date(member.joinedAt)) }}</small>
@@ -162,7 +292,7 @@ watch(
               <h2>Moderators</h2>
               <ul class="mods">
                 <li v-for="owner in owners" :key="owner.userId">
-                  <AvatarImage :image-url="owner.imageUrl" :name="owner.name" :size="28" is-round />
+                  <Avatar :src="owner.imageUrl" :name="owner.name" :size="28" :round="true" :show-name="false" />
                   {{ owner.name }}
                   <svg class="crown" viewBox="0 0 24 24" aria-label="Owner"><path d="M3 18 5 7l5 5 2-7 2 7 5-5 2 11z" /></svg>
                 </li>
@@ -177,6 +307,39 @@ watch(
       </template>
     </main>
   </div>
+
+  <PostComposerModal
+    v-if="community"
+    v-model:open="composerOpen"
+    :community-id="community.id"
+    :post="editingPost"
+    @created="handleCreated"
+    @updated="handleUpdated"
+  />
+
+  <BaseModal
+    :open="deleteOpen"
+    title="Xoá bài viết"
+    size="sm"
+    :close-on-backdrop="!deleting"
+    @update:open="handleDeleteOpenChange"
+  >
+    <p class="confirm-text">Bạn có chắc muốn xoá bài viết này? Hành động không thể hoàn tác.</p>
+    <p v-if="deleteTarget?.title" class="confirm-title">"{{ deleteTarget.title }}"</p>
+    <p v-if="deleteError" class="confirm-error" role="alert">{{ deleteError }}</p>
+
+    <template #footer>
+      <button type="button" class="btn" :disabled="deleting" @click="closeDeleteConfirm">Hủy</button>
+      <button type="button" class="btn btn--danger" :disabled="deleting" @click="confirmDelete">
+        <span v-if="deleting" class="spinner" aria-hidden="true"></span>
+        {{ deleting ? 'Đang xoá…' : 'Xoá bài' }}
+      </button>
+    </template>
+  </BaseModal>
+
+  <Transition name="toast">
+    <div v-if="toast" class="toast" role="status">{{ toast }}</div>
+  </Transition>
 </template>
 
 <style scoped src="./CommunityPage.css"></style>

@@ -1,5 +1,5 @@
 <script setup>
-import Avatar from './Avatar.vue'
+import Avatar from '../../../components/common/Avatar.vue'
 
 defineProps({
   title: { type: String, default: 'Weekly Contest' },

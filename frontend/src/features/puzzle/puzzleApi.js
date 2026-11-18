@@ -1,16 +1,4 @@
-import axios from 'axios'
-import { auth } from '../../config/firebase'
-
-const apiClient = axios.create({ baseURL: '/api' })
-
-apiClient.interceptors.request.use(async (requestConfig) => {
-  const firebaseUser = auth.currentUser
-  if (firebaseUser) {
-    const idToken = await firebaseUser.getIdToken()
-    requestConfig.headers.Authorization = `Bearer ${idToken}`
-  }
-  return requestConfig
-})
+import { apiClient } from '../../config/apiClient'
 
 export async function fetchPuzzles({ q = '', difficulty = '', page = 0, size = 10 } = {}) {
   const params = { page, size }
@@ -21,16 +9,16 @@ export async function fetchPuzzles({ q = '', difficulty = '', page = 0, size = 1
     params.difficulty = difficulty
   }
 
-  const response = await apiClient.get('/puzzle', { params })
+  const response = await apiClient.get('/puzzles', { params })
   return response.data
 }
 
 export async function fetchPuzzle(id) {
-  const response = await apiClient.get(`/puzzle/${id}`)
+  const response = await apiClient.get(`/puzzles/${id}`)
   return response.data
 }
 
 export async function createPuzzle(puzzle) {
-  const response = await apiClient.post('/puzzle', puzzle)
+  const response = await apiClient.post('/puzzles', puzzle)
   return response.data
 }

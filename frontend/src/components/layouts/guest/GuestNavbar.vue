@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import AppLogo from '../../AppLogo.vue'
-import ThemeToggle from '../../ThemeToggle.vue'
+import AppLogo from '../../common/AppLogo.vue'
+import ThemeToggle from '../../common/ThemeToggle.vue'
 import NavSearch from '../NavSearch.vue'
 
 const route = useRoute()

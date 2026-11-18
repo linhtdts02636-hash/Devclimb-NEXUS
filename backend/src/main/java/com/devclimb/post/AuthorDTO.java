@@ -1,4 +1,10 @@
 package com.devclimb.post;
 
-public record AuthorDto(Integer id, String name, String avatarUrl) {
+import com.devclimb.user.User;
+
+public record AuthorDTO(Integer userId, String name, String imageUrl) {
+
+	public static AuthorDTO of(User user) {
+		return new AuthorDTO(user.getId(), user.getName(), user.getImageUrl());
+	}
 }
