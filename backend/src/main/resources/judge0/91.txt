@@ -1,0 +1,364 @@
+class Main {
+    public static void main(String[] args) throws Exception {
+        String raw = new String(System.in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        java.util.List<Object> values = Judge0Json.parseArguments(raw);
+        Class<?> target = Class.forName("{CLASS}");
+
+        java.lang.reflect.Method method = null;
+        for (java.lang.reflect.Method candidate : target.getDeclaredMethods()) {
+            if (candidate.getName().equals("{FUNCT}") && candidate.getParameterCount() == values.size()) {
+                method = candidate;
+                break;
+            }
+        }
+        if (method == null) {
+            throw new NoSuchMethodException("{FUNCT} with " + values.size() + " argument(s)");
+        }
+
+        method.setAccessible(true);
+        Object receiver = null;
+        if (!java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
+            java.lang.reflect.Constructor<?> constructor = target.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            receiver = constructor.newInstance();
+        }
+
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        Object[] arguments = new Object[values.size()];
+        for (int index = 0; index < values.size(); index++) {
+            arguments[index] = Judge0Json.convert(values.get(index), parameterTypes[index]);
+        }
+
+        Object result = method.invoke(receiver, arguments);
+        if (result != null) {
+            System.out.print(Judge0Json.stringify(result));
+        } else if (!values.isEmpty()) {
+            System.out.print(Judge0Json.stringify(values.get(0)));
+        }
+    }
+}
+
+// Tự phân tích JSON để wrapper không phụ thuộc thư viện ngoài của Judge0.
+final class Judge0Json {
+    private final String text;
+    private int position;
+
+    private Judge0Json(String text) {
+        this.text = text;
+    }
+
+    // Judge0 truyền mỗi testcase qua stdin; nhiều dòng nghĩa là nhiều tham số.
+    static java.util.List<Object> parseArguments(String raw) {
+        String trimmed = raw == null ? "" : raw.trim();
+        java.util.List<Object> values = new java.util.ArrayList<>();
+        if (trimmed.isEmpty()) {
+            return values;
+        }
+
+        String[] lines = trimmed.split("\\R");
+        int lineCount = 0;
+        for (String line : lines) {
+            if (!line.trim().isEmpty()) {
+                lineCount++;
+            }
+        }
+
+        if (lineCount > 1) {
+            for (String line : lines) {
+                if (!line.trim().isEmpty()) {
+                    values.add(parse(line.trim()));
+                }
+            }
+        } else {
+            values.add(parse(trimmed));
+        }
+        return values;
+    }
+
+    static Object convert(Object value, Class<?> type) {
+        if (value == null) {
+            return null;
+        }
+        if (type == Object.class) {
+            return value;
+        }
+        if (type == String.class) {
+            return String.valueOf(value);
+        }
+        if (type == int.class || type == Integer.class) {
+            return ((Number) value).intValue();
+        }
+        if (type == long.class || type == Long.class) {
+            return ((Number) value).longValue();
+        }
+        if (type == double.class || type == Double.class) {
+            return ((Number) value).doubleValue();
+        }
+        if (type == float.class || type == Float.class) {
+            return ((Number) value).floatValue();
+        }
+        if (type == short.class || type == Short.class) {
+            return ((Number) value).shortValue();
+        }
+        if (type == byte.class || type == Byte.class) {
+            return ((Number) value).byteValue();
+        }
+        if (type == boolean.class || type == Boolean.class) {
+            return (Boolean) value;
+        }
+        if (type == char.class || type == Character.class) {
+            return String.valueOf(value).charAt(0);
+        }
+        if (type.isArray()) {
+            java.util.List<?> list = (java.util.List<?>) value;
+            Class<?> componentType = type.getComponentType();
+            Object array = java.lang.reflect.Array.newInstance(componentType, list.size());
+            for (int index = 0; index < list.size(); index++) {
+                java.lang.reflect.Array.set(array, index, convert(list.get(index), componentType));
+            }
+            return array;
+        }
+        return value;
+    }
+
+    static String stringify(Object value) {
+        if (value == null) {
+            return "null";
+        }
+        if (value instanceof String string) {
+            return quote(string);
+        }
+        if (value instanceof Character character) {
+            return quote(String.valueOf(character));
+        }
+        if (value instanceof Boolean || value instanceof Number) {
+            return value.toString();
+        }
+        if (value.getClass().isArray()) {
+            StringBuilder builder = new StringBuilder("[");
+            int length = java.lang.reflect.Array.getLength(value);
+            for (int index = 0; index < length; index++) {
+                if (index > 0) {
+                    builder.append(',');
+                }
+                builder.append(stringify(java.lang.reflect.Array.get(value, index)));
+            }
+            return builder.append(']').toString();
+        }
+        if (value instanceof Iterable<?> iterable) {
+            StringBuilder builder = new StringBuilder("[");
+            boolean first = true;
+            for (Object item : iterable) {
+                if (!first) {
+                    builder.append(',');
+                }
+                first = false;
+                builder.append(stringify(item));
+            }
+            return builder.append(']').toString();
+        }
+        if (value instanceof java.util.Map<?, ?> map) {
+            StringBuilder builder = new StringBuilder("{");
+            boolean first = true;
+            for (java.util.Map.Entry<?, ?> entry : map.entrySet()) {
+                if (!first) {
+                    builder.append(',');
+                }
+                first = false;
+                builder.append(quote(String.valueOf(entry.getKey())));
+                builder.append(':');
+                builder.append(stringify(entry.getValue()));
+            }
+            return builder.append('}').toString();
+        }
+        return quote(String.valueOf(value));
+    }
+
+    private static Object parse(String text) {
+        Judge0Json parser = new Judge0Json(text);
+        Object value = parser.readValue();
+        parser.skipWhitespace();
+        if (parser.position != text.length()) {
+            throw new IllegalArgumentException("Trailing JSON input.");
+        }
+        return value;
+    }
+
+    private Object readValue() {
+        skipWhitespace();
+        if (position >= text.length()) {
+            throw new IllegalArgumentException("Unexpected end of JSON input.");
+        }
+        char character = text.charAt(position);
+        if (character == '"') {
+            return readString();
+        }
+        if (character == '[') {
+            return readArray();
+        }
+        if (character == '{') {
+            return readObject();
+        }
+        if (character == 't') {
+            expect("true");
+            return Boolean.TRUE;
+        }
+        if (character == 'f') {
+            expect("false");
+            return Boolean.FALSE;
+        }
+        if (character == 'n') {
+            expect("null");
+            return null;
+        }
+        return readNumber();
+    }
+
+    private java.util.List<Object> readArray() {
+        java.util.List<Object> values = new java.util.ArrayList<>();
+        position++;
+        skipWhitespace();
+        if (peek(']')) {
+            position++;
+            return values;
+        }
+        while (true) {
+            values.add(readValue());
+            skipWhitespace();
+            if (peek(']')) {
+                position++;
+                return values;
+            }
+            expect(",");
+            skipWhitespace();
+        }
+    }
+
+    private java.util.Map<String, Object> readObject() {
+        java.util.Map<String, Object> values = new java.util.LinkedHashMap<>();
+        position++;
+        skipWhitespace();
+        if (peek('}')) {
+            position++;
+            return values;
+        }
+        while (true) {
+            skipWhitespace();
+            String key = readString();
+            skipWhitespace();
+            expect(":");
+            values.put(key, readValue());
+            skipWhitespace();
+            if (peek('}')) {
+                position++;
+                return values;
+            }
+            expect(",");
+            skipWhitespace();
+        }
+    }
+
+    private String readString() {
+        expect("\"");
+        StringBuilder builder = new StringBuilder();
+        while (position < text.length()) {
+            char character = text.charAt(position++);
+            if (character == '"') {
+                return builder.toString();
+            }
+            if (character != '\\') {
+                builder.append(character);
+                continue;
+            }
+            if (position >= text.length()) {
+                throw new IllegalArgumentException("Unterminated JSON string.");
+            }
+            char escaped = text.charAt(position++);
+            switch (escaped) {
+                case '"' -> builder.append('"');
+                case '\\' -> builder.append('\\');
+                case '/' -> builder.append('/');
+                case 'b' -> builder.append('\b');
+                case 'f' -> builder.append('\f');
+                case 'n' -> builder.append('\n');
+                case 'r' -> builder.append('\r');
+                case 't' -> builder.append('\t');
+                case 'u' -> {
+                    if (position + 4 > text.length()) {
+                        throw new IllegalArgumentException("Invalid unicode escape.");
+                    }
+                    builder.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
+                    position += 4;
+                }
+                default -> throw new IllegalArgumentException("Invalid JSON escape.");
+            }
+        }
+        throw new IllegalArgumentException("Unterminated JSON string.");
+    }
+
+    private Object readNumber() {
+        int start = position;
+        while (position < text.length()) {
+            char character = text.charAt(position);
+            if ((character >= '0' && character <= '9')
+                    || character == '-'
+                    || character == '+'
+                    || character == '.'
+                    || character == 'e'
+                    || character == 'E') {
+                position++;
+            } else {
+                break;
+            }
+        }
+        if (start == position) {
+            throw new IllegalArgumentException("Invalid JSON value.");
+        }
+        String number = text.substring(start, position);
+        if (number.indexOf('.') >= 0 || number.indexOf('e') >= 0 || number.indexOf('E') >= 0) {
+            return Double.valueOf(number);
+        }
+        return Long.valueOf(number);
+    }
+
+    private void skipWhitespace() {
+        while (position < text.length() && Character.isWhitespace(text.charAt(position))) {
+            position++;
+        }
+    }
+
+    private boolean peek(char expected) {
+        return position < text.length() && text.charAt(position) == expected;
+    }
+
+    private void expect(String expected) {
+        if (!text.startsWith(expected, position)) {
+            throw new IllegalArgumentException("Expected " + expected + ".");
+        }
+        position += expected.length();
+    }
+
+    private static String quote(String value) {
+        StringBuilder builder = new StringBuilder("\"");
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            switch (character) {
+                case '"' -> builder.append("\\\"");
+                case '\\' -> builder.append("\\\\");
+                case '\b' -> builder.append("\\b");
+                case '\f' -> builder.append("\\f");
+                case '\n' -> builder.append("\\n");
+                case '\r' -> builder.append("\\r");
+                case '\t' -> builder.append("\\t");
+                default -> {
+                    if (character < 0x20) {
+                        builder.append(String.format("\\u%04x", (int) character));
+                    } else {
+                        builder.append(character);
+                    }
+                }
+            }
+        }
+        return builder.append('"').toString();
+    }
+}

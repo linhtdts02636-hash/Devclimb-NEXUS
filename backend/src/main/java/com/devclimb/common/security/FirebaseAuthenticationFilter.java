@@ -28,6 +28,7 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
 	public static final String AUTHENTICATED_USER_ATTRIBUTE = "authenticatedFirebaseUser";
 
+	private static final String PUBLIC_SUBMISSION_PATH = ""; // For testing, if you don't want to go through auth to test an API, put it here
 	private static final String BEARER_PREFIX = "Bearer ";
 	private static final boolean CHECK_REVOKED = true;
 	private static final String FIREBASE_CLAIM = "firebase";
@@ -51,6 +52,10 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 		return devHeaderEnabled
 				|| HttpMethod.OPTIONS.matches(request.getMethod())
 				|| !request.getRequestURI().startsWith("/api/");
+		String servletPath = request.getServletPath();
+		return HttpMethod.OPTIONS.matches(request.getMethod())
+				|| PUBLIC_SUBMISSION_PATH.equals(servletPath)
+				|| (PUBLIC_SUBMISSION_PATH + "/").equals(servletPath);
 	}
 
 	@Override
