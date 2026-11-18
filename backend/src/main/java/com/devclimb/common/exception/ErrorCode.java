@@ -12,6 +12,8 @@ public enum ErrorCode {
 	ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "This account has been disabled."),
 	ACCOUNT_CONFLICT(HttpStatus.CONFLICT, "An account with these details already exists."),
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "No account found for this session. Sign in again."),
+	COMMUNITY_NOT_FOUND(HttpStatus.NOT_FOUND, "Cộng đồng không tồn tại."),
+	COMMUNITY_SLUG_CONFLICT(HttpStatus.CONFLICT, "Có nhiều cộng đồng cùng đường dẫn."),
 	PUZZLE_LANGUAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "This puzzle does not support the selected language."),
 	TESTCASES_NOT_FOUND(HttpStatus.NOT_FOUND, "This puzzle has no test cases yet."),
 	LANGUAGE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "This language is not supported for submissions yet."),
