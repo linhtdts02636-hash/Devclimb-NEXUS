@@ -12,8 +12,8 @@ public interface PtagRepository extends JpaRepository<Ptag, Integer> {
 
 	List<Ptag> findByNameIn(Collection<String> names);
 
-	// Puzzle creation can race with another request creating the same tag. The
-	// upsert keeps that race from turning into a database constraint exception.
+	// Hai request tạo puzzle cùng lúc có thể cùng tạo một tag. Upsert giúp tránh
+	// lỗi unique constraint trên ptag_name.
 	@Modifying
 	@Query(value = """
 			INSERT INTO ptag (ptag_name)
@@ -21,4 +21,15 @@ public interface PtagRepository extends JpaRepository<Ptag, Integer> {
 			ON CONFLICT (ptag_name) DO NOTHING
 			""", nativeQuery = true)
 	void insertIfAbsent(@Param("name") String name);
+
+	// Đếm số puzzle cho từng tag bằng một query aggregate duy nhất.
+	// LEFT JOIN để tag chưa gắn puzzle nào vẫn xuất hiện với count = 0.
+	@Query(value = """
+			SELECT p.ptag_name, COUNT(pp.puzz_id)
+			FROM ptag p
+			LEFT JOIN ptag_puzzle pp ON pp.ptag_id = p.ptag_id
+			GROUP BY p.ptag_id, p.ptag_name
+			ORDER BY COUNT(pp.puzz_id) DESC, p.ptag_name ASC
+			""", nativeQuery = true)
+	List<Object[]> findTagUsage();
 }

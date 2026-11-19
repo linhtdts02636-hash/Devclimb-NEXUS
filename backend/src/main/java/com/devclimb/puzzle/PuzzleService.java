@@ -180,7 +180,8 @@ public class PuzzleService {
 						languages.get(language.languageId()),
 						language.functionHeader().trim()))
 				.toList();
-		// Judge0 calls are deliberately outside the persistence transaction below.
+		// Cố tình gọi Judge0 ra ngoài transaction bên dưới: network call có thể chậm
+		// hoặc timeout, không nên giữ DB transaction mở trong lúc chờ.
 		functionHeaderValidator.validate(headers);
 
 		List<String> tagNames = normalizeTags(request.tags());
@@ -193,8 +194,8 @@ public class PuzzleService {
 	}
 
 	private void requireMembership(Integer userId, Integer communityId) {
-		// Membership is the only permission rule for now. A role-aware check can
-		// replace this method without changing the rest of the creation flow.
+		// Tạm thời chỉ kiểm tra membership. Sau này nếu thêm role, chỉ cần thay
+		// method này mà không phải sửa phần còn lại của luồng tạo puzzle.
 		if (!userCommunityRepository.existsById(new UserCommunityId(userId, communityId))) {
 			throw new ApiException(ErrorCode.NOT_A_MEMBER);
 		}
@@ -256,8 +257,8 @@ public class PuzzleService {
 			return List.of();
 		}
 
-		// Upsert first so two creators using the same new tag do not race on the
-		// unique ptag_name constraint.
+		// Upsert trước để hai người cùng tạo một tag mới không đụng unique
+		// constraint trên ptag_name.
 		for (String tagName : tagNames) {
 			ptagRepository.insertIfAbsent(tagName);
 		}

@@ -6,21 +6,12 @@ import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchCommunity } from '../../features/community/communityApi'
 import { createCodeEditor, getEditorLanguage } from '../../features/editor/codeEditor'
-import { createPuzzle } from '../../features/puzzle/puzzleApi'
+import { DEFAULT_FUNCTION_HEADERS } from '../../features/editor/defaultHeaders'
+import { createPuzzle, fetchTags, invalidateTags } from '../../features/puzzle/puzzleApi'
 import { getBackendLanguageId } from '../../features/submission/submissionApi'
 
 const CREATE_LANGUAGE_IDS = ['python', 'java', 'javascript']
 const MAX_TAGS = 20
-const SEEDED_TAGS = [
-  'array',
-  'string',
-  'math',
-  'stack',
-  'two-pointers',
-  'binary-search',
-  'sorting',
-  'dynamic-programming',
-]
 const DIFFICULTY_OPTIONS = [
   { value: 'EASY', label: 'Easy', tone: 'easy' },
   { value: 'MEDIUM', label: 'Medium', tone: 'medium' },
@@ -31,18 +22,6 @@ const router = useRouter()
 const community = ref(null)
 const communityStatus = ref('loading') // loading | ready | blocked | missing | failed
 const communityError = ref('')
-const DEFAULT_HEADERS = {
-  python: 'def functionHeader(arg1, arg2):',
-  java: `import java.util.*;
-
-class Solution {
-    public static int functionHeader(String arg1, String arg2) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-}`,
-  javascript: 'function functionHeader(arg1, arg2) {',
-}
-
 const form = reactive({
   title: '',
   difficulty: 'MEDIUM',
@@ -53,11 +32,13 @@ const errors = reactive({
   content: '',
 })
 const selectedTags = ref([])
-const availableTags = ref([...SEEDED_TAGS])
+const availableTags = ref([])
+const tagsLoading = ref(false)
+const tagsError = ref('')
 const tagQuery = ref('')
 const tagError = ref('')
 const selectedLanguages = ref(['python'])
-const headers = reactive({ ...DEFAULT_HEADERS })
+const headers = reactive({ ...DEFAULT_FUNCTION_HEADERS })
 const headerErrors = ref({})
 const languageError = ref('')
 const testcases = ref([{ id: 0, input: '', output: '' }])
@@ -84,17 +65,32 @@ const normalizedTagQuery = computed(() => normalizeTag(tagQuery.value))
 const filteredTags = computed(() => {
   const query = tagQuery.value.trim().toLowerCase()
   if (!query) return availableTags.value
-  return availableTags.value.filter((tag) => tag.toLowerCase().includes(query))
+  return availableTags.value.filter((tag) => tag.name.toLowerCase().includes(query))
 })
 const canCreateTag = computed(() => {
   const name = normalizedTagQuery.value
   if (!name || name.length > 50 || selectedTags.value.length >= MAX_TAGS) return false
-  return !availableTags.value.some((tag) => tag.toLowerCase() === name)
+  return !availableTags.value.some((tag) => tag.name.toLowerCase() === name)
 })
 const createTone = ref('idle')
 const createLabel = ref('Draft')
 const createMessage = ref('Fill in the puzzle details, then create.')
 const isCreating = ref(false)
+
+// Tải catalog tag kèm số puzzle. Cache ở puzzleApi giúp mở lại trang không
+// phải gọi API liên tục.
+async function loadTags() {
+  tagsLoading.value = true
+  tagsError.value = ''
+  try {
+    availableTags.value = await fetchTags()
+  } catch (error) {
+    tagsError.value = describeApiError(error).message
+    availableTags.value = []
+  } finally {
+    tagsLoading.value = false
+  }
+}
 
 async function loadCommunity() {
   communityStatus.value = 'loading'
@@ -103,8 +99,8 @@ async function loadCommunity() {
     const loaded = await fetchCommunity(route.params.name)
     community.value = loaded
     if (!loaded.isMember) {
-      // The backend repeats this check. Hiding the form here keeps non-members
-      // from filling in a draft that cannot be submitted.
+      // Backend vẫn kiểm tra lại quyền này. Ẩn form ở client để người không
+      // phải member không mất thời gian điền một draft không thể gửi.
       communityStatus.value = 'blocked'
       communityError.value = `Only members of c/${loaded.name} can create puzzles. Join the community first.`
       return
@@ -231,9 +227,9 @@ function submitTagQuery() {
     return
   }
 
-  const existing = availableTags.value.find((tag) => tag.toLowerCase() === name)
+  const existing = availableTags.value.find((tag) => tag.name.toLowerCase() === name)
   if (existing) {
-    selectTag(existing)
+    selectTag(existing.name)
     tagQuery.value = ''
     tagError.value = ''
     return
@@ -244,7 +240,8 @@ function submitTagQuery() {
     return
   }
 
-  availableTags.value = [...availableTags.value, name]
+  // Tag mới chưa có puzzle nào dùng, count tạm là 0 cho tới lần tải lại catalog.
+  availableTags.value = [...availableTags.value, { name, puzzleCount: 0 }]
   selectedTags.value = [...selectedTags.value, name]
   tagQuery.value = ''
   tagError.value = ''
@@ -285,7 +282,7 @@ function mountHeaderEditor(languageId) {
   const editor = createCodeEditor({
     parent: host,
     language: languageId,
-    doc: headers[languageId] ?? DEFAULT_HEADERS[languageId] ?? '',
+    doc: headers[languageId] ?? DEFAULT_FUNCTION_HEADERS[languageId] ?? '',
   })
   headerEditors.set(languageId, editor)
 }
@@ -419,12 +416,12 @@ async function handleCreate() {
       content: form.content.trim(),
       communityId: community.value.id,
       tags: selectedTags.value,
-      // The editor uses string IDs; the API expects the numeric language rows.
+      // Editor dùng ID dạng chuỗi; API cần numeric language row trong DB.
       languages: selectedLanguages.value.map((languageId) => ({
         languageId: getBackendLanguageId(languageId),
         functionHeader: (headers[languageId] ?? '').trim(),
       })),
-      // Keep testcase whitespace exactly as the author typed it.
+      // Giữ nguyên khoảng trắng của testcase đúng như tác giả nhập.
       testcases: testcases.value.map((testcase) => ({
         input: testcase.input,
         output: testcase.output,
@@ -434,6 +431,8 @@ async function handleCreate() {
     createTone.value = 'accepted'
     createLabel.value = 'Created'
     createMessage.value = 'Puzzle created. Opening it now...'
+    // Count của tag vừa dùng đã thay đổi, lần mở trang tạo tiếp theo phải tải mới.
+    invalidateTags()
     router.push({ name: 'puzzle-solve', params: { id: created.id } })
   } catch (error) {
     const { message } = describeApiError(error)
@@ -458,6 +457,7 @@ onMounted(() => {
   document.addEventListener('pointerdown', handleDocumentPointer)
   document.addEventListener('keydown', handleDocumentKeydown)
   loadCommunity()
+  loadTags()
 })
 
 onBeforeUnmount(() => {
@@ -622,20 +622,25 @@ onBeforeUnmount(() => {
                   />
 
                   <div class="menu-list">
+                    <p v-if="tagsLoading" class="menu-empty">Loading tags...</p>
+
                     <button
                       v-for="tag in filteredTags"
-                      :key="tag"
+                      :key="tag.name"
                       class="menu-item"
-                      :class="{ selected: selectedTags.includes(tag) }"
+                      :class="{ selected: selectedTags.includes(tag.name) }"
                       type="button"
-                      @click="toggleTag(tag)"
+                      @click="toggleTag(tag.name)"
                     >
                       <span class="check">
-                        <svg v-if="selectedTags.includes(tag)" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg v-if="selectedTags.includes(tag.name)" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="m5 12 4 4L19 6" />
                         </svg>
                       </span>
-                      <span>{{ tag }}</span>
+                      <span class="tag-name">{{ tag.name }}</span>
+                      <span class="tag-count">
+                        {{ tag.puzzleCount }} {{ tag.puzzleCount === 1 ? 'puzzle' : 'puzzles' }}
+                      </span>
                     </button>
 
                     <button
@@ -652,7 +657,11 @@ onBeforeUnmount(() => {
                       <span>Create "{{ normalizedTagQuery }}"</span>
                     </button>
 
-                    <p v-if="!filteredTags.length && !canCreateTag" class="menu-empty">
+                    <p v-if="tagsError" class="menu-empty">{{ tagsError }}</p>
+                    <p
+                      v-else-if="!tagsLoading && !filteredTags.length && !canCreateTag"
+                      class="menu-empty"
+                    >
                       No matching tags.
                     </p>
                   </div>
@@ -1414,6 +1423,28 @@ onBeforeUnmount(() => {
 .menu-item.selected {
   color: var(--ac);
   background: var(--ac-soft);
+}
+
+.tag-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--tx3);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.menu-item.selected .tag-count {
+  color: var(--ac);
+  opacity: 0.8;
 }
 
 .check {

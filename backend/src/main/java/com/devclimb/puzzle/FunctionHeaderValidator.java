@@ -25,8 +25,8 @@ public class FunctionHeaderValidator {
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionHeaderValidator.class);
 	private static final int COMPILE_ERROR_STATUS_ID = 6;
-	// Interpreted languages sometimes report parser failures as runtime errors.
-	// These markers separate a real syntax failure from our probe's missing args.
+	// Ngôn ngữ thông dịch đôi khi trả lỗi parser dưới dạng runtime error. Các dấu
+	// hiệu này giúp phân biệt lỗi syntax thật với lỗi do probe thiếu tham số.
 	private static final Pattern SYNTAX_ERROR_PATTERN = Pattern.compile(
 			"(?i)(syntaxerror|indentationerror|taberror|unexpected end of input|unexpected token|invalid syntax)");
 
@@ -38,9 +38,10 @@ public class FunctionHeaderValidator {
 		this.judge0Client = judge0Client;
 	}
 
-	// Compile and run a tiny program made from the header and the real submission
-	// wrapper. Non-syntax runtime errors are ignored because the probe has no useful
-	// arguments; a compile failure or parser failure means the header is invalid.
+	// Ý tưởng: ghép function header với đúng SubmissionWrapper mà lúc chấm bài sẽ
+	// dùng, rồi compile và chạy thử. Lỗi runtime không phải lỗi syntax bị bỏ qua vì
+	// probe cố tình không truyền tham số; chỉ compile fail hoặc parser fail mới kết
+	// luận header sai.
 	public void validate(List<LanguageHeader> headers) {
 		for (LanguageHeader header : headers) {
 			validateOne(header);
@@ -56,8 +57,8 @@ public class FunctionHeaderValidator {
 
 		List<JsonNode> results;
 		try {
-			// An empty stdin keeps the probe cheap. The wrapper may fail at runtime
-			// when the function expects arguments, but it will still have compiled.
+			// stdin rỗng để probe chạy nhanh. Wrapper có thể lỗi runtime khi hàm cần
+			// tham số, nhưng lúc đó code đã compile xong nên vẫn đủ để kiểm tra header.
 			List<String> tokens = judge0Client.submitBatch(
 					wrappedSource,
 					language.getJudge0Id(),
@@ -82,6 +83,8 @@ public class FunctionHeaderValidator {
 		}
 		String compileOutput = Judge0Client.decodeBase64(textField(result, "compile_output"));
 		String stderr = Judge0Client.decodeBase64(textField(result, "stderr"));
+		// Kiểm tra cả compile_output vì một số language/Judge0 version không trả
+		// status 6 dù compiler đã báo lỗi cú pháp.
 		if (statusId == COMPILE_ERROR_STATUS_ID
 				|| SYNTAX_ERROR_PATTERN.matcher(compileOutput).find()
 				|| SYNTAX_ERROR_PATTERN.matcher(stderr).find()) {
@@ -96,6 +99,7 @@ public class FunctionHeaderValidator {
 
 	private String buildProbeSource(String languageName, String functionHeader) {
 		String name = languageName == null ? "" : languageName.trim().toLowerCase(Locale.ROOT);
+		// Header một dòng của Python/JS cần thêm thân rỗng tối thiểu để parser chấp nhận.
 		return switch (name) {
 			case "python" -> functionHeader.endsWith(":") ? functionHeader + "\n    pass" : functionHeader;
 			case "javascript" -> functionHeader.endsWith("{") ? functionHeader + "\n}" : functionHeader;
@@ -105,8 +109,8 @@ public class FunctionHeaderValidator {
 	}
 
 	private String buildJavaProbe(String functionHeader) {
-		// A full Java class is already a complete compilation unit.
-		// note on this, there would be C# implemented later, so this may or may not work.
+		// Nếu header đã là cả một class Java thì nó đã đủ compilation unit. Lưu ý:
+		// sau này thêm C# có thể cần nhánh riêng vì cú pháp/khung class khác Java.
 		if (functionHeader.contains("class ")) {
 			return functionHeader;
 		}

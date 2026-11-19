@@ -30,9 +30,11 @@ export function toPuzzleCard(puzzle) {
     createdLabel: formatDate(puzzle.createdAt),
     acceptance: '',
     showProof: false,
+    // Backend đã trả sẵn community name/image; fallback cũ chỉ dùng khi API cũ
+    // hoặc dữ liệu thiếu để card vẫn có avatar hợp lệ.
     community: {
-      src: '/favicon.svg',
-      name: puzzle.communityId != null ? `Community #${puzzle.communityId}` : 'Community',
+      src: puzzle.communityImageUrl || '/favicon.svg',
+      name: puzzle.communityName || (puzzle.communityId != null ? `Community #${puzzle.communityId}` : 'Community'),
       type: 'community',
     },
   }

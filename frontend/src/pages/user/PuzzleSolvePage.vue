@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { EDITOR_LANGUAGES, buildStarter, createCodeEditor, getEditorLanguage } from '../../features/editor/codeEditor'
 import { fetchPuzzle } from '../../features/puzzle/puzzleApi'
-import { getBackendLanguageId } from '../../features/submission/submissionApi'
+import { getBackendLanguageId, getEditorLanguageId } from '../../features/submission/submissionApi'
 import { usePuzzleSubmission } from '../../features/submission/usePuzzleSubmission'
 
 const editorHost = ref(null)
@@ -14,11 +14,10 @@ const runHint = 'Ctrl+Enter to submit'
 
 let editor = null
 let activeLanguage = 'python'
-// Gi��_ code riA�ng cho t���ng ngA'n ng��_ khi �`��i qua l���i.
 const languageDrafts = new Map()
 const puzzle = ref(null)
 
-// Only show languages that this puzzle actually supports.
+// Chỉ hiển thị những ngôn ngữ mà puzzle này thực sự hỗ trợ.
 const submissionLanguages = computed(() => {
   const allowedIds = new Set((puzzle.value?.languages ?? []).map((language) => language.languageId))
   return EDITOR_LANGUAGES.filter((language) => allowedIds.has(getBackendLanguageId(language.id)))
@@ -33,11 +32,15 @@ const difficultyLabel = computed(() => {
   return difficulty.charAt(0) + difficulty.slice(1).toLowerCase()
 })
 const difficultyTone = computed(() => puzzle.value?.difficulty?.toLowerCase() ?? '')
+// Map header theo languageId của DB, không dựa vào languageName vì tên có thể
+// khác hoa/thường hoặc đổi nhãn. Header này chính là pula_functionheader.
 const functionHeaders = computed(() => {
   const headers = new Map()
   for (const language of puzzle.value?.languages ?? []) {
-    if (language.languageName) {
-      headers.set(language.languageName.toLowerCase(), language.functionHeader)
+    const editorLanguageId = getEditorLanguageId(language.languageId)
+    const header = language.functionHeader?.trim()
+    if (editorLanguageId && header) {
+      headers.set(editorLanguageId, header)
     }
   }
   return headers
@@ -67,6 +70,7 @@ function handleUpdate({ line, column }) {
 }
 
 function starterFor(languageId) {
+  // Ưu tiên header thật từ DB; buildStarter tự dùng placeholder chung nếu thiếu.
   return buildStarter(languageId, functionHeaders.value.get(languageId))
 }
 
@@ -114,6 +118,7 @@ async function loadPuzzle() {
     const data = await fetchPuzzle(puzzleId.value)
     if (token !== puzzleRequest) return
     puzzle.value = data
+    // Nếu ngôn ngữ đang chọn không thuộc puzzle, chuyển sang ngôn ngữ hợp lệ đầu tiên.
     const nextLanguage = submissionLanguages.value.some((language) => language.id === selectedLanguage.value)
       ? selectedLanguage.value
       : submissionLanguages.value[0]?.id

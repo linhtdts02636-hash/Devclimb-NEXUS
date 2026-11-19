@@ -9,8 +9,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-// Full create payload: the puzzle row plus the language headers, tags, and
-// hidden testcases that are written in the same transaction.
+// Payload đầy đủ khi tạo puzzle: thông tin puzzle, function header từng ngôn ngữ,
+// tag và testcase ẩn — tất cả được ghi trong cùng một transaction.
 public record CreatePuzzleRequest(
 		@NotBlank @Size(max = 200) String title,
 		@NotNull PuzzleDifficulty difficulty,
