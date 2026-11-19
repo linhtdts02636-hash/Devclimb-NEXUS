@@ -262,7 +262,8 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-else-if="activeTab === 'puzzles' || activeTab === 'contests'" role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
-              <p>{{ activeTab === 'puzzles' ? 'Puzzles' : 'Contests' }} for this community are coming soon.</p>
+              <p v-if="activeTab === 'puzzles'">Puzzle listing for this community is coming soon. Members can create a puzzle now.</p>
+              <p v-else>Contests for this community are coming soon.</p>
             </div>
 
             <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">

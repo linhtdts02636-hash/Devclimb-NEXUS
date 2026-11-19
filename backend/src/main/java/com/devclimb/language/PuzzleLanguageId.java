@@ -1,4 +1,4 @@
-package com.devclimb.puzzle;
+package com.devclimb.language;
 
 import java.io.Serializable;
 import java.util.Objects;

@@ -7,6 +7,8 @@ export const router = createRouter({
     { path: '/', component: () => import('../pages/guest/LandingPage.vue') },
     { path: '/login', component: () => import('../pages/guest/LoginPage.vue'), meta: { guestOnly: true } },
     { path: '/puzzles', name: 'puzzles', component: () => import('../pages/user/PuzzlePage.vue'), meta: { requiresAuth: true } },
+    { path: '/puzzles/new', redirect: '/communities' },
+    { path: '/community/:name/puzzles/new', name: 'puzzle-create', component: () => import('../pages/user/PuzzleCreatePage.vue'), meta: { requiresAuth: true } },
     { path: '/puzzle/:id', name: 'puzzle-solve', component: () => import('../pages/user/PuzzleSolvePage.vue'), meta: { requiresAuth: true } },
     { path: '/communities', component: () => import('../pages/user/MyCommunitiesPage.vue'), meta: { requiresAuth: true } },
     { path: '/communities/new', component: () => import('../pages/user/CreateCommunityPage.vue'), meta: { requiresAuth: true } },

@@ -3,6 +3,9 @@ package com.devclimb.puzzle;
 import java.time.Instant;
 import java.util.List;
 
+import com.devclimb.language.PuzzleLanguage;
+import com.devclimb.language.PuzzleLanguageDTO;
+
 public record PuzzleDTO(
 		Integer id,
 		String title,

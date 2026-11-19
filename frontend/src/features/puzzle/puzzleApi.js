@@ -18,6 +18,9 @@ export async function fetchPuzzle(id) {
   return response.data
 }
 
+// The payload includes the target community, normalized tags, per-language
+// headers, and the private testcase rows. The backend validates each header by
+// compiling it through Judge0 before saving anything.
 export async function createPuzzle(puzzle) {
   const response = await apiClient.post('/puzzles', puzzle)
   return response.data

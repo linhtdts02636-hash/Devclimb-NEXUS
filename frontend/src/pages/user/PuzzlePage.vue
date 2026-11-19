@@ -5,8 +5,6 @@ import ContestCard from '../../features/contest/components/ContestCard.vue'
 import PuzzleCard from '../../features/puzzle/components/PuzzleCard.vue'
 import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
-import CreatePuzzleModal from '../../features/puzzle/components/CreatePuzzleModal.vue'
-import { fetchCommunity, fetchMyCommunities } from '../../features/community/communityApi'
 import { fetchPuzzles } from '../../features/puzzle/puzzleApi'
 import { toPuzzleCard } from '../../features/puzzle/puzzleMapper'
 import { useAuthStore } from '../../stores/authStore'
@@ -14,10 +12,8 @@ import { useAuthStore } from '../../stores/authStore'
 const authStore = useAuthStore()
 const router = useRouter()
 const contestTrack = ref(null)
-const isCreateOpen = ref(false)
 
 const community = ref({ src: '/favicon.svg', name: 'fpt-algo-club', type: 'community' })
-const communityId = ref(null)
 
 const contests = [
   {
@@ -139,48 +135,12 @@ function goToPage(target) {
   loadPuzzles()
 }
 
-function applyCommunity(data) {
-  community.value = {
-    src: data.imageUrl || '/favicon.svg',
-    name: data.name || 'Community',
-    type: 'community',
-  }
-  communityId.value = data.id ?? null
-}
-
-// this function is actually very ass, it hard selects the fpt-algo-club to create puzzles.
-//create puzzles should exist in community page instead. So it's Khoa's responsibility later.
-async function loadCommunity() {
-  try {
-    applyCommunity(await fetchCommunity('fpt-algo-club'))
-    return
-  } catch {
-  }
-
-  try {
-    const [first] = await fetchMyCommunities()
-    if (first) {
-      applyCommunity(first)
-      return
-    }
-  } catch {
-  }
-  communityId.value = null
-}
-
-function handlePuzzleCreated() {
-  isCreateOpen.value = false
-  page.value = 0
-  loadPuzzles()
-}
-
 onMounted(async () => {
   await authStore.initialize()
   if (authStore.status !== 'authenticated') {
     router.push('/login')
     return
   }
-  loadCommunity()
   loadPuzzles()
 })
 
@@ -241,10 +201,6 @@ function scrollContests(direction) {
         </button>
       </div>
       <section class="toolbar" aria-label="Filter puzzles">
-        <div class="create-bar">
-
-        </div>
-
         <div class="toolbar-row">
           <div class="search">
             <svg class="ic search-icon"><use href="#ic-search" /></svg>
@@ -339,13 +295,6 @@ function scrollContests(direction) {
     </main>
 
     <SiteFooter />
-
-    <CreatePuzzleModal
-      :open="isCreateOpen"
-      :community-id="communityId"
-      @close="isCreateOpen = false"
-      @created="handlePuzzleCreated"
-    />
   </div>
 </template>
 
@@ -451,39 +400,6 @@ function scrollContests(direction) {
   background: var(--s1);
   border: 1px solid var(--line2);
   border-radius: var(--r);
-}
-
-.create-bar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.create-btn {
-margin-left:auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: 36px;
-  width:fit-content;
-  padding: 0 var(--s-4);
-  color: var(--ac-ink);
-  background: var(--ac);
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font: 600 13px var(--f-head);
-}
-
-.create-btn:hover {
-  filter: brightness(1.08);
-}
-
-.create-plus {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
 }
 
 .toolbar-row {

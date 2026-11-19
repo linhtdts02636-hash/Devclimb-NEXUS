@@ -14,16 +14,17 @@ const runHint = 'Ctrl+Enter to submit'
 
 let editor = null
 let activeLanguage = 'python'
-// Giữ code riêng cho từng ngôn ngữ khi đổi qua lại.
+// Gi��_ code riA�ng cho t���ng ngA'n ng��_ khi �`��i qua l���i.
 const languageDrafts = new Map()
+const puzzle = ref(null)
 
-// Chỉ hiện ngôn ngữ backend có wrapper chấm bài.
-const submissionLanguages = computed(() =>
-  EDITOR_LANGUAGES.filter((language) => getBackendLanguageId(language.id) != null),
-)
+// Only show languages that this puzzle actually supports.
+const submissionLanguages = computed(() => {
+  const allowedIds = new Set((puzzle.value?.languages ?? []).map((language) => language.languageId))
+  return EDITOR_LANGUAGES.filter((language) => allowedIds.has(getBackendLanguageId(language.id)))
+})
 const selectedLanguageInfo = computed(() => getEditorLanguage(selectedLanguage.value))
 const fileTag = computed(() => selectedLanguageInfo.value.fileName)
-const puzzle = ref(null)
 const puzzleLoading = ref(true)
 const puzzleError = ref('')
 const difficultyLabel = computed(() => {
@@ -72,7 +73,13 @@ function starterFor(languageId) {
 function handleLanguageChange(event) {
   if (!editor) return
 
-  selectedLanguage.value = event.target.value
+  const nextLanguage = event.target.value
+  if (!submissionLanguages.value.some((language) => language.id === nextLanguage)) {
+    event.target.value = selectedLanguage.value
+    return
+  }
+
+  selectedLanguage.value = nextLanguage
   languageDrafts.set(activeLanguage, editor.getValue())
   activeLanguage = selectedLanguage.value
   editor.setLanguage(activeLanguage)
@@ -107,6 +114,14 @@ async function loadPuzzle() {
     const data = await fetchPuzzle(puzzleId.value)
     if (token !== puzzleRequest) return
     puzzle.value = data
+    const nextLanguage = submissionLanguages.value.some((language) => language.id === selectedLanguage.value)
+      ? selectedLanguage.value
+      : submissionLanguages.value[0]?.id
+    if (nextLanguage) {
+      selectedLanguage.value = nextLanguage
+      activeLanguage = nextLanguage
+      editor?.setLanguage(nextLanguage)
+    }
     languageDrafts.clear()
     editor?.setValue(starterFor(selectedLanguage.value))
   } catch (error) {

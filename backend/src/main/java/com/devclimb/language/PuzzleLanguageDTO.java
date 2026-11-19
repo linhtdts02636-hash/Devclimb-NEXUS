@@ -1,6 +1,4 @@
-package com.devclimb.puzzle;
-
-import com.devclimb.language.Language;
+package com.devclimb.language;
 
 public record PuzzleLanguageDTO(
 		Integer languageId,
