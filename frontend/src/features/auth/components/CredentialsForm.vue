@@ -7,7 +7,7 @@ import {
   validateNewPassword,
   validatePasswordConfirmation,
 } from '../validation'
-import TextField from '../../../components/TextField.vue'
+import TextField from '../../../components/common/TextField.vue'
 
 const props = defineProps({
   mode: { type: String, required: true },

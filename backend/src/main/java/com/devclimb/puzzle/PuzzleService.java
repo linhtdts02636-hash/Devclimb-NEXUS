@@ -16,7 +16,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.devclimb.auth.AuthenticationService;
+import com.devclimb.common.exception.ApiException;
+import com.devclimb.common.exception.ErrorCode;
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
+import com.devclimb.community.Community;
+import com.devclimb.community.CommunityRepository;
 import com.devclimb.tag.PtagPuzzleRepository;
 import com.devclimb.user.User;
 
@@ -24,21 +28,23 @@ import com.devclimb.user.User;
 public class PuzzleService {
 
 	private static final Set<Integer> ALLOWED_PAGE_SIZES = Set.of(10, 30, 50);
-	private static final int DEFAULT_COMMUNITY_ID = 1;
 
 	private final PuzzleRepository puzzleRepository;
 	private final PuzzleLanguageRepository puzzleLanguageRepository;
 	private final PtagPuzzleRepository ptagPuzzleRepository;
+	private final CommunityRepository communityRepository;
 	private final AuthenticationService authenticationService;
 
 	public PuzzleService(
 			PuzzleRepository puzzleRepository,
 			PuzzleLanguageRepository puzzleLanguageRepository,
 			PtagPuzzleRepository ptagPuzzleRepository,
+			CommunityRepository communityRepository,
 			AuthenticationService authenticationService) {
 		this.puzzleRepository = puzzleRepository;
 		this.puzzleLanguageRepository = puzzleLanguageRepository;
 		this.ptagPuzzleRepository = ptagPuzzleRepository;
+		this.communityRepository = communityRepository;
 		this.authenticationService = authenticationService;
 	}
 
@@ -123,9 +129,12 @@ public class PuzzleService {
 	@Transactional
 	public PuzzleDTO createPuzzle(CreatePuzzleRequest request, AuthenticatedFirebaseUser firebaseUser) {
 		User author = authenticationService.findCurrentUser(firebaseUser);
+		Community community = communityRepository.findById(request.communityId())
+				.filter(Community::isActive)
+				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
 		Puzzle puzzle = new Puzzle(
 				author,
-				DEFAULT_COMMUNITY_ID,
+				community,
 				request.difficulty(),
 				request.title().trim(),
 				request.content().trim());

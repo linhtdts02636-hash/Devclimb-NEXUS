@@ -4,6 +4,7 @@ import { createPuzzle } from '../puzzleApi'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  communityId: { type: Number, default: null },
 })
 
 const emit = defineEmits(['close', 'created'])
@@ -56,6 +57,10 @@ function close() {
 
 async function submit() {
   if (isSubmitting.value || !validate()) return
+  if (!Number.isInteger(props.communityId) || props.communityId <= 0) {
+    serverError.value = 'Community is unavailable. Try again later.'
+    return
+  }
 
   isSubmitting.value = true
   serverError.value = ''
@@ -66,6 +71,7 @@ async function submit() {
       functionName: form.functionName.trim(),
       difficulty: form.difficulty,
       content: form.content.trim(),
+      communityId: props.communityId,
     })
     emit('created', puzzle)
   } catch (error) {

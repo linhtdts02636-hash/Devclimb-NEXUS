@@ -1,8 +1,8 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/authStore'
-import AppLogo from '../../AppLogo.vue'
-import ThemeToggle from '../../ThemeToggle.vue'
+import AppLogo from '../../common/AppLogo.vue'
+import ThemeToggle from '../../common/ThemeToggle.vue'
 import NavSearch from '../NavSearch.vue'
 
 const authStore = useAuthStore()

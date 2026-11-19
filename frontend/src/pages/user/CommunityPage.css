@@ -41,6 +41,9 @@
 
 .community-avatar {
   align-self: flex-start;
+}
+
+.community-avatar :deep(.avatar-box) {
   border: 4px solid var(--bg);
 }
 
@@ -128,28 +131,6 @@ h1 {
   color: var(--tx2);
   border: 1px dashed var(--line2);
   border-radius: var(--r);
-}
-
-.composer {
-  display: flex;
-  gap: var(--s-3);
-  align-items: center;
-  padding: var(--s-3) var(--s-4);
-  background: var(--s1);
-  border: 1px solid var(--line2);
-  border-radius: var(--r);
-}
-
-.composer button {
-  flex: 1;
-  height: 38px;
-  padding: 0 var(--s-4);
-  font-size: var(--t-sm);
-  text-align: left;
-  color: var(--tx2);
-  background: var(--s2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
 }
 
 .sample-note {
@@ -265,6 +246,70 @@ h1 {
 .skeleton.line {
   height: 56px;
   margin-top: var(--s-5);
+}
+
+.confirm-text {
+  color: var(--tx);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+
+.confirm-title {
+  margin-top: var(--s-2);
+  color: var(--tx2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.confirm-error {
+  margin-top: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  color: var(--bad);
+  font-size: var(--t-xs);
+  line-height: 1.45;
+  background: color-mix(in srgb, var(--bad) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bad) 36%, transparent);
+  border-radius: var(--r-sm);
+}
+
+.btn--danger {
+  background: var(--bad);
+  color: #ffffff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bad) 88%, #000000);
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 20;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.4;
+  background: #1f1f1e;
+  border-radius: 999px;
+  box-shadow: var(--sh-pop);
+  transform: translateX(-50%);
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition:
+    opacity 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 6px);
 }
 
 @media (max-width: 1100px) {

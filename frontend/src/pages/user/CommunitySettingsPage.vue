@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import AvatarImage from '../../components/AvatarImage.vue'
+import Avatar from '../../components/common/Avatar.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import CommunityForm from '../../features/community/components/CommunityForm.vue'
@@ -91,7 +91,7 @@ function closeDeleteDialog() {
   <main class="page">
     <RouterLink class="back" :to="`/community/${communityName}`">&larr; Back to c/{{ communityName }}</RouterLink>
     <div class="title">
-      <AvatarImage :image-url="community?.imageUrl" :name="communityName" :size="48" />
+      <Avatar :src="community?.imageUrl" :name="communityName" :size="48" :show-name="false" />
       <div>
         <h1><span>c/</span>{{ communityName }}</h1>
         <p>Community settings</p>

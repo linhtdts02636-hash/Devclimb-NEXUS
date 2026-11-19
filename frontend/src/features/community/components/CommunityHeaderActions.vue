@@ -1,16 +1,13 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const props = defineProps({
+defineProps({
   community: { type: Object, required: true },
   busy: { type: Boolean, default: false },
   activeTab: { type: String, default: 'posts' },
 })
 
-const CREATE_LABELS = { posts: 'Create post', puzzles: 'Create puzzle', contests: 'Create contest' }
-const createLabel = computed(() => CREATE_LABELS[props.activeTab])
-
-const emit = defineEmits(['join', 'leave'])
+const emit = defineEmits(['join', 'leave', 'create'])
 
 const openMenu = ref('')
 const rootElement = ref(null)
@@ -50,8 +47,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootElement" class="actions">
-    <button v-if="community.isMember && createLabel" type="button" class="btn p" disabled title="Coming soon">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ createLabel }}
+    <button v-if="community.isMember && activeTab === 'posts'" type="button" class="btn p" @click="emit('create')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create post
     </button>
     <button v-else-if="!community.isMember && community.isPublic" type="button" class="btn p" :disabled="busy" @click="emit('join')">Join</button>
 

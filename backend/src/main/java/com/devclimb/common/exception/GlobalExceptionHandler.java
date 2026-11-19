@@ -7,8 +7,10 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -27,8 +29,12 @@ public class GlobalExceptionHandler {
 		return respondWith(ErrorCode.ACCOUNT_CONFLICT);
 	}
 
-	@ExceptionHandler(HttpMessageNotReadableException.class)
-	public ResponseEntity<ApiErrorResponse> handleUnreadableBody() {
+	@ExceptionHandler({
+			HttpMessageNotReadableException.class,
+			MethodArgumentTypeMismatchException.class,
+			MethodArgumentNotValidException.class
+	})
+	public ResponseEntity<ApiErrorResponse> handleBadRequest() {
 		return respondWith(ErrorCode.INVALID_REQUEST);
 	}
 

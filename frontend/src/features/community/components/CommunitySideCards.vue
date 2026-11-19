@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import AvatarImage from '../../../components/AvatarImage.vue'
-import { sampleContest, sampleSolvers, sampleTopics } from '../sampleCommunityData'
+import Avatar from '../../../components/common/Avatar.vue'
+import { sampleContest, sampleSolvers, sampleTopics } from '../../../sample/sampleCommunityData'
 
 const MINUTE_MS = 60_000
 
@@ -38,7 +38,7 @@ const countdown = computed(() => {
     <ol class="solvers">
       <li v-for="(solver, index) in sampleSolvers" :key="solver.name">
         <span class="position">{{ index + 1 }}</span>
-        <AvatarImage :name="solver.name" :size="26" is-round />
+        <Avatar :name="solver.name" :size="26" :round="true" :show-name="false" />
         {{ solver.name }}<span class="solves">{{ solver.solves }}</span>
       </li>
     </ol>

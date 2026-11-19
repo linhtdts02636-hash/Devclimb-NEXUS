@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, useId } from 'vue'
-import TextField from '../../../components/TextField.vue'
+import TextField from '../../../components/common/TextField.vue'
 import ImageUploadField from './ImageUploadField.vue'
 
 const props = defineProps({

@@ -2,6 +2,7 @@ package com.devclimb.puzzle;
 
 import java.time.Instant;
 
+import com.devclimb.community.Community;
 import com.devclimb.user.User;
 
 import jakarta.persistence.Column;
@@ -32,8 +33,9 @@ public class Puzzle {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User author;
 
-	@Column(name = "comm_id", nullable = false)
-	private Integer communityId; //change this after merging with Khoa's branch!!!!
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "comm_id", nullable = false)
+	private Community community;
 
 	@Enumerated(EnumType.STRING)
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -54,12 +56,12 @@ public class Puzzle {
 
 	public Puzzle(
 			User author,
-			Integer communityId,
+			Community community,
 			PuzzleDifficulty difficulty,
 			String title,
 			String content) {
 		this.author = author;
-		this.communityId = communityId;
+		this.community = community;
 		this.difficulty = difficulty;
 		this.title = title;
 		this.content = content;
@@ -73,8 +75,8 @@ public class Puzzle {
 		return author;
 	}
 
-	public Integer getCommunityId() {
-		return communityId;
+	public Community getCommunity() {
+		return community;
 	}
 
 	public PuzzleDifficulty getDifficulty() {
