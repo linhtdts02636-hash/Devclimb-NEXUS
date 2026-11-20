@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import PuzzleCard from '../../features/puzzle/components/PuzzleCard.vue'
+import { fetchTags } from '../../features/puzzle/puzzleApi'
 
 const props = defineProps({
   items: { type: Array, default: null },
@@ -40,37 +41,116 @@ const isHelpOpen = ref(false)
 const localQuery = ref(props.query)
 const localDifficulty = ref(props.difficulty)
 
-// Bật/tắt menu hướng dẫn cú pháp khi bấm nút '?'
-function toggleHelp() {
-  isHelpOpen.value = !isHelpOpen.value
-}
+// Quản lý dữ liệu tag và menu autocomplete khi gõ '#' hoặc '-#'
+const availableTags = ref([])
+const tagsLoading = ref(false)
+const tagsError = ref('')
 
-// Đóng menu hướng dẫn khi bấm ra ngoài
-function closeHelpOnOutsideClick(event) {
-  if (!searchHelpRef.value?.contains(event.target)) {
-    isHelpOpen.value = false
+const isTagDropdownOpen = ref(false)
+const activeTagToken = ref(null)
+const highlightedTagIndex = ref(0)
+const tagDropdownRef = ref(null)
+const tagMenuListRef = ref(null)
+
+// Tải danh sách tag từ server (giống cơ chế cache trong PuzzleCreatePage)
+async function loadTags() {
+  tagsLoading.value = true
+  tagsError.value = ''
+  try {
+    const data = await fetchTags()
+    if (Array.isArray(data) && data.length > 0) {
+      availableTags.value = data
+    }
+  } catch (err) {
+    tagsError.value = err?.message || ''
+  } finally {
+    tagsLoading.value = false
   }
 }
 
-// Đóng menu hướng dẫn khi nhấn phím Escape
-function handleHelpKeydown(event) {
-  if (event.key === 'Escape' && isHelpOpen.value) {
+// Danh sách tag hiệu dụng: ưu tiên dữ liệu từ server (fetchTags), nếu rỗng thì trích xuất từ props.items
+const effectiveTags = computed(() => {
+  if (availableTags.value && availableTags.value.length > 0) {
+    return availableTags.value
+  }
+
+  if (props.items && props.items.length > 0) {
+    const tagCounts = {}
+    for (const item of props.items) {
+      if (Array.isArray(item.tags)) {
+        for (const t of item.tags) {
+          const norm = String(t).trim().toLowerCase()
+          if (norm) {
+            tagCounts[norm] = (tagCounts[norm] || 0) + 1
+          }
+        }
+      }
+    }
+    return Object.entries(tagCounts)
+      .map(([name, puzzleCount]) => ({ name, puzzleCount }))
+      .sort((a, b) => b.puzzleCount - a.puzzleCount || a.name.localeCompare(b.name))
+  }
+
+  return []
+})
+
+// Lọc các tag khớp với từ khóa người dùng đang gõ sau dấu '#'
+const filteredDropdownTags = computed(() => {
+  const active = activeTagToken.value
+  if (!active) return []
+  const q = active.query.trim().toLowerCase()
+  if (!q) return effectiveTags.value.slice(0, 30)
+  return effectiveTags.value
+    .filter((tag) => tag.name.toLowerCase().includes(q))
+    .slice(0, 30)
+})
+
+// Bật/tắt menu hướng dẫn cú pháp khi bấm nút '?'
+function toggleHelp() {
+  isHelpOpen.value = !isHelpOpen.value
+  if (isHelpOpen.value) {
+    closeTagDropdown()
+  }
+}
+
+// Đóng menu hướng dẫn hoặc menu tag khi bấm ra ngoài
+function closeOnOutsideClick(event) {
+  if (!searchHelpRef.value?.contains(event.target)) {
     isHelpOpen.value = false
+  }
+  if (
+    !tagDropdownRef.value?.contains(event.target) &&
+    !searchInputRef.value?.contains(event.target)
+  ) {
+    closeTagDropdown()
+  }
+}
+
+// Đóng menu khi nhấn phím Escape
+function handleGlobalKeydown(event) {
+  if (event.key === 'Escape') {
+    if (isTagDropdownOpen.value) {
+      closeTagDropdown()
+    } else if (isHelpOpen.value) {
+      isHelpOpen.value = false
+    }
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', closeHelpOnOutsideClick)
-  document.addEventListener('keydown', handleHelpKeydown)
+  loadTags()
+  document.addEventListener('click', closeOnOutsideClick)
+  document.addEventListener('keydown', handleGlobalKeydown)
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeHelpOnOutsideClick)
-  document.removeEventListener('keydown', handleHelpKeydown)
+  document.removeEventListener('click', closeOnOutsideClick)
+  document.removeEventListener('keydown', handleGlobalKeydown)
 })
 
 // Tự động điền hoặc chèn đoạn cú pháp vào ô tìm kiếm và focus lại input
 function applyQuerySnippet(snippet, { replace = false } = {}) {
+  closeTagDropdown()
   const current = localQuery.value.trim()
   if (replace || !current) {
     localQuery.value = snippet
@@ -80,6 +160,164 @@ function applyQuerySnippet(snippet, { replace = false } = {}) {
   emit('update:query', localQuery.value)
   emit('search', localQuery.value)
   searchInputRef.value?.focus()
+}
+
+// Phát hiện token tag đang được con trỏ chỉnh sửa (bắt đầu bằng # hoặc -#)
+function detectActiveTagToken() {
+  const input = searchInputRef.value
+  if (!input) return null
+
+  const val = localQuery.value || ''
+  const selStart = input.selectionStart ?? val.length
+  const selEnd = input.selectionEnd ?? val.length
+
+  if (selStart !== selEnd) return null
+
+  const textBefore = val.slice(0, selEnd)
+  const match = textBefore.match(/(?:^|\s)(-?#[a-zA-Z0-9_-]*)$/)
+  if (!match) return null
+
+  const fullToken = match[1]
+  const tokenStart = selEnd - fullToken.length
+  const isNegative = fullToken.startsWith('-#')
+  const prefix = isNegative ? '-#' : '#'
+  const query = fullToken.slice(prefix.length)
+
+  const textAfter = val.slice(selEnd)
+  const restMatch = textAfter.match(/^[a-zA-Z0-9_-]*/)
+  const restLength = restMatch ? restMatch[0].length : 0
+  const tokenEnd = selEnd + restLength
+
+  return {
+    fullToken,
+    prefix,
+    query,
+    tokenStart,
+    tokenEnd,
+  }
+}
+
+// Kiểm tra và cập nhật trạng thái mở dropdown tag autocomplete
+function checkTagAutocomplete() {
+  const token = detectActiveTagToken()
+  if (token) {
+    activeTagToken.value = token
+    isTagDropdownOpen.value = true
+    if (highlightedTagIndex.value >= filteredDropdownTags.value.length) {
+      highlightedTagIndex.value = 0
+    }
+  } else {
+    closeTagDropdown()
+  }
+}
+
+// Đóng dropdown tag
+function closeTagDropdown() {
+  isTagDropdownOpen.value = false
+  activeTagToken.value = null
+  highlightedTagIndex.value = 0
+}
+
+// Chọn một tag từ dropdown và hoàn thiện vào ô tìm kiếm
+function selectTag(tagName) {
+  const active = activeTagToken.value
+  const input = searchInputRef.value
+  const val = localQuery.value || ''
+
+  if (!active) {
+    applyQuerySnippet(`#${tagName}`)
+    closeTagDropdown()
+    return
+  }
+
+  const before = val.slice(0, active.tokenStart)
+  const after = val.slice(active.tokenEnd).replace(/^\s*/, '')
+  const inserted = `${active.prefix}${tagName} `
+  const newQuery = before + inserted + after
+
+  localQuery.value = newQuery
+  emit('update:query', newQuery)
+  emit('search', newQuery)
+
+  closeTagDropdown()
+
+  nextTick(() => {
+    if (input) {
+      input.focus()
+      const newCursorPos = (before + inserted).length
+      input.setSelectionRange(newCursorPos, newCursorPos)
+    }
+  })
+}
+
+// Kiểm tra xem một tag đã xuất hiện trong chuỗi tìm kiếm hay chưa
+function isTagInQuery(tagName) {
+  const q = (localQuery.value || '').toLowerCase()
+  const lowerTag = tagName.toLowerCase()
+  return q.includes(`#${lowerTag}`) || q.includes(`-#${lowerTag}`)
+}
+
+// Cuộn item được chọn bằng phím mũi tên vào vùng nhìn thấy
+function scrollHighlightedItemIntoView() {
+  nextTick(() => {
+    const list = tagMenuListRef.value
+    if (!list) return
+    const items = list.querySelectorAll('.tag-menu-item')
+    const activeEl = items[highlightedTagIndex.value]
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ block: 'nearest' })
+    }
+  })
+}
+
+// Xử lý các phím điều hướng khi đang mở dropdown tag
+function handleSearchKeydown(event) {
+  if (isTagDropdownOpen.value && filteredDropdownTags.value.length > 0) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      highlightedTagIndex.value = (highlightedTagIndex.value + 1) % filteredDropdownTags.value.length
+      scrollHighlightedItemIntoView()
+      return
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      highlightedTagIndex.value =
+        (highlightedTagIndex.value - 1 + filteredDropdownTags.value.length) %
+        filteredDropdownTags.value.length
+      scrollHighlightedItemIntoView()
+      return
+    }
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      if (
+        highlightedTagIndex.value >= 0 &&
+        highlightedTagIndex.value < filteredDropdownTags.value.length
+      ) {
+        event.preventDefault()
+        selectTag(filteredDropdownTags.value[highlightedTagIndex.value].name)
+        return
+      }
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeTagDropdown()
+      return
+    }
+  }
+
+  if (event.key === 'Enter') {
+    handleSearchSubmit()
+  }
+}
+
+function handleSearchKeyup(event) {
+  if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+    return
+  }
+  checkTagAutocomplete()
+}
+
+function handleSearchClick() {
+  checkTagAutocomplete()
 }
 
 watch(
@@ -100,6 +338,7 @@ function handleQueryInput(event) {
   const value = event.target.value
   localQuery.value = value
   emit('update:query', value)
+  checkTagAutocomplete()
 }
 
 function handleSearchSubmit() {
@@ -108,6 +347,7 @@ function handleSearchSubmit() {
 
 function clearQuery() {
   localQuery.value = ''
+  closeTagDropdown()
   emit('update:query', '')
   emit('search', '')
 }
@@ -121,6 +361,7 @@ function selectDifficulty(value) {
 function resetFilters() {
   localQuery.value = ''
   localDifficulty.value = ''
+  closeTagDropdown()
   emit('update:query', '')
   emit('update:difficulty', '')
   emit('search', '')
@@ -219,7 +460,9 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
             aria-label="Search puzzles"
             :placeholder="placeholder"
             @input="handleQueryInput"
-            @keyup.enter="handleSearchSubmit"
+            @keydown="handleSearchKeydown"
+            @keyup="handleSearchKeyup"
+            @click="handleSearchClick"
             @search="handleSearchSubmit"
           />
           <div class="search-actions">
@@ -283,6 +526,50 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
               </div>
             </div>
           </div>
+
+          <!-- Menu gợi ý Tag Autocomplete khi gõ '#' hoặc '-#' -->
+          <div
+            v-if="isTagDropdownOpen && activeTagToken"
+            ref="tagDropdownRef"
+            class="tag-autocomplete-menu"
+            role="listbox"
+            aria-label="Tag suggestions"
+          >
+            <div class="tag-menu-header">
+              <span class="tag-menu-title">Tags ({{ activeTagToken.prefix }})</span>
+              <span class="tag-menu-sub">↑↓ navigate · Enter to select</span>
+            </div>
+            <div ref="tagMenuListRef" class="tag-menu-list">
+              <p v-if="tagsLoading" class="menu-empty">Loading tags...</p>
+              <button
+                v-for="(tag, index) in filteredDropdownTags"
+                :key="tag.name"
+                type="button"
+                class="tag-menu-item"
+                :class="{
+                  'is-active': index === highlightedTagIndex,
+                  'is-selected': isTagInQuery(tag.name),
+                }"
+                role="option"
+                :aria-selected="index === highlightedTagIndex"
+                @mousedown.prevent="selectTag(tag.name)"
+                @mouseenter="highlightedTagIndex = index"
+              >
+                <span class="tag-hash">{{ activeTagToken.prefix }}</span>
+                <span class="tag-name">{{ tag.name }}</span>
+                <span class="tag-count">
+                  {{ tag.puzzleCount != null ? tag.puzzleCount : 0 }}
+                  {{ (tag.puzzleCount != null ? tag.puzzleCount : 0) === 1 ? 'puzzle' : 'puzzles' }}
+                </span>
+              </button>
+              <p
+                v-if="!tagsLoading && !filteredDropdownTags.length"
+                class="menu-empty"
+              >
+                No matching tags{{ activeTagToken.query ? ` for "${activeTagToken.query}"` : '.' }}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="toolbar-controls">
@@ -309,8 +596,18 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
         <button class="retry-btn" type="button" @click="emit('retry')">Try again</button>
       </div>
 
-      <div v-else-if="loading && !displayedPuzzles.length" class="empty">
-        <p>Loading puzzles...</p>
+      <!-- Trạng thái Skeleton Shimmer (sao chép phong cách từ ContestCatalog theo DESIGN.md) -->
+      <div
+        v-else-if="loading && !displayedPuzzles.length"
+        class="puzzle-grid"
+        :class="`cols-${columns}`"
+        aria-busy="true"
+        aria-label="Loading puzzles"
+      >
+        <div v-for="n in (columns > 1 ? 6 : 3)" :key="n" class="skeleton-card">
+          <div class="skeleton-hero"></div>
+          <div class="skeleton-foot"></div>
+        </div>
       </div>
 
       <div v-else-if="!displayedPuzzles.length" class="empty">
@@ -437,6 +734,123 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
   color: var(--tx);
 }
 
+/* Tag Autocomplete Dropdown: Menu gợi ý thẻ khi gõ '#' hoặc '-#' */
+.tag-autocomplete-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 70;
+  padding: 6px;
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: var(--r-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.tag-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.tag-menu-title {
+  font: 500 11px var(--f-mono);
+  color: var(--tx);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tag-menu-sub {
+  font: 400 11px var(--f-mono);
+  color: var(--tx3);
+}
+
+.tag-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-color: var(--line2) transparent;
+  scrollbar-width: thin;
+}
+
+.tag-menu-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tag-menu-list::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 999px;
+}
+
+.tag-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  color: var(--tx);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font: 400 12px var(--f-head);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s var(--ease), border-color 0.12s var(--ease);
+}
+
+.tag-menu-item:hover,
+.tag-menu-item.is-active {
+  background: var(--s2);
+  border-color: var(--line);
+}
+
+.tag-menu-item.is-selected {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+
+.tag-hash {
+  font: 500 11px var(--f-mono);
+  color: var(--ac);
+}
+
+.tag-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.tag-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--tx3);
+  font: 500 11px var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tag-menu-item.is-selected .tag-count {
+  color: var(--ac);
+  opacity: 0.85;
+}
+
+.menu-empty {
+  margin: 0;
+  padding: 12px 8px;
+  font: 400 12px var(--f-head);
+  color: var(--tx2);
+  text-align: center;
+}
+
 .search-help {
   position: relative;
   display: flex;
@@ -504,7 +918,7 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
 }
 
 .help-title {
-  font: 600 12px var(--f-head);
+  font: 500 12px var(--f-head);
   color: var(--tx);
 }
 
@@ -696,6 +1110,39 @@ const hasActiveFilters = computed(() => Boolean(localQuery.value.trim() || local
 
 .puzzle-grid.is-loading {
   opacity: 0.55;
+}
+
+/* Thẻ Skeleton Shimmer khi đang tải (đồng bộ với ContestCatalog) */
+.skeleton-card {
+  height: 195px;
+  background: var(--s1);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.skeleton-hero {
+  flex: 1;
+  background: linear-gradient(90deg, var(--s2) 25%, var(--s3) 50%, var(--s2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-foot {
+  height: 48px;
+  border-top: 1px solid var(--line);
+  background: var(--s1);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .empty {

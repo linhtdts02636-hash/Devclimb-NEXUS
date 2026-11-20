@@ -979,7 +979,7 @@ onBeforeUnmount(() => {
 
 .panel-kicker {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -1340,7 +1340,7 @@ onBeforeUnmount(() => {
   color: var(--ac);
   background: var(--ac-soft);
   border-radius: 999px;
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
 }
 
 .menu {
@@ -1534,7 +1534,7 @@ onBeforeUnmount(() => {
 
 .header-lang {
   color: var(--tx);
-  font: 600 12px var(--f-head);
+  font: 500 12px var(--f-head);
 }
 
 .file-tag {
@@ -1641,7 +1641,7 @@ onBeforeUnmount(() => {
 
 .test-index {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1711,7 +1711,7 @@ onBeforeUnmount(() => {
   background: var(--s2);
   border: 1px solid var(--line2);
   border-radius: 999px;
-  font: 600 11px var(--f-mono);
+  font: 500 11px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -1800,7 +1800,6 @@ onBeforeUnmount(() => {
 .primary-btn {
   color: var(--ac-ink);
   background: var(--ac);
-  font-weight: 600;
 }
 
 .primary-btn:hover:not(:disabled) {

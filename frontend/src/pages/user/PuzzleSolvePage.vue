@@ -417,7 +417,6 @@ onBeforeUnmount(() => {
 .tab.active {
   color: var(--tx);
   border-bottom-color: var(--ac);
-  font-weight: 600;
 }
 
 .tab-count {
@@ -547,7 +546,7 @@ onBeforeUnmount(() => {
   display: block;
   margin-bottom: 4px;
   color: var(--tx);
-  font: 600 12px var(--f-head);
+  font: 500 12px var(--f-head);
 }
 
 .example-key {
@@ -566,7 +565,7 @@ onBeforeUnmount(() => {
 }
 
 .constraints-title {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .constraints ul {
@@ -606,7 +605,7 @@ onBeforeUnmount(() => {
 .editor-title,
 .tests-head > span:first-child {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -736,7 +735,7 @@ onBeforeUnmount(() => {
   color: var(--ac-ink);
   background: var(--ac);
   border-radius: var(--r-sm);
-  font: 600 var(--t-xs) var(--f-head);
+  font: 500 var(--t-xs) var(--f-head);
 }
 
 .run-again-btn:hover {
@@ -774,7 +773,7 @@ onBeforeUnmount(() => {
 
 .result-output > span {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -903,7 +902,7 @@ onBeforeUnmount(() => {
 
 .tests-result > span:first-child {
   color: var(--tx2);
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -953,7 +952,7 @@ onBeforeUnmount(() => {
   background: var(--s2);
   border: 1px solid var(--line2);
   border-radius: 999px;
-  font: 600 11px var(--f-mono);
+  font: 500 11px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -988,7 +987,7 @@ onBeforeUnmount(() => {
 
 .verdict-metrics strong {
   color: var(--tx);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .verdict-metrics em {
@@ -1035,7 +1034,6 @@ onBeforeUnmount(() => {
 .primary-btn {
   color: var(--ac-ink);
   background: var(--ac);
-  font-weight: 600;
 }
 
 .primary-btn:hover:not(:disabled) {

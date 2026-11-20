@@ -5,10 +5,12 @@ import Avatar from '../../components/common/Avatar.vue'
 import BaseModal from '../../components/common/BaseModal.vue'
 import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
 import PostList from '../../features/post/components/PostList.vue'
+import ContestCatalog from '../../components/common/ContestCatalog.vue'
 import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchCommunity, fetchCommunityPuzzles, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
+import { fetchContests } from '../../features/contest/contestApi'
 import CommunityHeaderActions from '../../features/community/components/CommunityHeaderActions.vue'
 import CommunitySideCards from '../../features/community/components/CommunitySideCards.vue'
 import CommunitySidebar from '../../features/community/components/CommunitySidebar.vue'
@@ -61,6 +63,10 @@ const puzzles = ref([])
 const puzzlesLoading = ref(false)
 const puzzlesError = ref('')
 
+const contests = ref([])
+const contestsLoading = ref(false)
+const contestsError = ref('')
+
 // Tải danh sách puzzle của cộng đồng từ backend API
 async function loadCommunityPuzzles() {
   if (!route.params.name) return
@@ -74,6 +80,29 @@ async function loadCommunityPuzzles() {
     puzzlesError.value = describeApiError(error).message
   } finally {
     puzzlesLoading.value = false
+  }
+}
+
+// Tải danh sách cuộc thi của cộng đồng hiện tại từ backend API
+async function loadCommunityContests() {
+  if (!community.value?.id && !route.params.name) return
+  contestsLoading.value = true
+  contestsError.value = ''
+  try {
+    const data = await fetchContests()
+    const currentId = community.value?.id
+    const currentName = (route.params.name || '').toLowerCase()
+    // Chỉ hiển thị các cuộc thi thuộc về cộng đồng này
+    contests.value = (Array.isArray(data) ? data : []).filter((c) => {
+      if (currentId != null && c.communityId === currentId) return true
+      if (c.communityName && c.communityName.toLowerCase() === currentName) return true
+      return false
+    })
+  } catch (error) {
+    contests.value = []
+    contestsError.value = describeApiError(error).message
+  } finally {
+    contestsLoading.value = false
   }
 }
 
@@ -212,6 +241,8 @@ watch(
     editingPost.value = null
     puzzles.value = []
     puzzlesError.value = ''
+    contests.value = []
+    contestsError.value = ''
     resetDeleteConfirm()
     loadCommunity()
   },
@@ -221,6 +252,8 @@ watch(
 watch(activeTab, (tab) => {
   if (tab === 'puzzles') {
     loadCommunityPuzzles()
+  } else if (tab === 'contests') {
+    loadCommunityContests()
   }
 })
 
@@ -301,8 +334,16 @@ onBeforeUnmount(() => {
               />
             </div>
 
-            <div v-else-if="activeTab === 'contests'" role="tabpanel" aria-labelledby="tab-contests" class="empty-tab">
-              <p>Contests for this community are coming soon.</p>
+            <div v-else-if="activeTab === 'contests'" role="tabpanel" aria-labelledby="tab-contests" class="contests-tab">
+              <ContestCatalog
+                :items="contests"
+                :columns="1"
+                :loading="contestsLoading"
+                :error="contestsError"
+                :create-url="community ? `/community/${community.name}/contests/new` : ''"
+                :show-create="isMember"
+                @retry="loadCommunityContests"
+              />
             </div>
 
             <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">

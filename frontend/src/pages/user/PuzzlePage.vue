@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ContestCard from '../../features/contest/components/ContestCard.vue'
+import { fetchContests } from '../../features/contest/contestApi'
+import { toContestCard } from '../../features/contest/contestMapper'
 import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
@@ -13,50 +15,23 @@ const authStore = useAuthStore()
 const router = useRouter()
 const contestTrack = ref(null)
 
-const community = ref({ src: '/favicon.svg', name: 'fpt-algo-club', type: 'community' })
+// Danh sách các cuộc thi được tải từ backend
+const contests = ref([])
+const contestsLoading = ref(true)
+const contestsError = ref('')
 
-const contests = [
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-]
+async function loadContests() {
+  contestsLoading.value = true
+  contestsError.value = ''
+  try {
+    const data = await fetchContests()
+    contests.value = (Array.isArray(data) ? data : []).map(toContestCard)
+  } catch (err) {
+    contestsError.value = 'Failed to load contests.'
+  } finally {
+    contestsLoading.value = false
+  }
+}
 
 const difficultyOptions = [
   { label: 'All', value: '' },
@@ -140,6 +115,7 @@ onMounted(async () => {
     return
   }
   loadPuzzles()
+  loadContests()
 })
 
 onBeforeUnmount(() => clearTimeout(searchTimer))
@@ -182,16 +158,15 @@ function scrollContests(direction) {
     <UserNavbar />
 
     <main class="puzzles">
-      <div class="contest-carousel">
+      <div v-if="contests.length > 0" class="contest-carousel">
         <button class="carousel-arrow prev" type="button" aria-label="Previous contests" @click="scrollContests(-1)">
           <svg class="ic"><use href="#ic-chevron-left" /></svg>
         </button>
         <section ref="contestTrack" class="top-cards" aria-label="Contests">
           <ContestCard
-            v-for="(contest, index) in contests"
-            :key="index"
+            v-for="contest in contests"
+            :key="contest.id"
             v-bind="contest"
-            :community="community"
           />
         </section>
         <button class="carousel-arrow next" type="button" aria-label="Next contests" @click="scrollContests(1)">

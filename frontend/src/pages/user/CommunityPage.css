@@ -125,7 +125,8 @@ h1 {
   gap: var(--s-3);
 }
 
-.puzzles-tab {
+.puzzles-tab,
+.contests-tab {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);

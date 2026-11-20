@@ -606,7 +606,8 @@ ALTER TABLE public.puzzle OWNER TO avnadmin;
 
 CREATE TABLE public.puzzle_contest (
     puzz_id integer NOT NULL,
-    cont_id integer NOT NULL
+    cont_id integer NOT NULL,
+    puco_score INT NOT NULL DEFAULT 100 CHECK (puco_score > 0);
 );
 
 
@@ -1326,7 +1327,7 @@ CREATE INDEX idx_pzct_cont ON public.puzzle_contest USING btree (cont_id);
 -- Name: idx_pzlg_lang; Type: INDEX; Schema: public; Owner: avnadmin
 --
 
-CREATE INDEX idx_pzlg_lang ON public.puzzle_language USING btree (lang_id);
+CREATE INDEX idx_pula_lang ON public.puzzle_language USING btree (lang_id);
 
 
 --
@@ -1785,6 +1786,13 @@ ALTER TABLE ONLY public.warn
 ALTER TABLE ONLY public.warn
     ADD CONSTRAINT warn_warn_warnerid_fkey FOREIGN KEY (warn_warnerid) REFERENCES public.users(user_id);
 
+-- every puzzle can only appear at most once in all of contests
+    ALTER TABLE puzzle_contest ADD CONSTRAINT uq_puco_puzz UNIQUE (puzz_id);
+
+-- Rename weird prefixes to puco (puzzle contest), ptpu, ctco.
+ALTER INDEX public.idx_pzct_cont RENAME TO idx_puco_cont;
+ALTER INDEX public.idx_ptpz_puzz RENAME TO idx_ptpu_puzz;
+ALTER INDEX public.idx_ctcm_comm RENAME TO idx_ctco_comm;
 
 --
 -- PostgreSQL database dump complete
