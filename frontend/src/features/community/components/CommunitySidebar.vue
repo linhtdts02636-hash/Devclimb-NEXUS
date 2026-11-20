@@ -6,6 +6,7 @@ import { RESOURCES } from '../resources'
 
 const props = defineProps({
   currentCommunity: { type: Object, default: null },
+  isAuthenticated: { type: Boolean, default: false },
 })
 
 // Lưu theo id (không đổi) kèm tên để hiển thị ngay; tên được làm mới từ server nên vẫn đúng sau khi đổi tên.
@@ -100,6 +101,8 @@ async function refreshRecentNames() {
 }
 
 onMounted(() => {
+  // Các API này yêu cầu đăng nhập; guest chỉ thấy Recent lưu trong trình duyệt và Resources.
+  if (!props.isAuthenticated) return
   loadJoinedCommunities()
   refreshRecentNames()
 })
@@ -112,7 +115,7 @@ onMounted(() => {
         <svg viewBox="0 0 24 24" aria-hidden="true" v-html="item.icon"></svg>
         <span class="name">{{ item.label }}</span><small>soon</small>
       </li>
-      <li>
+      <li v-if="isAuthenticated">
         <RouterLink class="item" to="/communities/new">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
           <span class="name">Create community</span>
@@ -120,7 +123,7 @@ onMounted(() => {
       </li>
     </ul>
 
-    <section class="group">
+    <section v-if="isAuthenticated" class="group">
       <button type="button" class="head" :aria-expanded="openSections.communities" aria-controls="sidebar-communities" @click="openSections.communities = !openSections.communities">
         Communities<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>

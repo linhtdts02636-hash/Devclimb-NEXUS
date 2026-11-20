@@ -10,7 +10,8 @@ export const router = createRouter({
     { path: '/puzzle/:id', name: 'puzzle-solve', component: () => import('../pages/user/PuzzleSolvePage.vue'), meta: { requiresAuth: true } },
     { path: '/communities', component: () => import('../pages/user/MyCommunitiesPage.vue'), meta: { requiresAuth: true } },
     { path: '/communities/new', component: () => import('../pages/user/CreateCommunityPage.vue'), meta: { requiresAuth: true } },
-    { path: '/community/:name', component: () => import('../pages/user/CommunityPage.vue'), meta: { requiresAuth: true } },
+    // Route public: guest xem được community public, guard vẫn khởi tạo auth.
+    { path: '/community/:name', component: () => import('../pages/user/CommunityPage.vue'), meta: { public: true } },
     { path: '/community/:name/settings', component: () => import('../pages/user/CommunitySettingsPage.vue'), meta: { requiresAuth: true } },
     { path: '/resources/:slug', component: () => import('../pages/user/ResourcePage.vue'), meta: { requiresAuth: true } },
     { path: '/c/:name', redirect: (destination) => `/community/${destination.params.name}` },

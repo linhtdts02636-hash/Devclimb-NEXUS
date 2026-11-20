@@ -62,6 +62,11 @@ public class CommunityService {
 
 	@Transactional(readOnly = true)
 	public CommunityDTO get(AuthenticatedFirebaseUser firebaseUser, String name) {
+		if (firebaseUser == null) {
+			Community community = requirePublicCommunity(name);
+			return CommunityDTO.of(community, userCommunityRepository.countByIdCommunityId(community.getId()),
+					false, false);
+		}
 		User user = authenticationService.findCurrentUser(firebaseUser);
 		return requireVisibleCommunityView(name, user);
 	}
@@ -163,6 +168,16 @@ public class CommunityService {
 
 	private Optional<UserCommunity> findMembership(User user, Community community) {
 		return userCommunityRepository.findById(new UserCommunityId(user.getId(), community.getId()));
+	}
+
+	// Guest chỉ được xem cộng đồng công khai; cộng đồng riêng tư trả 404 để không lộ việc nó có tồn tại.
+	private Community requirePublicCommunity(String name) {
+		Community community = communityRepository.findByNameAndActiveTrue(name)
+				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
+		if (!community.isPublic()) {
+			throw new ApiException(ErrorCode.COMMUNITY_NOT_FOUND);
+		}
+		return community;
 	}
 
 	// Cộng đồng riêng tư trả về "không tồn tại" cho người ngoài để không lộ việc nó có tồn tại.

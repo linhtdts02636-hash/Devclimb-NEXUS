@@ -324,7 +324,13 @@ h1 {
 
 @media (max-width: 900px) {
   .layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) để nội dung không đẩy cột rộng hơn màn hình 320px. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feed,
+  .side {
+    min-width: 0;
   }
 
   .side {

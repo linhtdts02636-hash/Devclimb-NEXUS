@@ -5,6 +5,7 @@ import Avatar from '../../components/common/Avatar.vue'
 import BaseModal from '../../components/common/BaseModal.vue'
 import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
 import PostList from '../../features/post/components/PostList.vue'
+import GuestNavbar from '../../components/layouts/guest/GuestNavbar.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchCommunity, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
@@ -22,7 +23,7 @@ const authStore = useAuthStore()
 const dateFormat = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' })
 const pinnedPosts = samplePosts.filter((post) => post.isPinned)
 
-const TABS = [
+const ALL_TABS = [
   { id: 'posts', label: 'Posts' },
   { id: 'puzzles', label: 'Puzzles' },
   { id: 'contests', label: 'Contests' },
@@ -54,6 +55,10 @@ const currentUserId = computed(() => authStore.profile?.id ?? null)
 const isAuthenticated = computed(() => authStore.status === 'authenticated')
 const isMember = computed(() => Boolean(community.value?.isMember))
 const canPost = computed(() => isAuthenticated.value && isMember.value && Number.isInteger(community.value?.id))
+// Guest chỉ xem bài post, không xem danh sách thành viên (API members vẫn yêu cầu đăng nhập).
+const tabs = computed(() => (
+  isAuthenticated.value ? ALL_TABS : ALL_TABS.filter((tab) => tab.id !== 'members')
+))
 
 async function loadFeed() {
   if (!Number.isInteger(community.value?.id)) {
@@ -77,8 +82,9 @@ async function loadFeed() {
 async function loadCommunity() {
   loadStatus.value = 'loading'
   try {
-    // Hai yêu cầu độc lập nên gửi song song, không chờ nhau.
-    const [loadedCommunity, loadedMembers] = await Promise.all([fetchCommunity(route.params.name), fetchMembers(route.params.name)])
+    // Hai yêu cầu độc lập nên gửi song song, không chờ nhau. Guest không gọi API members.
+    const membersRequest = isAuthenticated.value ? fetchMembers(route.params.name) : Promise.resolve([])
+    const [loadedCommunity, loadedMembers] = await Promise.all([fetchCommunity(route.params.name), membersRequest])
     community.value = loadedCommunity
     members.value = loadedMembers
     loadStatus.value = 'ready'
@@ -93,8 +99,8 @@ function moveTabWithArrowKeys(event) {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
   event.preventDefault()
   const step = event.key === 'ArrowRight' ? 1 : -1
-  const currentIndex = TABS.findIndex((tab) => tab.id === activeTab.value)
-  activeTab.value = TABS[(currentIndex + step + TABS.length) % TABS.length].id
+  const currentIndex = tabs.value.findIndex((tab) => tab.id === activeTab.value)
+  activeTab.value = tabs.value[(currentIndex + step + tabs.value.length) % tabs.value.length].id
   document.getElementById(`tab-${activeTab.value}`)?.focus()
 }
 
@@ -204,9 +210,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <UserNavbar />
+  <UserNavbar v-if="isAuthenticated" />
+  <GuestNavbar v-else />
   <div class="shell">
-    <CommunitySidebar class="left" :current-community="community" />
+    <CommunitySidebar
+      class="left"
+      :current-community="community"
+      :is-authenticated="isAuthenticated"
+    />
 
     <main class="content">
       <div v-if="loadStatus === 'loading'" aria-busy="true" aria-label="Loading community">
@@ -217,7 +228,9 @@ onBeforeUnmount(() => {
       <div v-else-if="loadStatus !== 'ready'" class="state" role="alert">
         <h1>{{ loadStatus === 'missing' ? 'Community not found' : 'Could not load this community' }}</h1>
         <p>{{ loadStatus === 'missing' ? 'It may not exist, or it may be private.' : loadError }}</p>
-        <RouterLink class="btn" to="/communities">Back to communities</RouterLink>
+        <RouterLink class="btn" :to="isAuthenticated ? '/communities' : '/'">
+          {{ isAuthenticated ? 'Back to communities' : 'Back to home' }}
+        </RouterLink>
       </div>
 
       <template v-else>
@@ -238,14 +251,22 @@ onBeforeUnmount(() => {
               <span><b>{{ community.memberCount }}</b> {{ community.memberCount === 1 ? 'member' : 'members' }}</span>
             </p>
           </div>
-          <CommunityHeaderActions :community="community" :active-tab="activeTab" :busy="isMembershipBusy" @join="changeMembership(joinCommunity)" @leave="changeMembership(leaveCommunity)" @create="openComposer" />
+          <CommunityHeaderActions
+            :community="community"
+            :active-tab="activeTab"
+            :busy="isMembershipBusy"
+            :is-authenticated="isAuthenticated"
+            @join="changeMembership(joinCommunity)"
+            @leave="changeMembership(leaveCommunity)"
+            @create="openComposer"
+          />
         </header>
         <p v-if="actionError" class="action-error" role="alert">{{ actionError }}</p>
 
         <div class="layout">
           <section class="feed">
             <div class="tabs" role="tablist" aria-label="Community sections" @keydown="moveTabWithArrowKeys">
-              <button v-for="tab in TABS" :id="`tab-${tab.id}`" :key="tab.id" type="button" role="tab" :aria-selected="activeTab === tab.id" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id">{{ tab.label }}</button>
+              <button v-for="tab in tabs" :id="`tab-${tab.id}`" :key="tab.id" type="button" role="tab" :aria-selected="activeTab === tab.id" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id">{{ tab.label }}</button>
             </div>
 
             <div v-if="activeTab === 'posts'" role="tabpanel" aria-labelledby="tab-posts" class="posts">
@@ -265,7 +286,7 @@ onBeforeUnmount(() => {
               <p>{{ activeTab === 'puzzles' ? 'Puzzles' : 'Contests' }} for this community are coming soon.</p>
             </div>
 
-            <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">
+            <ul v-else-if="isAuthenticated" class="members" role="tabpanel" aria-labelledby="tab-members">
               <li v-for="member in members" :key="member.userId">
                 <Avatar :src="member.imageUrl" :name="member.name" :size="36" :round="true" :show-name="false" />
                 <b>{{ member.name }}</b>
@@ -282,7 +303,7 @@ onBeforeUnmount(() => {
               <p class="created">Created {{ dateFormat.format(new Date(community.createdAt)) }}</p>
             </section>
 
-            <section class="card">
+            <section v-if="isAuthenticated" class="card">
               <h2>Moderators</h2>
               <ul class="mods">
                 <li v-for="owner in owners" :key="owner.userId">
@@ -293,7 +314,7 @@ onBeforeUnmount(() => {
               </ul>
             </section>
 
-            <RoleList :owners="owners" />
+            <RoleList v-if="isAuthenticated" :owners="owners" />
             <CommunitySideCards />
             <p class="sample-note">Roles, contest, solvers and topics are sample data for illustration</p>
           </aside>
