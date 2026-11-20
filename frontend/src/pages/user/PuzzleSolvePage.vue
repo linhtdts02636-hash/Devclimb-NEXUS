@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { EDITOR_LANGUAGES, buildStarter, createCodeEditor, getEditorLanguage } from '../../features/editor/codeEditor'
 import { fetchPuzzle } from '../../features/puzzle/puzzleApi'
-import { getBackendLanguageId } from '../../features/submission/submissionApi'
+import { getBackendLanguageId, getEditorLanguageId } from '../../features/submission/submissionApi'
 import { usePuzzleSubmission } from '../../features/submission/usePuzzleSubmission'
 
 const editorHost = ref(null)
@@ -14,16 +14,16 @@ const runHint = 'Ctrl+Enter to submit'
 
 let editor = null
 let activeLanguage = 'python'
-// Giữ code riêng cho từng ngôn ngữ khi đổi qua lại.
 const languageDrafts = new Map()
+const puzzle = ref(null)
 
-// Chỉ hiện ngôn ngữ backend có wrapper chấm bài.
-const submissionLanguages = computed(() =>
-  EDITOR_LANGUAGES.filter((language) => getBackendLanguageId(language.id) != null),
-)
+// Chỉ hiển thị những ngôn ngữ mà puzzle này thực sự hỗ trợ.
+const submissionLanguages = computed(() => {
+  const allowedIds = new Set((puzzle.value?.languages ?? []).map((language) => language.languageId))
+  return EDITOR_LANGUAGES.filter((language) => allowedIds.has(getBackendLanguageId(language.id)))
+})
 const selectedLanguageInfo = computed(() => getEditorLanguage(selectedLanguage.value))
 const fileTag = computed(() => selectedLanguageInfo.value.fileName)
-const puzzle = ref(null)
 const puzzleLoading = ref(true)
 const puzzleError = ref('')
 const difficultyLabel = computed(() => {
@@ -32,11 +32,15 @@ const difficultyLabel = computed(() => {
   return difficulty.charAt(0) + difficulty.slice(1).toLowerCase()
 })
 const difficultyTone = computed(() => puzzle.value?.difficulty?.toLowerCase() ?? '')
+// Map header theo languageId của DB, không dựa vào languageName vì tên có thể
+// khác hoa/thường hoặc đổi nhãn. Header này chính là pula_functionheader.
 const functionHeaders = computed(() => {
   const headers = new Map()
   for (const language of puzzle.value?.languages ?? []) {
-    if (language.languageName) {
-      headers.set(language.languageName.toLowerCase(), language.functionHeader)
+    const editorLanguageId = getEditorLanguageId(language.languageId)
+    const header = language.functionHeader?.trim()
+    if (editorLanguageId && header) {
+      headers.set(editorLanguageId, header)
     }
   }
   return headers
@@ -66,13 +70,20 @@ function handleUpdate({ line, column }) {
 }
 
 function starterFor(languageId) {
+  // Ưu tiên header thật từ DB; buildStarter tự dùng placeholder chung nếu thiếu.
   return buildStarter(languageId, functionHeaders.value.get(languageId))
 }
 
 function handleLanguageChange(event) {
   if (!editor) return
 
-  selectedLanguage.value = event.target.value
+  const nextLanguage = event.target.value
+  if (!submissionLanguages.value.some((language) => language.id === nextLanguage)) {
+    event.target.value = selectedLanguage.value
+    return
+  }
+
+  selectedLanguage.value = nextLanguage
   languageDrafts.set(activeLanguage, editor.getValue())
   activeLanguage = selectedLanguage.value
   editor.setLanguage(activeLanguage)
@@ -107,6 +118,15 @@ async function loadPuzzle() {
     const data = await fetchPuzzle(puzzleId.value)
     if (token !== puzzleRequest) return
     puzzle.value = data
+    // Nếu ngôn ngữ đang chọn không thuộc puzzle, chuyển sang ngôn ngữ hợp lệ đầu tiên.
+    const nextLanguage = submissionLanguages.value.some((language) => language.id === selectedLanguage.value)
+      ? selectedLanguage.value
+      : submissionLanguages.value[0]?.id
+    if (nextLanguage) {
+      selectedLanguage.value = nextLanguage
+      activeLanguage = nextLanguage
+      editor?.setLanguage(nextLanguage)
+    }
     languageDrafts.clear()
     editor?.setValue(starterFor(selectedLanguage.value))
   } catch (error) {
@@ -397,7 +417,6 @@ onBeforeUnmount(() => {
 .tab.active {
   color: var(--tx);
   border-bottom-color: var(--ac);
-  font-weight: 600;
 }
 
 .tab-count {
@@ -527,7 +546,7 @@ onBeforeUnmount(() => {
   display: block;
   margin-bottom: 4px;
   color: var(--tx);
-  font: 600 12px var(--f-head);
+  font: 500 12px var(--f-head);
 }
 
 .example-key {
@@ -546,7 +565,7 @@ onBeforeUnmount(() => {
 }
 
 .constraints-title {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .constraints ul {
@@ -586,7 +605,7 @@ onBeforeUnmount(() => {
 .editor-title,
 .tests-head > span:first-child {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -716,7 +735,7 @@ onBeforeUnmount(() => {
   color: var(--ac-ink);
   background: var(--ac);
   border-radius: var(--r-sm);
-  font: 600 var(--t-xs) var(--f-head);
+  font: 500 var(--t-xs) var(--f-head);
 }
 
 .run-again-btn:hover {
@@ -754,7 +773,7 @@ onBeforeUnmount(() => {
 
 .result-output > span {
   color: var(--tx2);
-  font: 600 10px var(--f-mono);
+  font: 500 10px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -883,7 +902,7 @@ onBeforeUnmount(() => {
 
 .tests-result > span:first-child {
   color: var(--tx2);
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -933,7 +952,7 @@ onBeforeUnmount(() => {
   background: var(--s2);
   border: 1px solid var(--line2);
   border-radius: 999px;
-  font: 600 11px var(--f-mono);
+  font: 500 11px var(--f-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -968,7 +987,7 @@ onBeforeUnmount(() => {
 
 .verdict-metrics strong {
   color: var(--tx);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .verdict-metrics em {
@@ -1015,7 +1034,6 @@ onBeforeUnmount(() => {
 .primary-btn {
   color: var(--ac-ink);
   background: var(--ac);
-  font-weight: 600;
 }
 
 .primary-btn:hover:not(:disabled) {

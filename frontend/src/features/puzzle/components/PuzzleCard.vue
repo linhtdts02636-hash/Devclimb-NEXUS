@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import Avatar from '../../../components/common/Avatar.vue'
+import TooltipHover from '../../../components/common/TooltipHover.vue'
 
 const router = useRouter()
 
@@ -14,7 +15,7 @@ const props = defineProps({
   tags: { type: Array, default: () => [] },
   authorName: { type: String, default: '' },
   createdLabel: { type: String, default: '' },
-  acceptance: { type: String, default: '' },
+  acceptance: { type: String, default: '' }, //this exists! dont forget
   community: {
     type: Object,
     default: () => ({ src: '/favicon.svg', name: 'fpt-algo-club', type: 'community' }),
@@ -23,6 +24,10 @@ const props = defineProps({
   proofAvatars: { type: Array, default: () => [] },
   proofText: { type: String, default: '' },
   solveLabel: { type: String, default: 'Solve' },
+  solved: { type: Boolean, default: false },
+  scoreBadge: { type: String, default: '' },
+  scoreTone: { type: String, default: '' },
+  locked: { type: Boolean, default: false },
 })
 
 function openPuzzle() {
@@ -35,64 +40,86 @@ function openPuzzle() {
 <template>
   <article
     class="puzzle-card"
-    :tabindex="content ? 0 : undefined"
-    :aria-describedby="content && id != null ? `puzzle-preview-${id}` : undefined"
+    :class="{ 'is-locked': locked }"
+    :tabindex="content && !locked ? 0 : undefined"
+    :aria-describedby="content && !locked && id != null ? `puzzle-preview-${id}` : undefined"
   >
-    <div
-      v-if="content"
-      :id="id != null ? `puzzle-preview-${id}` : undefined"
-      class="puzzle-preview"
-      role="tooltip"
-    >
-      <span class="puzzle-preview-label">Puzzle</span>
-      <p class="puzzle-preview-text">{{ content }}</p>
-    </div>
+    <TooltipHover v-if="content && !locked">
+      <div
+        :id="id != null ? `puzzle-preview-${id}` : undefined"
+        class="puzzle-preview"
+      >
+        <span class="puzzle-preview-label">Puzzle</span>
+        <p class="puzzle-preview-text">{{ content }}</p>
+      </div>
+    </TooltipHover>
 
-    <div class="puzzle-card-head">
-      <Avatar :src="community.src" :name="community.name" :type="community.type" />
-      <span v-if="createdLabel" class="puzzle-date">{{ createdLabel }}</span>
-    </div>
+    <template v-if="locked">
+      <div class="locked-card-body">
+        <div class="locked-question-circle">
+          <span class="locked-question-mark">?</span>
+        </div>
+        <span class="locked-hint">Hidden until contest begins</span>
+      </div>
+    </template>
 
-    <div>
-      <div class="puzzle-title-row">
-        <span v-if="index" class="puzzle-index">{{ index }}</span>
-        <h3 class="puzzle-card-title">{{ title }}</h3>
+    <template v-else>
+      <div class="puzzle-card-head">
+        <Avatar :src="community.src" :name="community.name" :type="community.type" />
+        <span v-if="createdLabel" class="puzzle-date">{{ createdLabel }}</span>
       </div>
 
-      <div class="puzzle-meta">
-        <span class="badge" :class="difficulty.toLowerCase()">{{ difficulty }}</span>
-        <span v-for="language in languages" :key="language" class="tag lang-tag">{{ language }}</span>
+      <div>
+        <div class="puzzle-title-row">
+          <span v-if="index" class="puzzle-index">{{ index }}</span>
+          <h3 class="puzzle-card-title">{{ title }}</h3>
+        </div>
+
+        <div class="puzzle-meta">
+          <span class="badge" :class="difficulty.toLowerCase()">{{ difficulty }}</span>
+          <span v-for="language in languages" :key="language" class="tag lang-tag">{{ language }}</span>
+        </div>
+
+        <div v-if="tags.length || acceptance || authorName" class="puzzle-tags">
+          <span v-for="tag in tags" :key="tag" class="tag">{{ tag }}</span>
+          <span v-if="authorName" class="author-tag">by {{ authorName }}</span>
+          <span v-if="acceptance" class="acceptance-tag">{{ acceptance }} acceptance</span>
+        </div>
       </div>
 
-      <div v-if="tags.length || acceptance || authorName" class="puzzle-tags">
-        <span v-for="tag in tags" :key="tag" class="tag">{{ tag }}</span>
-        <span v-if="authorName" class="author-tag">by {{ authorName }}</span>
-        <span v-if="acceptance" class="acceptance-tag">{{ acceptance }} acceptance</span>
+      <div v-if="showProof && (proofText || proofAvatars.length)" class="puzzle-proof">
+        <div v-if="proofAvatars.length" class="proof-avatars">
+          <span
+            v-for="(avatar, avatarIndex) in proofAvatars"
+            :key="avatarIndex"
+            class="proof-avatar"
+            :class="avatar.tone"
+          >
+            {{ avatar.initials }}
+          </span>
+        </div>
+        <span v-if="proofText" class="proof-text">{{ proofText }}</span>
       </div>
-    </div>
 
-    <div v-if="showProof && (proofText || proofAvatars.length)" class="puzzle-proof">
-      <div v-if="proofAvatars.length" class="proof-avatars">
-        <span
-          v-for="(avatar, avatarIndex) in proofAvatars"
-          :key="avatarIndex"
-          class="proof-avatar"
-          :class="avatar.tone"
+      <div class="puzzle-card-foot" :class="{ 'has-score-badge': Boolean(scoreBadge) }">
+        <span v-if="scoreBadge" class="badge" :class="scoreTone || 'easy'">{{ scoreBadge }}</span>
+        <button
+          class="solve-btn"
+          :class="{ 'is-solved': solved }"
+          type="button"
+          :disabled="id == null"
+          @click="openPuzzle"
         >
-          {{ avatar.initials }}
-        </span>
+          <span>{{ solved ? 'Solved' : solveLabel }}</span>
+          <svg v-if="!solved" class="solve-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+          <svg v-else class="solve-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </button>
       </div>
-      <span v-if="proofText" class="proof-text">{{ proofText }}</span>
-    </div>
-
-    <div class="puzzle-card-foot">
-      <button class="solve-btn" type="button" :disabled="id == null" @click="openPuzzle">
-        <span>{{ solveLabel }}</span>
-        <svg class="solve-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
-      </button>
-    </div>
+    </template>
   </article>
 </template>
 
@@ -121,28 +148,12 @@ function openPuzzle() {
 }
 
 .puzzle-preview {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 10px);
-  left: 0;
-  z-index: 30;
+  max-width: 320px;
   padding: 12px 14px;
   background: var(--s1);
   border: 1px solid var(--line2);
   border-radius: var(--r-sm);
-  box-shadow: var(--sh-card);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease), visibility 0.15s;
-  pointer-events: none;
-}
-
-.puzzle-card:hover .puzzle-preview,
-.puzzle-card:focus-visible .puzzle-preview {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .puzzle-preview-label {
@@ -329,7 +340,12 @@ function openPuzzle() {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   padding-top: 2px;
+}
+
+.puzzle-card-foot.has-score-badge {
+  justify-content: space-between;
 }
 
 .solve-btn {
@@ -357,6 +373,70 @@ function openPuzzle() {
 .solve-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.solve-btn.is-solved {
+  background: var(--s3);
+  color: var(--tx2);
+  box-shadow: none;
+  cursor: pointer;
+  opacity: 0.92;
+}
+
+.solve-btn.is-solved:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--s3) 80%, var(--tx));
+  color: var(--tx);
+  filter: none;
+}
+
+.puzzle-card.is-locked {
+  min-height: 200px;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.locked-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  width: 100%;
+}
+
+.locked-question-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--s2);
+  border: 1px dashed var(--line2);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.puzzle-card.is-locked:hover .locked-question-circle {
+  border-color: var(--tx3);
+  transform: scale(1.05);
+}
+
+.locked-question-mark {
+  font: 700 28px/1 var(--f-mono);
+  color: var(--tx3);
+  user-select: none;
+}
+
+.locked-hint {
+  font: 500 11px/1.4 var(--f-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tx3);
+  max-width: 220px;
 }
 
 .solve-icon {

@@ -1,4 +1,4 @@
-package com.devclimb.tag;
+package com.devclimb.ptag;
 
 import com.devclimb.puzzle.Puzzle;
 

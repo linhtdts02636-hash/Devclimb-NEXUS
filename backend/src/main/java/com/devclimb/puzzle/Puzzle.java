@@ -17,7 +17,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.generator.EventType;
 import org.hibernate.type.SqlTypes;
 
 @Entity
@@ -48,6 +50,7 @@ public class Puzzle {
 	@Column(name = "puzz_content", nullable = false)
 	private String content;
 
+	@Generated(event = EventType.INSERT)
 	@Column(name = "puzz_createdat", insertable = false, updatable = false)
 	private Instant createdAt;
 

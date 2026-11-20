@@ -14,6 +14,10 @@ const props = defineProps({
   showName: { type: Boolean, default: true },
   // Mặc định avatar người dùng tròn, avatar cộng đồng vuông; prop này cho phép ghi đè.
   round: { default: undefined },
+  // Bật/tắt tính năng bấm điều hướng (mặc định bật khi có tên).
+  clickable: { type: Boolean, default: true },
+  // Đường dẫn tùy chỉnh nếu cần ghi đè đích đến.
+  to: { type: [String, Object], default: null },
 })
 
 const failed = ref(false)
@@ -39,6 +43,19 @@ const initials = computed(() => {
 })
 const showImage = computed(() => Boolean(props.src) && !failed.value)
 
+// Đường dẫn điều hướng của avatar: chuyển đến trang cộng đồng hoặc trang người dùng
+const routeTarget = computed(() => {
+  if (!props.clickable || !props.name?.trim()) return null
+  if (props.to) return props.to
+  if (props.type === 'community') {
+    return `/community/${encodeURIComponent(props.name.trim())}`
+  }
+  if (props.type === 'user') {
+    return `/user/${encodeURIComponent(props.name.trim())}`
+  }
+  return null
+})
+
 watch(
   () => props.src,
   () => {
@@ -48,7 +65,13 @@ watch(
 </script>
 
 <template>
-  <div class="avatar">
+  <component
+    :is="routeTarget ? 'RouterLink' : 'div'"
+    :to="routeTarget || undefined"
+    class="avatar"
+    :class="{ 'is-clickable': Boolean(routeTarget) }"
+    :title="routeTarget ? (type === 'community' ? `View community ${name}` : `View user ${name}`) : undefined"
+  >
     <span
       class="avatar-box"
       :class="{ 'is-round': isRound }"
@@ -59,7 +82,7 @@ watch(
       <span v-else class="avatar-fallback">{{ initials }}</span>
     </span>
     <span v-if="showName && name" class="avatar-name">{{ name }}</span>
-  </div>
+  </component>
 </template>
 
 <style scoped>
@@ -69,6 +92,27 @@ watch(
   gap: 8px;
   min-width: 0;
   max-width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.avatar.is-clickable {
+  cursor: pointer;
+  transition: opacity 0.15s var(--ease);
+}
+
+.avatar.is-clickable:hover {
+  opacity: 0.88;
+}
+
+.avatar.is-clickable:hover .avatar-name {
+  color: var(--tx);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.avatar.is-clickable:hover .avatar-box {
+  border-color: var(--tx3);
 }
 
 .avatar-box {
@@ -84,6 +128,7 @@ watch(
   font-weight: 500;
   line-height: 1;
   user-select: none;
+  transition: border-color 0.15s var(--ease);
 }
 
 .avatar-box.is-round {
@@ -109,5 +154,6 @@ watch(
   color: var(--tx2);
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.15s var(--ease);
 }
 </style>

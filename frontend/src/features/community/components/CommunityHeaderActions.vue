@@ -47,7 +47,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootElement" class="actions">
-    <button v-if="community.isMember && activeTab === 'posts'" type="button" class="btn p" @click="emit('create')">
+    <RouterLink
+      v-if="community.isMember && activeTab === 'puzzles'"
+      class="btn p"
+      :to="`/community/${community.name}/puzzles/new`"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create puzzle
+    </RouterLink>
+    <RouterLink
+      v-else-if="community.isMember && activeTab === 'contests'"
+      class="btn p"
+      :to="`/community/${community.name}/contests/new`"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create contest
+    </RouterLink>
+    <button v-else-if="community.isMember && activeTab === 'posts'" type="button" class="btn p" @click="emit('create')">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create post
     </button>
     <button v-else-if="!community.isMember && community.isPublic" type="button" class="btn p" :disabled="busy" @click="emit('join')">Join</button>

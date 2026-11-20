@@ -46,7 +46,7 @@ onMounted(async () => {
     <ul v-else class="list">
       <li v-for="community in communities" :key="community.id">
         <RouterLink class="card" :to="`/community/${community.name}`">
-          <Avatar :src="community.imageUrl" :name="community.name" :size="48" :show-name="false" />
+          <Avatar :src="community.imageUrl" :name="community.name" :size="48" :show-name="false" :clickable="false" />
           <span class="info">
             <b>{{ community.name }}</b>
             <small>{{ community.memberCount }} {{ community.memberCount === 1 ? 'member' : 'members' }}</small>
