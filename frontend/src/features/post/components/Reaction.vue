@@ -14,10 +14,6 @@ const props = defineProps({
     type: Object,
     default: () => ({ upvotes: 0, downvotes: 0, myReaction: null }),
   },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
 })
 
 const upvotes = ref(0)
@@ -43,9 +39,8 @@ watch(
 
 const upvoteActive = computed(() => myReaction.value === 'LIKE')
 const downvoteActive = computed(() => myReaction.value === 'DISLIKE')
-const buttonsDisabled = computed(() => props.disabled || pending.value)
-// Khách chỉ thấy icon và số; câu nhắc đăng nhập chỉ dành cho trình đọc màn hình.
-const signInHint = computed(() => (props.disabled ? '. Sign in to vote.' : ''))
+// Khi đang gửi request thì khoá cả hai nút để tránh bấm liên tục.
+const buttonsDisabled = computed(() => pending.value)
 
 // Cập nhật tức thời trước khi server phản hồi.
 function applyOptimisticReaction(nextReaction) {
@@ -106,7 +101,7 @@ async function chooseReaction(type) {
         :class="{ 'is-active': upvoteActive }"
         :disabled="buttonsDisabled"
         :aria-pressed="upvoteActive"
-        :aria-label="`Upvote, ${upvotes} ${upvotes === 1 ? 'vote' : 'votes'}${signInHint}`"
+        :aria-label="`Upvote, ${upvotes} ${upvotes === 1 ? 'vote' : 'votes'}`"
         @click="chooseReaction('LIKE')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -122,7 +117,7 @@ async function chooseReaction(type) {
         :class="{ 'is-active': downvoteActive }"
         :disabled="buttonsDisabled"
         :aria-pressed="downvoteActive"
-        :aria-label="`Downvote, ${downvotes} ${downvotes === 1 ? 'vote' : 'votes'}${signInHint}`"
+        :aria-label="`Downvote, ${downvotes} ${downvotes === 1 ? 'vote' : 'votes'}`"
         @click="chooseReaction('DISLIKE')"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">

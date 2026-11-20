@@ -5,7 +5,6 @@ defineProps({
   community: { type: Object, required: true },
   busy: { type: Boolean, default: false },
   activeTab: { type: String, default: 'posts' },
-  isAuthenticated: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['join', 'leave', 'create'])
@@ -48,31 +47,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="rootElement" class="actions">
-    <button
-      v-if="isAuthenticated && community.isMember && activeTab === 'posts'"
-      type="button"
-      class="btn p"
-      @click="emit('create')"
-    >
+    <button v-if="community.isMember && activeTab === 'posts'" type="button" class="btn p" @click="emit('create')">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create post
     </button>
-    <button
-      v-else-if="isAuthenticated && !community.isMember && community.isPublic"
-      type="button"
-      class="btn p"
-      :disabled="busy"
-      @click="emit('join')"
-    >
-      Join
-    </button>
-    <!-- Guest chỉ được dẫn về login, không gọi API join/create. -->
-    <RouterLink
-      v-else-if="!isAuthenticated && community.isPublic"
-      class="btn p"
-      to="/login"
-    >
-      Log in to join
-    </RouterLink>
+    <button v-else-if="!community.isMember && community.isPublic" type="button" class="btn p" :disabled="busy" @click="emit('join')">Join</button>
 
     <span v-if="community.isOwner" class="pill static">Owner</span>
     <div v-else-if="community.isMember" class="anchor">

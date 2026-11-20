@@ -78,14 +78,10 @@ public class PostService {
 
 	@Transactional(readOnly = true)
 	public List<PostDTO> listFeed(AuthenticatedFirebaseUser firebaseUser, Integer communityId) {
-		// Guest chỉ xem được cộng đồng công khai; cộng đồng riêng tư vẫn giữ nguyên quy tắc membership.
-		User user = firebaseUser == null ? null : authenticationService.findCurrentUser(firebaseUser);
+		User user = authenticationService.findCurrentUser(firebaseUser);
 		Community community = findActiveCommunity(communityId);
 
 		if (!community.isPublic()) {
-			if (user == null) {
-				throw new ApiException(ErrorCode.COMMUNITY_NOT_FOUND);
-			}
 			requireMembership(user, communityId);
 		}
 
@@ -95,7 +91,7 @@ public class PostService {
 		}
 
 		Map<Integer, ReactionSummaryDTO> summaries = reactionService.summariesFor(
-				posts.stream().map(PostDTO::id).toList(), user == null ? null : user.getId());
+				posts.stream().map(PostDTO::id).toList(), user.getId());
 		return posts.stream()
 				.map(post -> post.withReaction(summaries.getOrDefault(post.id(), ReactionSummaryDTO.empty())))
 				.toList();

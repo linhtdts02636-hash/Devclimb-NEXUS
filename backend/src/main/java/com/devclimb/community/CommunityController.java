@@ -48,10 +48,8 @@ public class CommunityController {
 		return communityService.listJoined(firebaseUser);
 	}
 
-	// Đọc community public cho phép guest; private vẫn do service trả 404.
 	@GetMapping("/{name}")
-	public CommunityDTO get(
-			@RequestAttribute(name = FIREBASE_USER, required = false) AuthenticatedFirebaseUser firebaseUser,
+	public CommunityDTO get(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
 			@PathVariable String name) {
 		return communityService.get(firebaseUser, name);
 	}

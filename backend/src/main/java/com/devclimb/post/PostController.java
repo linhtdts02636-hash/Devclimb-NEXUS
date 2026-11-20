@@ -34,10 +34,8 @@ public class PostController {
 		return postService.create(firebaseUser, communityId, request);
 	}
 
-	// Guest được phép thiếu attribute Firebase; filter vẫn từ chối token sai.
 	@GetMapping("/api/communities/{communityId}/posts")
-	public List<PostDTO> listFeed(
-			@RequestAttribute(name = FIREBASE_USER, required = false) AuthenticatedFirebaseUser firebaseUser,
+	public List<PostDTO> listFeed(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
 			@PathVariable Integer communityId) {
 		return postService.listFeed(firebaseUser, communityId);
 	}

@@ -94,7 +94,6 @@ const canManage = computed(
     <Reaction
       :post-id="post.id"
       :reaction="post.reaction"
-      :disabled="!currentUserId"
     />
   </article>
 </template>

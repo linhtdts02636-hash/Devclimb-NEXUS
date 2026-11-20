@@ -23,7 +23,6 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 	public static final String AUTHENTICATED_USER_ATTRIBUTE = "authenticatedFirebaseUser";
 
 	private static final String PUBLIC_SUBMISSION_PATH = ""; // For testing, if you don't want to go through auth to test an API, put it here
-	private static final String COMMUNITY_PATH_PREFIX = "/api/communities/";
 	private static final String BEARER_PREFIX = "Bearer ";
 	private static final boolean CHECK_REVOKED = true;
 	private static final String FIREBASE_CLAIM = "firebase";
@@ -46,21 +45,9 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 			FilterChain filterChain) throws ServletException, IOException {
-		boolean publicRead = isPublicRead(request);
 		String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-		// Các API đọc công khai vẫn nhận token nếu có, nhưng không bắt buộc phải có token.
-		if (authorizationHeader == null) {
-			if (publicRead) {
-				filterChain.doFilter(request, response);
-				return;
-			}
+		if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
 			reject(response, ErrorCode.MISSING_TOKEN);
-			return;
-		}
-
-		if (!authorizationHeader.startsWith(BEARER_PREFIX)) {
-			reject(response, publicRead ? ErrorCode.INVALID_TOKEN : ErrorCode.MISSING_TOKEN);
 			return;
 		}
 
@@ -78,27 +65,6 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		filterChain.doFilter(request, response);
-	}
-
-	private boolean isPublicRead(HttpServletRequest request) {
-		if (!HttpMethod.GET.matches(request.getMethod())) {
-			return false;
-		}
-
-		String servletPath = request.getServletPath();
-		if (!servletPath.startsWith(COMMUNITY_PATH_PREFIX)) {
-			return false;
-		}
-
-		String remainder = servletPath.substring(COMMUNITY_PATH_PREFIX.length()).replaceAll("/+$", "");
-		String[] segments = remainder.split("/");
-		if (segments.length == 1) {
-			// /api/communities/mine là danh sách cộng đồng của chính người dùng, vẫn phải đăng nhập.
-			return !"mine".equals(segments[0]);
-		}
-
-		// /api/communities/{id}/posts là feed công khai của cộng đồng public.
-		return segments.length == 2 && "posts".equals(segments[1]) && segments[0].matches("\\d+");
 	}
 
 	private AuthenticatedFirebaseUser toAuthenticatedUser(FirebaseToken token) {
