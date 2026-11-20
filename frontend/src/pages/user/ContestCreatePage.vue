@@ -1,24 +1,46 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Avatar from '../../components/common/Avatar.vue'
 import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
+import { describeApiError } from '../../config/apiClient'
+import { fetchCommunity } from '../../features/community/communityApi'
+import {
+  createContest,
+  fetchContest,
+  fetchContestPuzzles,
+  updateContest,
+} from '../../features/contest/contestApi'
+import { toContestPuzzleCard } from '../../features/contest/contestMapper'
 import { useAuthStore } from '../../stores/authStore'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
-// Thông tin cộng đồng hiện tại (lấy từ tham số đường dẫn nếu có)
-const communityName = computed(() => route.params.name || 'MIT CSAIL Coding Guild')
+// Xác định chế độ tạo mới hay chỉnh sửa dựa vào tham số contestId trên URL
+const contestId = computed(() => {
+  const raw = Number(route.params.contestId)
+  return Number.isInteger(raw) && raw > 0 ? raw : null
+})
+const isEditMode = computed(() => contestId.value !== null)
 
-// Đường dẫn sang trang tạo bài toán cho cộng đồng hiện tại
-const createPuzzleRoute = computed(() =>
-  route.params.name ? `/community/${route.params.name}/puzzles/new` : '/puzzles/new'
-)
+const community = ref(null)
+const communityName = computed(() => community.value?.name || route.params.name || 'Community')
 
-// Dữ liệu biểu mẫu tạo cuộc thi (chỉ lưu cục bộ ở frontend)
+// Đường dẫn sang trang tạo bài toán thuộc cuộc thi hiện tại
+const createPuzzleRoute = computed(() => {
+  if (!contestId.value || !route.params.name) return '/puzzles/new'
+  return {
+    name: 'puzzle-create',
+    params: { name: route.params.name },
+    query: { contestId: contestId.value },
+  }
+})
+
+// Dữ liệu biểu mẫu cuộc thi
 const form = reactive({
   title: '',
   description: '',
@@ -29,19 +51,31 @@ const form = reactive({
 
 const bannerInputRef = ref(null)
 const contestPuzzles = ref([])
+const puzzlesLoading = ref(false)
+const submitting = ref(false)
+const submitError = ref('')
+const submitSuccess = ref('')
 
-// Tính tổng điểm tối đa từ danh sách bài toán hiện có
+// Chuyển đổi ISO timestamp sang chuỗi YYYY-MM-DDTHH:mm theo giờ địa phương cho input datetime-local
+function toLocalDateTimeInput(isoString) {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+// Tính tổng điểm tối đa từ danh sách bài toán của cuộc thi
 const maxScoreLabel = computed(() => {
-  const total = contestPuzzles.value.reduce((sum, p) => sum + (Number(p.score) || 0), 0)
+  const total = contestPuzzles.value.reduce((sum, p) => sum + (Number(p.points ?? p.score) || 0), 0)
   return `${total.toLocaleString()} pts max`
 })
 
-// Mở hộp thoại chọn ảnh bìa
+// Mở hộp thoại chọn ảnh bìa (chỉ xem trước cục bộ, chưa nối upload backend)
 function triggerBannerUpload() {
   bannerInputRef.value?.click()
 }
 
-// Tạo đường dẫn xem trước cục bộ cho ảnh bìa đã tải lên
 function handleBannerChange(event) {
   const file = event.target.files?.[0]
   if (!file) return
@@ -51,13 +85,120 @@ function handleBannerChange(event) {
   form.bannerUrl = URL.createObjectURL(file)
 }
 
-// Xử lý nút Create (chưa nối backend)
-function handleCreate() {
-  // Chờ hướng dẫn tích hợp backend tiếp theo
+// Tải thông tin cộng đồng và dữ liệu cuộc thi (nếu đang ở chế độ chỉnh sửa)
+async function loadPageData() {
+  submitError.value = ''
+  submitSuccess.value = ''
+
+  if (route.params.name) {
+    try {
+      community.value = await fetchCommunity(route.params.name)
+    } catch (error) {
+      submitError.value = describeApiError(error).message
+    }
+  }
+
+  if (!contestId.value) {
+    contestPuzzles.value = []
+    return
+  }
+
+  puzzlesLoading.value = true
+  try {
+    const [contestData, puzzlesData] = await Promise.all([
+      fetchContest(contestId.value),
+      fetchContestPuzzles(contestId.value).catch(() => []),
+    ])
+    form.title = contestData.title || ''
+    form.description = contestData.content || ''
+    form.startDate = toLocalDateTimeInput(contestData.startTime)
+    form.endDate = toLocalDateTimeInput(contestData.endTime)
+    if (contestData.banner) {
+      form.bannerUrl = contestData.banner
+    }
+    contestPuzzles.value = Array.isArray(puzzlesData) ? puzzlesData.map(toContestPuzzleCard) : []
+  } catch (error) {
+    submitError.value = describeApiError(error).message || 'Failed to load contest.'
+  } finally {
+    puzzlesLoading.value = false
+  }
 }
+
+// Tạo mới hoặc cập nhật thông tin cuộc thi
+async function handleSubmit() {
+  if (submitting.value) return
+  submitError.value = ''
+  submitSuccess.value = ''
+
+  const title = form.title.trim()
+  const content = form.description.trim()
+  if (!title) {
+    submitError.value = 'Please enter a contest title.'
+    return
+  }
+  if (!content) {
+    submitError.value = 'Please enter a contest description.'
+    return
+  }
+  if (!form.startDate || !form.endDate) {
+    submitError.value = 'Please select both Start and End dates.'
+    return
+  }
+
+  const startMs = new Date(form.startDate).getTime()
+  const endMs = new Date(form.endDate).getTime()
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    submitError.value = 'End date must be after Start date.'
+    return
+  }
+
+  // Không gửi blob URL cục bộ lên backend khi chưa nối upload
+  const bannerPayload =
+    form.bannerUrl && !form.bannerUrl.startsWith('blob:') ? form.bannerUrl : null
+
+  submitting.value = true
+  try {
+    if (isEditMode.value) {
+      await updateContest(contestId.value, {
+        title,
+        content,
+        banner: bannerPayload,
+        startTime: new Date(startMs).toISOString(),
+        endTime: new Date(endMs).toISOString(),
+      })
+      submitSuccess.value = 'Changes applied.'
+    } else {
+      if (!community.value?.id) {
+        submitError.value = 'Community could not be resolved.'
+        return
+      }
+      const created = await createContest({
+        title,
+        content,
+        banner: bannerPayload,
+        startTime: new Date(startMs).toISOString(),
+        endTime: new Date(endMs).toISOString(),
+        communityId: community.value.id,
+      })
+      router.replace({
+        name: 'contest-edit',
+        params: { name: route.params.name || community.value.name, contestId: created.id },
+      })
+    }
+  } catch (error) {
+    submitError.value = describeApiError(error).message || 'Failed to save contest.'
+  } finally {
+    submitting.value = false
+  }
+}
+
+watch([() => route.params.name, () => route.params.contestId], () => {
+  loadPageData()
+})
 
 onMounted(() => {
   authStore.initialize()
+  loadPageData()
 })
 
 onBeforeUnmount(() => {
@@ -89,7 +230,7 @@ onBeforeUnmount(() => {
           <div class="hero-content">
             <!-- Hàng đầu: Avatar cộng đồng bên trái; 2 ô chọn ngày Start và End date bên phải -->
             <div class="hero-top-row">
-              <Avatar src="" :name="communityName" type="community" />
+              <Avatar :src="community?.imageUrl || ''" :name="communityName" type="community" />
 
               <div class="hero-date-group">
                 <label class="date-field">
@@ -120,7 +261,7 @@ onBeforeUnmount(() => {
                 v-model="form.title"
                 type="text"
                 class="hero-title-input"
-                maxlength="200"
+                maxlength="250"
                 autocomplete="off"
                 placeholder="Contest title"
                 aria-label="Contest title"
@@ -143,7 +284,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- Chân thẻ: Metadata cuộc thi, nút Create và ô nhập mô tả -->
+        <!-- Chân thẻ: Metadata cuộc thi, nút Create/Apply và ô nhập mô tả -->
         <div class="hero-foot">
           <div class="hero-foot-row">
             <div class="meta-line">
@@ -153,11 +294,18 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="hero-actions">
-              <button class="btn p" type="button" @click="handleCreate">
-                <span>Create</span>
+              <span v-if="submitSuccess" class="submit-success" role="status">{{ submitSuccess }}</span>
+              <button class="btn p" type="button" :disabled="submitting" @click="handleSubmit">
+                <span>
+                  {{ submitting
+                    ? (isEditMode ? 'Applying...' : 'Creating...')
+                    : (isEditMode ? 'Apply' : 'Create') }}
+                </span>
               </button>
             </div>
           </div>
+
+          <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>
 
           <textarea
             v-model="form.description"
@@ -169,8 +317,8 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <!-- Bố cục 1 cột toàn chiều rộng: PuzzleCatalog 3 cột -->
-      <div class="contest-grid">
+      <!-- Chỉ hiển thị PuzzleCatalog sau khi cuộc thi đã được tạo (chế độ chỉnh sửa) -->
+      <div v-if="isEditMode" class="contest-grid">
         <div class="catalog-column">
           <div class="column-header">
             <div class="column-heading">
@@ -186,7 +334,7 @@ onBeforeUnmount(() => {
             </RouterLink>
           </div>
 
-          <PuzzleCatalog :items="contestPuzzles" :columns="3" />
+          <PuzzleCatalog :items="contestPuzzles" :columns="3" :loading="puzzlesLoading" />
         </div>
       </div>
     </main>
@@ -398,7 +546,18 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--s-3);
+}
+
+.submit-error {
+  margin: 0;
+  font: 500 12px var(--f-head);
+  color: var(--bad);
+}
+
+.submit-success {
+  font: 500 12px var(--f-head);
+  color: var(--ok);
 }
 
 /* Ô nhập mô tả không nền không viền */
@@ -450,12 +609,17 @@ onBeforeUnmount(() => {
   transition: background 0.15s var(--ease), filter 0.15s var(--ease), transform 0.12s var(--ease);
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: var(--s3);
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn.p {
@@ -464,7 +628,7 @@ onBeforeUnmount(() => {
   color: var(--ac-ink);
 }
 
-.btn.p:hover {
+.btn.p:hover:not(:disabled) {
   background: var(--ac);
   filter: brightness(1.08);
 }

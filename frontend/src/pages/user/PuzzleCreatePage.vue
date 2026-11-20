@@ -19,6 +19,11 @@ const DIFFICULTY_OPTIONS = [
 ]
 const route = useRoute()
 const router = useRouter()
+const contestId = computed(() => {
+  const raw = Number(route.query.contestId)
+  return Number.isInteger(raw) && raw > 0 ? raw : null
+})
+const contestScore = ref(100)
 const community = ref(null)
 const communityStatus = ref('loading') // loading | ready | blocked | missing | failed
 const communityError = ref('')
@@ -426,14 +431,29 @@ async function handleCreate() {
         input: testcase.input,
         output: testcase.output,
       })),
+      ...(contestId.value
+        ? {
+            contestId: contestId.value,
+            contestScore: Math.max(1, Math.trunc(Number(contestScore.value) || 100)),
+          }
+        : {}),
     })
 
     createTone.value = 'accepted'
     createLabel.value = 'Created'
-    createMessage.value = 'Puzzle created. Opening it now...'
+    createMessage.value = contestId.value
+      ? 'Puzzle created and added to contest. Returning...'
+      : 'Puzzle created. Opening it now...'
     // Count của tag vừa dùng đã thay đổi, lần mở trang tạo tiếp theo phải tải mới.
     invalidateTags()
-    router.push({ name: 'puzzle-solve', params: { id: created.id } })
+    if (contestId.value) {
+      router.push({
+        name: 'contest-edit',
+        params: { name: route.params.name, contestId: contestId.value },
+      })
+    } else {
+      router.push({ name: 'puzzle-solve', params: { id: created.id } })
+    }
   } catch (error) {
     const { message } = describeApiError(error)
     createTone.value = 'failed'
@@ -513,6 +533,18 @@ onBeforeUnmount(() => {
                 :size="20"
               />
             </div>
+
+            <label v-if="contestId" class="score-control">
+              <span class="score-control-label">Score</span>
+              <input
+                v-model.number="contestScore"
+                type="number"
+                min="1"
+                step="10"
+                class="score-control-input"
+                aria-label="Contest puzzle score"
+              />
+            </label>
           </header>
 
           <div class="panel-scroll form-scroll">
@@ -997,6 +1029,41 @@ onBeforeUnmount(() => {
   color: var(--tx2);
   font: 500 12px var(--f-head);
   white-space: nowrap;
+}
+
+.score-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  color: var(--tx);
+  background: var(--s2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r-sm);
+  font: 500 11px var(--f-head);
+}
+
+.score-control:focus-within {
+  border-color: var(--ac);
+}
+
+.score-control-label {
+  color: var(--tx2);
+  font: 500 11px/1 var(--f-head);
+  white-space: nowrap;
+}
+
+.score-control-input {
+  width: 56px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--tx);
+  font: 500 12px/1 var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .form-scroll {

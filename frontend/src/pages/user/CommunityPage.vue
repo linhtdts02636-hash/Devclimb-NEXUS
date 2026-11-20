@@ -340,8 +340,6 @@ onBeforeUnmount(() => {
                 :columns="1"
                 :loading="contestsLoading"
                 :error="contestsError"
-                :create-url="community ? `/community/${community.name}/contests/new` : ''"
-                :show-create="isMember"
                 @retry="loadCommunityContests"
               />
             </div>

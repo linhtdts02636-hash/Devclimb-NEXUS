@@ -18,7 +18,9 @@ public record CreatePuzzleRequest(
 		@NotNull @Positive Integer communityId,
 		@NotEmpty @Size(max = 3) List<@Valid PuzzleLanguageRequest> languages,
 		@Size(max = 20) List<@NotBlank @Size(max = 50) String> tags,
-		@NotEmpty @Size(max = 50) List<@Valid TestcaseRequest> testcases) {
+		@NotEmpty @Size(max = 50) List<@Valid TestcaseRequest> testcases,
+		@Positive Integer contestId,
+		@Positive Integer contestScore) {
 
 	public record PuzzleLanguageRequest(
 			@NotNull @Positive Integer languageId,

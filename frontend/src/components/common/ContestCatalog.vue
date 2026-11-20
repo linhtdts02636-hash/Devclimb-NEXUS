@@ -1,6 +1,5 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
 import ContestCard from '../../features/contest/components/ContestCard.vue'
 import { formatContestCountdown, toContestCard } from '../../features/contest/contestMapper'
 
@@ -10,24 +9,13 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
   placeholder: { type: String, default: 'Search contests...' },
-  createUrl: { type: String, default: '' },
-  showCreate: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['retry'])
 
-const route = useRoute()
 const searchQuery = ref('')
 const now = ref(Date.now())
 let timer = null
-
-const resolvedCreateUrl = computed(() => {
-  if (!props.showCreate) return ''
-  if (props.createUrl) return props.createUrl
-  const commName = route?.params?.name
-  if (commName) return `/community/${commName}/contests/new`
-  return '/contests/new'
-})
 
 onMounted(() => {
   // Bộ đếm thời gian cập nhật mỗi giây để đồng hồ countdown luôn chính xác
@@ -54,7 +42,7 @@ function resolveCard(contest, currentTimestamp) {
     card.actionLabel = 'View Standings'
   } else if (Number.isFinite(startTime) && currentTimestamp >= startTime) {
     card.status = 'OPEN'
-    card.actionLabel = 'Enter Arena'
+    card.actionLabel = 'Join Contest'
   } else if (Number.isFinite(startTime) && currentTimestamp < startTime) {
     card.status = 'UPCOMING'
     card.actionLabel = 'Register Now'
@@ -109,15 +97,6 @@ const displayedContests = computed(() => {
               <path d="m6 6 12 12M18 6 6 18" />
             </svg>
           </button>
-        </div>
-
-        <div v-if="resolvedCreateUrl" class="toolbar-controls">
-          <RouterLink class="create-contest-btn" :to="resolvedCreateUrl">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Create contest
-          </RouterLink>
         </div>
       </div>
     </section>

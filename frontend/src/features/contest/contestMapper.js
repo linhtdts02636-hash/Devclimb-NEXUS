@@ -75,8 +75,8 @@ export function toContestCard(contest) {
     registeredLabel: 'Registered:',
     registeredCount: `${Number(contest.registeredCount || 0).toLocaleString()} devs`,
     puzzleCount: contest.puzzleCount ?? 0,
-    actionLabel: status === 'CLOSED' ? 'View Standings' : status === 'OPEN' ? 'Enter Arena' : 'Register Now',
-    image: contest.banner || DEFAULT_BANNER,
+    actionLabel: status === 'CLOSED' ? 'View Standings' : status === 'OPEN' ? 'Join Contest' : 'Register Now',
+    image: contest.banner || '',
   }
 }
 
@@ -102,7 +102,7 @@ export function toContestDetail(contest) {
     puzzleCount,
     maxScore: `${puzzleCount * 100} Max Score`,
     description: contest.content || '',
-    image: contest.banner || DEFAULT_BANNER,
+    image: contest.banner || '',
   }
 }
 

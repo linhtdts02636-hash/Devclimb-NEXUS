@@ -124,6 +124,15 @@ const myStanding = computed(() => {
   }
 })
 
+// Tính tổng điểm tối đa thực tế từ danh sách bài toán của cuộc thi
+const maxScoreLabel = computed(() => {
+  if (contestPuzzles.value.length > 0) {
+    const total = contestPuzzles.value.reduce((sum, p) => sum + (Number(p.points ?? p.score) || 0), 0)
+    return `${total.toLocaleString()} Max Score`
+  }
+  return contest.value?.maxScore || '0 Max Score'
+})
+
 // Tải thông tin chi tiết cuộc thi, bài tập và bảng xếp hạng từ backend
 async function loadContestDetail(id) {
   if (!id) return
@@ -336,7 +345,7 @@ const filteredLeaderboard = computed(() => {
               <span class="dot">•</span>
               <span>{{ contest.puzzleCount }} Puzzles</span>
               <span class="dot">•</span>
-              <span>{{ contest.maxScore }}</span>
+              <span>{{ maxScoreLabel }}</span>
             </div>
 
             <div class="hero-actions">
@@ -789,20 +798,30 @@ const filteredLeaderboard = computed(() => {
   gap: 4px;
   height: 22px;
   padding: 0 8px;
-  background: rgba(28, 28, 26, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--s2);
+  border: 1px solid var(--line);
   border-radius: 999px;
   font: 500 11px/1 var(--f-mono);
   font-variant-numeric: tabular-nums;
-  color: #ecebe6;
+  color: var(--tx);
   white-space: nowrap;
   box-sizing: border-box;
-  backdrop-filter: blur(8px);
 }
 
 .timer-ic {
   width: 13px;
   height: 13px;
+  color: var(--tx2);
+}
+
+.contest-hero-card.has-image .timer-chip {
+  background: rgba(28, 28, 26, 0.75);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #ecebe6;
+  backdrop-filter: blur(8px);
+}
+
+.contest-hero-card.has-image .timer-ic {
   color: #c8c6c3;
 }
 

@@ -28,6 +28,10 @@ import com.devclimb.community.Community;
 import com.devclimb.community.CommunityRepository;
 import com.devclimb.community.UserCommunityId;
 import com.devclimb.community.UserCommunityRepository;
+import com.devclimb.contest.Contest;
+import com.devclimb.contest.ContestRepository;
+import com.devclimb.contest.PuzzleContest;
+import com.devclimb.contest.PuzzleContestRepository;
 import com.devclimb.language.Language;
 import com.devclimb.language.LanguageRepository;
 import com.devclimb.language.PuzzleLanguage;
@@ -57,6 +61,8 @@ public class PuzzleService {
 	private final LanguageRepository languageRepository;
 	private final CommunityRepository communityRepository;
 	private final UserCommunityRepository userCommunityRepository;
+	private final ContestRepository contestRepository;
+	private final PuzzleContestRepository puzzleContestRepository;
 	private final AuthenticationService authenticationService;
 	private final FunctionHeaderValidator functionHeaderValidator;
 	private final TransactionTemplate transactionTemplate;
@@ -71,6 +77,8 @@ public class PuzzleService {
 			LanguageRepository languageRepository,
 			CommunityRepository communityRepository,
 			UserCommunityRepository userCommunityRepository,
+			ContestRepository contestRepository,
+			PuzzleContestRepository puzzleContestRepository,
 			AuthenticationService authenticationService,
 			FunctionHeaderValidator functionHeaderValidator,
 			PlatformTransactionManager transactionManager,
@@ -83,6 +91,8 @@ public class PuzzleService {
 		this.languageRepository = languageRepository;
 		this.communityRepository = communityRepository;
 		this.userCommunityRepository = userCommunityRepository;
+		this.contestRepository = contestRepository;
+		this.puzzleContestRepository = puzzleContestRepository;
 		this.authenticationService = authenticationService;
 		this.functionHeaderValidator = functionHeaderValidator;
 		this.transactionTemplate = new TransactionTemplate(transactionManager);
@@ -207,6 +217,13 @@ public class PuzzleService {
 				.filter(Community::isActive)
 				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
 		requireMembership(author.getId(), community.getId());
+		if (request.contestId() != null) {
+			Contest contest = contestRepository.findByIdWithCommunity(request.contestId())
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contest not found."));
+			if (!contest.getCommunity().getId().equals(community.getId())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contest does not belong to this community.");
+			}
+		}
 
 		Map<Integer, Language> languages = loadLanguages(request.languages());
 		List<FunctionHeaderValidator.LanguageHeader> headers = request.languages().stream()
@@ -280,6 +297,10 @@ public class PuzzleService {
 		testcaseRepository.saveAll(testcases);
 
 		List<Ptag> tags = attachTags(puzzle, tagNames);
+		if (request.contestId() != null) {
+			Contest contest = entityManager.getReference(Contest.class, request.contestId());
+			puzzleContestRepository.save(new PuzzleContest(puzzle, contest, request.contestScore()));
+		}
 		return PuzzleDTO.from(
 				puzzle,
 				puzzleLanguages,

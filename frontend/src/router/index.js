@@ -18,6 +18,7 @@ export const router = createRouter({
     { path: '/contest', redirect: '/contest/1' },
     { path: '/contests/new', redirect: '/communities' },
     { path: '/community/:name/contests/new', name: 'contest-create', component: () => import('../pages/user/ContestCreatePage.vue'), meta: { requiresAuth: true } },
+    { path: '/community/:name/contests/:contestId/edit', name: 'contest-edit', component: () => import('../pages/user/ContestCreatePage.vue'), meta: { requiresAuth: true } },
     { path: '/contest/:id', name: 'contest-detail', component: () => import('../pages/user/ContestDetailPage.vue'), meta: { requiresAuth: true } },
     { path: '/c/:name', redirect: (destination) => `/community/${destination.params.name}` },
     { path: '/c/:name/settings', redirect: (destination) => `/community/${destination.params.name}/settings` },

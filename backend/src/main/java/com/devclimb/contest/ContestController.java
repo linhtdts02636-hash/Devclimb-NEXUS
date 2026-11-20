@@ -11,23 +11,33 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.devclimb.auth.AuthenticationService;
+import com.devclimb.common.exception.ApiException;
+import com.devclimb.common.exception.ErrorCode;
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
 import com.devclimb.common.security.FirebaseAuthenticationFilter;
+import com.devclimb.community.Community;
+import com.devclimb.community.CommunityRepository;
+import com.devclimb.community.UserCommunityId;
+import com.devclimb.community.UserCommunityRepository;
 import com.devclimb.language.PuzzleLanguage;
 import com.devclimb.language.PuzzleLanguageDTO;
 import com.devclimb.language.PuzzleLanguageRepository;
 import com.devclimb.ptag.PtagPuzzleRepository;
 import com.devclimb.submission.SubmissionRepository;
 import com.devclimb.user.User;
+
+import jakarta.validation.Valid;
 
 // Controller phục vụ các endpoint liên quan đến cuộc thi (/api/contests)
 @RestController
@@ -42,6 +52,8 @@ public class ContestController {
 	private final PuzzleLanguageRepository puzzleLanguageRepository;
 	private final PtagPuzzleRepository ptagPuzzleRepository;
 	private final SubmissionRepository submissionRepository;
+	private final CommunityRepository communityRepository;
+	private final UserCommunityRepository userCommunityRepository;
 
 	public ContestController(
 			ContestRepository contestRepository,
@@ -50,7 +62,9 @@ public class ContestController {
 			AuthenticationService authenticationService,
 			PuzzleLanguageRepository puzzleLanguageRepository,
 			PtagPuzzleRepository ptagPuzzleRepository,
-			SubmissionRepository submissionRepository) {
+			SubmissionRepository submissionRepository,
+			CommunityRepository communityRepository,
+			UserCommunityRepository userCommunityRepository) {
 		this.contestRepository = contestRepository;
 		this.puzzleContestRepository = puzzleContestRepository;
 		this.userContestRepository = userContestRepository;
@@ -58,6 +72,8 @@ public class ContestController {
 		this.puzzleLanguageRepository = puzzleLanguageRepository;
 		this.ptagPuzzleRepository = ptagPuzzleRepository;
 		this.submissionRepository = submissionRepository;
+		this.communityRepository = communityRepository;
+		this.userCommunityRepository = userCommunityRepository;
 	}
 
 	@GetMapping
@@ -89,6 +105,69 @@ public class ContestController {
 		long registeredCount = userContestRepository.countByIdContestId(contest.getId());
 		long puzzleCount = puzzleContestRepository.countByIdContestId(contest.getId());
 		return ContestDTO.from(contest, registeredCount, puzzleCount);
+	}
+
+	// Tạo cuộc thi mới thuộc về một cộng đồng
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	@Transactional
+	public ContestDTO createContest(
+			@Valid @RequestBody CreateContestRequest request,
+			@RequestAttribute(FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE) AuthenticatedFirebaseUser firebaseUser) {
+		User user = authenticationService.findCurrentUser(firebaseUser);
+		Community community = communityRepository.findById(request.communityId())
+				.filter(Community::isActive)
+				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
+		requireCommunityMember(user.getId(), community.getId());
+		validateContestSchedule(request.startTime(), request.endTime());
+
+		String banner = request.banner() != null && !request.banner().isBlank() ? request.banner().trim() : null;
+		Contest contest = new Contest(
+				community,
+				request.title().trim(),
+				request.content().trim(),
+				banner,
+				request.startTime(),
+				request.endTime());
+		contestRepository.saveAndFlush(contest);
+		return ContestDTO.from(contest, 0L, 0L);
+	}
+
+	// Cập nhật thông tin cuộc thi ở chế độ chỉnh sửa
+	@PatchMapping("/{id}")
+	@Transactional
+	public ContestDTO updateContest(
+			@PathVariable Integer id,
+			@Valid @RequestBody UpdateContestRequest request,
+			@RequestAttribute(FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE) AuthenticatedFirebaseUser firebaseUser) {
+		User user = authenticationService.findCurrentUser(firebaseUser);
+		Contest contest = contestRepository.findByIdWithCommunity(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contest not found."));
+		requireCommunityMember(user.getId(), contest.getCommunity().getId());
+		validateContestSchedule(request.startTime(), request.endTime());
+
+		contest.setTitle(request.title().trim());
+		contest.setContent(request.content().trim());
+		contest.setBanner(request.banner() != null && !request.banner().isBlank() ? request.banner().trim() : null);
+		contest.setStartTime(request.startTime());
+		contest.setEndTime(request.endTime());
+		contestRepository.saveAndFlush(contest);
+
+		long registeredCount = userContestRepository.countByIdContestId(contest.getId());
+		long puzzleCount = puzzleContestRepository.countByIdContestId(contest.getId());
+		return ContestDTO.from(contest, registeredCount, puzzleCount);
+	}
+
+	private void requireCommunityMember(Integer userId, Integer communityId) {
+		if (!userCommunityRepository.existsById(new UserCommunityId(userId, communityId))) {
+			throw new ApiException(ErrorCode.NOT_A_MEMBER);
+		}
+	}
+
+	private void validateContestSchedule(Instant startTime, Instant endTime) {
+		if (!endTime.isAfter(startTime)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End time must be after start time.");
+		}
 	}
 
 	// Đăng ký tham gia cuộc thi
