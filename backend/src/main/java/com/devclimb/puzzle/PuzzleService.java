@@ -219,9 +219,9 @@ public class PuzzleService {
 		requireMembership(author.getId(), community.getId());
 		if (request.contestId() != null) {
 			Contest contest = contestRepository.findByIdWithCommunity(request.contestId())
-					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Contest not found."));
+					.orElseThrow(() -> new ApiException(ErrorCode.CONTEST_NOT_FOUND));
 			if (!contest.getCommunity().getId().equals(community.getId())) {
-				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contest does not belong to this community.");
+				throw new ApiException(ErrorCode.CONTEST_COMMUNITY_MISMATCH);
 			}
 		}
 
