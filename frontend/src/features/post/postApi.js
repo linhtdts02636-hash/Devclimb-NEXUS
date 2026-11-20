@@ -19,3 +19,14 @@ export async function updatePost(postId, { title, content }) {
 export async function deletePost(postId) {
   await apiClient.delete(`/posts/${postId}`)
 }
+
+// Dùng apiClient để interceptor tự gắn Firebase ID token.
+export async function setPostReaction(postId, type) {
+  const { data } = await apiClient.put(`/posts/${postId}/reaction`, { type })
+  return data
+}
+
+export async function removePostReaction(postId) {
+  const { data } = await apiClient.delete(`/posts/${postId}/reaction`)
+  return data
+}

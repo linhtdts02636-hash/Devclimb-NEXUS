@@ -1,6 +1,7 @@
 package com.devclimb.post;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import com.devclimb.community.Community;
 import com.devclimb.community.CommunityRepository;
 import com.devclimb.community.UserCommunityId;
 import com.devclimb.community.UserCommunityRepository;
+import com.devclimb.reaction.ReactionService;
+import com.devclimb.reaction.ReactionSummaryDTO;
 import com.devclimb.user.User;
 
 @Service
@@ -25,13 +28,16 @@ public class PostService {
 	private final CommunityRepository communityRepository;
 	private final UserCommunityRepository userCommunityRepository;
 	private final AuthenticationService authenticationService;
+	private final ReactionService reactionService;
 
 	public PostService(PostRepository postRepository, CommunityRepository communityRepository,
-			UserCommunityRepository userCommunityRepository, AuthenticationService authenticationService) {
+			UserCommunityRepository userCommunityRepository, AuthenticationService authenticationService,
+			ReactionService reactionService) {
 		this.postRepository = postRepository;
 		this.communityRepository = communityRepository;
 		this.userCommunityRepository = userCommunityRepository;
 		this.authenticationService = authenticationService;
+		this.reactionService = reactionService;
 	}
 
 	@Transactional
@@ -55,11 +61,11 @@ public class PostService {
 		// Không đánh dấu "đã chỉnh sửa" nếu nội dung gửi lên không thay đổi.
 		if (Objects.equals(post.getTitle(), trimmedTitle)
 				&& Objects.equals(post.getContent(), trimmedContent)) {
-			return PostDTO.of(post);
+			return withReaction(PostDTO.of(post), user.getId());
 		}
 
 		post.update(trimmedTitle, trimmedContent);
-		return PostDTO.of(postRepository.save(post));
+		return withReaction(PostDTO.of(postRepository.save(post)), user.getId());
 	}
 
 	@Transactional
@@ -79,7 +85,20 @@ public class PostService {
 			requireMembership(user, communityId);
 		}
 
-		return postRepository.findFeed(communityId);
+		List<PostDTO> posts = postRepository.findFeed(communityId);
+		if (posts.isEmpty()) {
+			return posts;
+		}
+
+		Map<Integer, ReactionSummaryDTO> summaries = reactionService.summariesFor(
+				posts.stream().map(PostDTO::id).toList(), user.getId());
+		return posts.stream()
+				.map(post -> post.withReaction(summaries.getOrDefault(post.id(), ReactionSummaryDTO.empty())))
+				.toList();
+	}
+
+	private PostDTO withReaction(PostDTO post, Integer userId) {
+		return post.withReaction(reactionService.summaryFor(post.id(), userId));
 	}
 
 	private void requireMembership(User user, Integer communityId) {

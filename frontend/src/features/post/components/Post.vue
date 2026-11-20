@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Avatar from '../../../components/common/Avatar.vue'
 import PostImages from './PostImages.vue'
+import Reaction from './Reaction.vue'
 import { formatFullDate, formatRelativeTime } from '../../../composables/useRelativeTime'
 
 const props = defineProps({
@@ -88,6 +89,12 @@ const canManage = computed(
     <p v-if="post.content" class="post__content">{{ post.content }}</p>
 
     <PostImages v-if="images?.length" :images="images" />
+
+    <!-- Reaction tự quản lý state hiển thị; Post.vue không mutate post.reaction. -->
+    <Reaction
+      :post-id="post.id"
+      :reaction="post.reaction"
+    />
   </article>
 </template>
 
