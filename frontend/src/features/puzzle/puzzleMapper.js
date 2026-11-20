@@ -33,7 +33,7 @@ export function toPuzzleCard(puzzle) {
     // Backend đã trả sẵn community name/image; fallback cũ chỉ dùng khi API cũ
     // hoặc dữ liệu thiếu để card vẫn có avatar hợp lệ.
     community: {
-      src: puzzle.communityImageUrl || '/favicon.svg',
+      src: puzzle.communityImageUrl || '',
       name: puzzle.communityName || (puzzle.communityId != null ? `Community #${puzzle.communityId}` : 'Community'),
       type: 'community',
     },

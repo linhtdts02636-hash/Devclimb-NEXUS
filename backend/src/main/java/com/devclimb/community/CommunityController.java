@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
 import com.devclimb.common.security.FirebaseAuthenticationFilter;
+import com.devclimb.puzzle.PuzzleDTO;
+import com.devclimb.puzzle.PuzzleService;
 
 @RestController
 @RequestMapping("/api/communities")
@@ -25,9 +27,11 @@ public class CommunityController {
 	private static final String FIREBASE_USER = FirebaseAuthenticationFilter.AUTHENTICATED_USER_ATTRIBUTE;
 
 	private final CommunityService communityService;
+	private final PuzzleService puzzleService;
 
-	public CommunityController(CommunityService communityService) {
+	public CommunityController(CommunityService communityService, PuzzleService puzzleService) {
 		this.communityService = communityService;
+		this.puzzleService = puzzleService;
 	}
 
 	@PostMapping
@@ -71,6 +75,14 @@ public class CommunityController {
 	public List<MemberDTO> listMembers(@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
 			@PathVariable String name) {
 		return communityService.listMembers(firebaseUser, name);
+	}
+
+	// Lấy danh sách puzzle thuộc về một cộng đồng theo tên
+	@GetMapping("/{name}/puzzles")
+	public List<PuzzleDTO> listPuzzles(
+			@RequestAttribute(FIREBASE_USER) AuthenticatedFirebaseUser firebaseUser,
+			@PathVariable String name) {
+		return puzzleService.findByCommunityName(firebaseUser, name);
 	}
 
 	@PostMapping("/{name}/members")

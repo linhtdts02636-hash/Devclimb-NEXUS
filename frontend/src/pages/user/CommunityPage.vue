@@ -5,15 +5,17 @@ import Avatar from '../../components/common/Avatar.vue'
 import BaseModal from '../../components/common/BaseModal.vue'
 import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
 import PostList from '../../features/post/components/PostList.vue'
+import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
-import { fetchCommunity, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
+import { fetchCommunity, fetchCommunityPuzzles, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
 import CommunityHeaderActions from '../../features/community/components/CommunityHeaderActions.vue'
 import CommunitySideCards from '../../features/community/components/CommunitySideCards.vue'
 import CommunitySidebar from '../../features/community/components/CommunitySidebar.vue'
 import PinnedPosts from '../../features/community/components/PinnedPosts.vue'
 import RoleList from '../../features/community/components/RoleList.vue'
 import { deletePost, getPosts } from '../../features/post/postApi'
+import { toPuzzleCard } from '../../features/puzzle/puzzleMapper'
 import { samplePosts } from '../../sample/sampleCommunityData'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -54,6 +56,26 @@ const currentUserId = computed(() => authStore.profile?.id ?? null)
 const isAuthenticated = computed(() => authStore.status === 'authenticated')
 const isMember = computed(() => Boolean(community.value?.isMember))
 const canPost = computed(() => isAuthenticated.value && isMember.value && Number.isInteger(community.value?.id))
+
+const puzzles = ref([])
+const puzzlesLoading = ref(false)
+const puzzlesError = ref('')
+
+// Tải danh sách puzzle của cộng đồng từ backend API
+async function loadCommunityPuzzles() {
+  if (!route.params.name) return
+  puzzlesLoading.value = true
+  puzzlesError.value = ''
+  try {
+    const data = await fetchCommunityPuzzles(route.params.name)
+    puzzles.value = data.map(toPuzzleCard)
+  } catch (error) {
+    puzzles.value = []
+    puzzlesError.value = describeApiError(error).message
+  } finally {
+    puzzlesLoading.value = false
+  }
+}
 
 async function loadFeed() {
   if (!Number.isInteger(community.value?.id)) {
@@ -188,11 +210,19 @@ watch(
     actionError.value = ''
     composerOpen.value = false
     editingPost.value = null
+    puzzles.value = []
+    puzzlesError.value = ''
     resetDeleteConfirm()
     loadCommunity()
   },
   { immediate: true },
 )
+
+watch(activeTab, (tab) => {
+  if (tab === 'puzzles') {
+    loadCommunityPuzzles()
+  }
+})
 
 onMounted(() => {
   authStore.initialize()
@@ -230,7 +260,7 @@ onBeforeUnmount(() => {
         </div>
 
         <header class="header">
-          <Avatar class="community-avatar" :src="community.imageUrl" :name="community.name" :size="96" :show-name="false" />
+          <Avatar class="community-avatar" :src="community.imageUrl" :name="community.name" :size="96" :show-name="false" :clickable="false" />
           <div class="identity">
             <h1><span class="prefix">c/</span>{{ community.name }}</h1>
             <p class="meta">
@@ -261,9 +291,18 @@ onBeforeUnmount(() => {
               />
             </div>
 
-            <div v-else-if="activeTab === 'puzzles' || activeTab === 'contests'" role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
-              <p v-if="activeTab === 'puzzles'">Puzzle listing for this community is coming soon. Members can create a puzzle now.</p>
-              <p v-else>Contests for this community are coming soon.</p>
+            <div v-else-if="activeTab === 'puzzles'" role="tabpanel" aria-labelledby="tab-puzzles" class="puzzles-tab">
+              <PuzzleCatalog
+                :items="puzzles"
+                :columns="1"
+                :loading="puzzlesLoading"
+                :error="puzzlesError"
+                @retry="loadCommunityPuzzles"
+              />
+            </div>
+
+            <div v-else-if="activeTab === 'contests'" role="tabpanel" aria-labelledby="tab-contests" class="empty-tab">
+              <p>Contests for this community are coming soon.</p>
             </div>
 
             <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">

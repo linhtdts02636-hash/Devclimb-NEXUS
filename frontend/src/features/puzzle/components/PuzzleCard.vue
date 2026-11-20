@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import Avatar from '../../../components/common/Avatar.vue'
+import TooltipHover from '../../../components/common/TooltipHover.vue'
 
 const router = useRouter()
 
@@ -14,7 +15,7 @@ const props = defineProps({
   tags: { type: Array, default: () => [] },
   authorName: { type: String, default: '' },
   createdLabel: { type: String, default: '' },
-  acceptance: { type: String, default: '' },
+  acceptance: { type: String, default: '' }, //this exists! dont forget
   community: {
     type: Object,
     default: () => ({ src: '/favicon.svg', name: 'fpt-algo-club', type: 'community' }),
@@ -38,15 +39,15 @@ function openPuzzle() {
     :tabindex="content ? 0 : undefined"
     :aria-describedby="content && id != null ? `puzzle-preview-${id}` : undefined"
   >
-    <div
-      v-if="content"
-      :id="id != null ? `puzzle-preview-${id}` : undefined"
-      class="puzzle-preview"
-      role="tooltip"
-    >
-      <span class="puzzle-preview-label">Puzzle</span>
-      <p class="puzzle-preview-text">{{ content }}</p>
-    </div>
+    <TooltipHover v-if="content">
+      <div
+        :id="id != null ? `puzzle-preview-${id}` : undefined"
+        class="puzzle-preview"
+      >
+        <span class="puzzle-preview-label">Puzzle</span>
+        <p class="puzzle-preview-text">{{ content }}</p>
+      </div>
+    </TooltipHover>
 
     <div class="puzzle-card-head">
       <Avatar :src="community.src" :name="community.name" :type="community.type" />
@@ -121,28 +122,12 @@ function openPuzzle() {
 }
 
 .puzzle-preview {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 10px);
-  left: 0;
-  z-index: 30;
+  max-width: 320px;
   padding: 12px 14px;
   background: var(--s1);
   border: 1px solid var(--line2);
   border-radius: var(--r-sm);
-  box-shadow: var(--sh-card);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease), visibility 0.15s;
-  pointer-events: none;
-}
-
-.puzzle-card:hover .puzzle-preview,
-.puzzle-card:focus-visible .puzzle-preview {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .puzzle-preview-label {

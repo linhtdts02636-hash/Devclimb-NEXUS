@@ -1,3 +1,4 @@
+-- SQLBook: Code
 --
 -- PostgreSQL database dump
 --
@@ -322,9 +323,10 @@ CREATE TABLE public.contest (
     comm_id integer NOT NULL,
     cont_title character varying(250) NOT NULL,
     cont_content text NOT NULL,
-    cont_image text,
+    -- recent edit: removed cont_image
     cont_banner text,
-    cont_start timestamp with time zone DEFAULT now() NOT NULL,
+    -- recent edit: removed DEFAULT now() of cont_start
+    cont_start timestamp with time zone NOT NULL, 
     cont_end timestamp with time zone NOT NULL,
     CONSTRAINT contest_check CHECK ((cont_end > cont_start))
 );

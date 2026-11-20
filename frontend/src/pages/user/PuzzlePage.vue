@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ContestCard from '../../features/contest/components/ContestCard.vue'
-import PuzzleCard from '../../features/puzzle/components/PuzzleCard.vue'
+import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { fetchPuzzles } from '../../features/puzzle/puzzleApi'
@@ -114,13 +114,11 @@ watch(query, () => {
   searchTimer = setTimeout(applySearch, 300)
 })
 
-function setDifficulty(value) {
-  if (difficulty.value === value) return
+watch(difficulty, () => {
   clearTimeout(searchTimer)
-  difficulty.value = value
   page.value = 0
   loadPuzzles()
-}
+})
 
 function onSizeChange() {
   clearTimeout(searchTimer)
@@ -200,98 +198,58 @@ function scrollContests(direction) {
           <svg class="ic"><use href="#ic-chevron-right" /></svg>
         </button>
       </div>
-      <section class="toolbar" aria-label="Filter puzzles">
-        <div class="toolbar-row">
-          <div class="search">
-            <svg class="ic search-icon"><use href="#ic-search" /></svg>
-            <input
-              v-model="query"
-              type="search"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Search puzzles"
-              placeholder="Search puzzles by name, #tag or by :language..."
-              @keyup.enter="applySearch"
-              @search="applySearch"
-            />
-          </div>
-
-          <div class="toolbar-controls">
-            <div class="segmented" role="group" aria-label="Filter by difficulty">
-              <button
-                v-for="option in difficultyOptions"
-                :key="option.value"
-                type="button"
-                class="seg"
-                :class="[option.tone, { active: difficulty === option.value }]"
-                :aria-pressed="difficulty === option.value"
-                @click="setDifficulty(option.value)"
-              >
-                {{ option.label }}
-              </button>
+      <PuzzleCatalog
+        v-model:query="query"
+        v-model:difficulty="difficulty"
+        :puzzles="puzzles"
+        :columns="2"
+        :loading="loading"
+        :error="error"
+        @retry="loadPuzzles"
+        @search="applySearch"
+      >
+        <template #footer>
+          <div class="table-foot">
+            <div class="foot-left">
+              <span v-if="puzzles.length">
+                Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> puzzles
+              </span>
+              <span v-else>No puzzles</span>
+              <span class="dot">•</span>
+              <label class="rows-control">
+                Rows:
+                <select v-model.number="size" aria-label="Puzzles per page" @change="onSizeChange">
+                  <option :value="10">10 / page</option>
+                  <option :value="30">30 / page</option>
+                  <option :value="50">50 / page</option>
+                </select>
+              </label>
             </div>
+
+            <nav class="pager" aria-label="Page navigation">
+              <button
+                class="page-btn"
+                type="button"
+                aria-label="Previous page"
+                :disabled="page === 0 || loading"
+                @click="goToPage(page - 1)"
+              >
+                <svg class="ic"><use href="#ic-chevron-left" /></svg>
+              </button>
+              <span class="page-status">Page {{ page + 1 }}</span>
+              <button
+                class="page-btn"
+                type="button"
+                aria-label="Next page"
+                :disabled="!hasNext || loading"
+                @click="goToPage(page + 1)"
+              >
+                <svg class="ic"><use href="#ic-chevron-right" /></svg>
+              </button>
+            </nav>
           </div>
-        </div>
-      </section>
-
-      <section class="table-card" aria-label="Puzzle list" :aria-busy="loading">
-        <div v-if="error" class="empty">
-          <p>{{ error }}</p>
-          <button class="retry-btn" type="button" @click="loadPuzzles">Try again</button>
-        </div>
-
-        <div v-else-if="loading && !puzzles.length" class="empty">
-          <p>Loading puzzles...</p>
-        </div>
-
-        <div v-else-if="!puzzles.length" class="empty">
-          <p>No puzzles found.</p>
-        </div>
-
-        <div v-else class="puzzle-grid" :class="{ 'is-loading': loading }">
-          <PuzzleCard v-for="puzzle in puzzles" :key="puzzle.index" v-bind="puzzle" />
-        </div>
-
-        <div class="table-foot">
-          <div class="foot-left">
-            <span v-if="puzzles.length">
-              Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> puzzles
-            </span>
-            <span v-else>No puzzles</span>
-            <span class="dot">•</span>
-            <label class="rows-control">
-              Rows:
-              <select v-model.number="size" aria-label="Puzzles per page" @change="onSizeChange">
-                <option :value="10">10 / page</option>
-                <option :value="30">30 / page</option>
-                <option :value="50">50 / page</option>
-              </select>
-            </label>
-          </div>
-
-          <nav class="pager" aria-label="Page navigation">
-            <button
-              class="page-btn"
-              type="button"
-              aria-label="Previous page"
-              :disabled="page === 0 || loading"
-              @click="goToPage(page - 1)"
-            >
-              <svg class="ic"><use href="#ic-chevron-left" /></svg>
-            </button>
-            <span class="page-status">Page {{ page + 1 }}</span>
-            <button
-              class="page-btn"
-              type="button"
-              aria-label="Next page"
-              :disabled="!hasNext || loading"
-              @click="goToPage(page + 1)"
-            >
-              <svg class="ic"><use href="#ic-chevron-right" /></svg>
-            </button>
-          </nav>
-        </div>
-      </section>
+        </template>
+      </PuzzleCatalog>
     </main>
 
     <SiteFooter />

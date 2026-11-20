@@ -127,7 +127,7 @@ onMounted(() => {
       <ul v-show="openSections.communities" id="sidebar-communities" class="list">
         <li v-for="community in sortedCommunities" :key="community.id" class="row">
           <RouterLink class="item" :to="`/community/${community.name}`">
-            <Avatar :src="community.imageUrl" :name="community.name" :size="26" :show-name="false" />
+            <Avatar :src="community.imageUrl" :name="community.name" :size="26" :show-name="false" :clickable="false" />
             <span class="name">{{ community.name }}</span>
           </RouterLink>
           <button type="button" class="star" :aria-pressed="favoriteIds.includes(community.id)" :aria-label="`Favorite ${community.name}`" @click="toggleFavorite(community.id)">
@@ -144,7 +144,7 @@ onMounted(() => {
       <ul v-show="openSections.recent" id="sidebar-recent" class="list">
         <li v-for="entry in otherRecentCommunities" :key="entry.id">
           <RouterLink class="item" :to="`/community/${entry.name}`">
-            <Avatar :src="entry.imageUrl" :name="entry.name" :size="26" :show-name="false" /><span class="name">{{ entry.name }}</span>
+            <Avatar :src="entry.imageUrl" :name="entry.name" :size="26" :show-name="false" :clickable="false" /><span class="name">{{ entry.name }}</span>
           </RouterLink>
         </li>
       </ul>

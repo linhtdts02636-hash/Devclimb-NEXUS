@@ -99,10 +99,13 @@ public class PuzzleService {
 		}
 
 		List<String> nameParts = new ArrayList<>();
+		List<String> excludedNames = new ArrayList<>();
 		Set<String> requiredLanguages = new LinkedHashSet<>();
 		Set<String> optionalLanguages = new LinkedHashSet<>();
+		Set<String> excludedLanguages = new LinkedHashSet<>();
 		Set<String> requiredTags = new LinkedHashSet<>();
 		Set<String> optionalTags = new LinkedHashSet<>();
+		Set<String> excludedTags = new LinkedHashSet<>();
 
 		String normalizedQuery = StringUtils.hasText(query) ? query.trim() : "";
 		normalizedQuery = normalizedQuery.replaceAll("\\s*\\|\\|\\s*", "||");
@@ -110,7 +113,14 @@ public class PuzzleService {
 			if (token.isEmpty()) {
 				continue;
 			}
-			if (token.startsWith(":") && token.length() > 1) {
+			// Xử lý tiền tố loại trừ '-' (-:ngôn ngữ, -#tag, -tên) và bộ lọc thông thường
+			if (token.startsWith("-:") && token.length() > 2) {
+				excludedLanguages.add(token.substring(2).trim().toLowerCase(Locale.ROOT));
+			} else if (token.startsWith("-#") && token.length() > 2) {
+				excludedTags.add(token.substring(2).trim().toLowerCase(Locale.ROOT));
+			} else if (token.startsWith("-") && token.length() > 1) {
+				excludedNames.add(token.substring(1).trim().toLowerCase(Locale.ROOT));
+			} else if (token.startsWith(":") && token.length() > 1) {
 				collectFilters(token.substring(1), ':', requiredLanguages, optionalLanguages);
 			} else if (token.startsWith("#") && token.length() > 1) {
 				collectFilters(token.substring(1), '#', requiredTags, optionalTags);
@@ -126,7 +136,31 @@ public class PuzzleService {
 				String.join(",", optionalLanguages),
 				String.join(",", requiredTags),
 				String.join(",", optionalTags),
+				String.join(",", excludedNames),
+				String.join(",", excludedLanguages),
+				String.join(",", excludedTags),
 				PageRequest.of(page, size));
+		return toDTOs(puzzles);
+	}
+
+	// Lấy danh sách puzzle của một cộng đồng theo tên (handle).
+	// Nếu cộng đồng ở chế độ riêng tư, chỉ cho phép thành viên truy cập.
+	@Transactional(readOnly = true)
+	public List<PuzzleDTO> findByCommunityName(AuthenticatedFirebaseUser firebaseUser, String communityName) {
+		User user = authenticationService.findCurrentUser(firebaseUser);
+		Community community = communityRepository.findByNameAndActiveTrue(communityName)
+				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
+
+		if (!community.isPublic() && !userCommunityRepository.existsById(new UserCommunityId(user.getId(), community.getId()))) {
+			throw new ApiException(ErrorCode.COMMUNITY_NOT_FOUND);
+		}
+
+		List<Puzzle> puzzles = puzzleRepository.findByCommunityId(community.getId());
+		return toDTOs(puzzles);
+	}
+
+	// Chuyển đổi danh sách Puzzle entity sang PuzzleDTO, kèm nạp trước ngôn ngữ và tag tương ứng.
+	private List<PuzzleDTO> toDTOs(List<Puzzle> puzzles) {
 		if (puzzles.isEmpty()) {
 			return List.of();
 		}
