@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../config/firebase'
 import { createSession } from '../features/auth/authApi'
 import { requiresEmailVerification, signOutCurrentUser } from '../features/auth/authService'
+import { FAVORITE_COMMUNITIES_KEY, RECENT_COMMUNITIES_KEY } from '../features/community/storageKeys'
 
 function isClientError(error) {
   const statusCode = error?.response?.status
@@ -17,7 +18,17 @@ export const useAuthStore = defineStore('auth', () => {
   const pendingVerificationEmail = ref('')
   let initialization = null
 
+  function forgetBrowserCommunityLists() {
+    try {
+      localStorage.removeItem(RECENT_COMMUNITIES_KEY)
+      localStorage.removeItem(FAVORITE_COMMUNITIES_KEY)
+    } catch {
+      // Trình duyệt chặn lưu trữ (chế độ riêng tư): chưa lưu gì nên không thể lộ sang tài khoản kế tiếp.
+    }
+  }
+
   function markSignedOut() {
+    forgetBrowserCommunityLists()
     profile.value = null
     pendingVerificationEmail.value = ''
     status.value = 'signedOut'

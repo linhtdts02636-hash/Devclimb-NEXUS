@@ -13,20 +13,17 @@ import CommunitySideCards from '../../features/community/components/CommunitySid
 import CommunitySidebar from '../../features/community/components/CommunitySidebar.vue'
 import PinnedPosts from '../../features/community/components/PinnedPosts.vue'
 import RoleList from '../../features/community/components/RoleList.vue'
-import { deletePost, getPosts } from '../../features/post/postApi'
-import { samplePosts } from '../../sample/sampleCommunityData'
+import { deletePost, getPinnedPosts, getPosts, setPostPinned } from '../../features/post/postApi'
 import { useAuthStore } from '../../stores/authStore'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const dateFormat = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' })
-const pinnedPosts = samplePosts.filter((post) => post.isPinned)
 
 const TABS = [
   { id: 'posts', label: 'Posts' },
   { id: 'puzzles', label: 'Puzzles' },
   { id: 'contests', label: 'Contests' },
-  { id: 'members', label: 'Members' },
 ]
 
 const community = ref(null)
@@ -38,8 +35,13 @@ const isMembershipBusy = ref(false)
 const actionError = ref('')
 
 const posts = ref([])
+const pinnedPosts = ref([])
+const nextCursor = ref(null)
 const postsLoading = ref(false)
 const postsError = ref('')
+const loadingMore = ref(false)
+const loadMoreError = ref('')
+const feedEnd = ref(null)
 const composerOpen = ref(false)
 const editingPost = ref(null)
 const deleteOpen = ref(false)
@@ -49,15 +51,24 @@ const deleteError = ref('')
 const toast = ref('')
 let toastTimer = null
 
-const owners = computed(() => members.value.filter((member) => member.isOwner))
+// Chủ cộng đồng, cùng bất kỳ ai có vai trò cấp quyền Pin posts, Remove posts and comments hoặc Manage members.
+const moderators = computed(() => members.value.filter((member) => member.isModerator))
+const canPinPosts = computed(() => Boolean(community.value?.permissions?.includes('PIN_POSTS')))
+const canRemoveContent = computed(() => Boolean(community.value?.permissions?.includes('REMOVE_CONTENT')))
+const canManageMembers = computed(() => Boolean(community.value?.permissions?.includes('MANAGE_MEMBERS')))
 const currentUserId = computed(() => authStore.profile?.id ?? null)
 const isAuthenticated = computed(() => authStore.status === 'authenticated')
 const isMember = computed(() => Boolean(community.value?.isMember))
 const canPost = computed(() => isAuthenticated.value && isMember.value && Number.isInteger(community.value?.id))
 
+const byNewest = (first, second) => second.id - first.id
+
 async function loadFeed() {
+  posts.value = []
+  pinnedPosts.value = []
+  nextCursor.value = null
+  loadMoreError.value = ''
   if (!Number.isInteger(community.value?.id)) {
-    posts.value = []
     postsLoading.value = false
     return
   }
@@ -65,12 +76,51 @@ async function loadFeed() {
   postsLoading.value = true
   postsError.value = ''
   try {
-    posts.value = await getPosts(community.value.id)
+    // Bài ghim lấy bằng truy vấn riêng để luôn hiện ở đầu, kể cả khi bài đó nằm ngoài các trang đã tải.
+    const [pinned, firstPage] = await Promise.all([getPinnedPosts(community.value.id), getPosts(community.value.id)])
+    pinnedPosts.value = pinned
+    posts.value = firstPage.posts
+    nextCursor.value = firstPage.nextCursor
   } catch (error) {
-    posts.value = []
     postsError.value = describeApiError(error).message
   } finally {
     postsLoading.value = false
+  }
+}
+
+async function loadMore() {
+  if (nextCursor.value === null || loadingMore.value || postsLoading.value) return
+
+  const communityId = community.value.id
+  loadingMore.value = true
+  loadMoreError.value = ''
+  try {
+    const page = await getPosts(communityId, nextCursor.value)
+    // Người dùng có thể đã chuyển sang cộng đồng khác trong lúc chờ.
+    if (community.value?.id !== communityId) return
+    posts.value = [...posts.value, ...page.posts]
+    nextCursor.value = page.nextCursor
+  } catch (error) {
+    loadMoreError.value = describeApiError(error).message
+  } finally {
+    loadingMore.value = false
+    observeFeedEnd()
+  }
+}
+
+let feedEndObserver = null
+
+// Quan sát lại để trình duyệt báo lần nữa nếu điểm cuối vẫn đang nằm trong tầm nhìn (trang vừa tải còn quá ngắn).
+function observeFeedEnd() {
+  feedEndObserver?.disconnect()
+  if (feedEnd.value && !loadMoreError.value) feedEndObserver?.observe(feedEnd.value)
+}
+
+async function refreshMembers() {
+  try {
+    members.value = await fetchMembers(route.params.name)
+  } catch (error) {
+    actionError.value = describeApiError(error).message
   }
 }
 
@@ -128,13 +178,36 @@ function handleCreated(post) {
   showToast('Post created.')
 }
 
+function replacePost(list, updatedPost) {
+  return list.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+}
+
 function handleUpdated(updatedPost) {
-  posts.value = posts.value.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+  posts.value = replacePost(posts.value, updatedPost)
+  pinnedPosts.value = replacePost(pinnedPosts.value, updatedPost)
   showToast('Post updated.')
 }
 
+async function togglePin(post) {
+  actionError.value = ''
+  try {
+    const updatedPost = await setPostPinned(post.id, !post.isPinned)
+    posts.value = posts.value.filter((existing) => existing.id !== updatedPost.id)
+    pinnedPosts.value = pinnedPosts.value.filter((existing) => existing.id !== updatedPost.id)
+    if (updatedPost.isPinned) {
+      pinnedPosts.value = [...pinnedPosts.value, updatedPost].sort(byNewest)
+    } else if (nextCursor.value === null || updatedPost.id > nextCursor.value) {
+      // Bài cũ hơn trang đã tải sẽ tự quay lại bảng tin khi cuộn tới; chèn ngay sẽ làm hỏng con trỏ.
+      posts.value = [...posts.value, updatedPost].sort(byNewest)
+    }
+    showToast(updatedPost.isPinned ? 'Post pinned.' : 'Post unpinned.')
+  } catch (error) {
+    actionError.value = describeApiError(error).message
+  }
+}
+
 function requestDelete(post) {
-  if (post?.author?.userId !== currentUserId.value) return
+  if (post?.author?.userId !== currentUserId.value && !canRemoveContent.value) return
   deleteTarget.value = post
   deleteError.value = ''
   deleteOpen.value = true
@@ -164,6 +237,7 @@ async function confirmDelete() {
     const postId = deleteTarget.value.id
     await deletePost(postId)
     posts.value = posts.value.filter((post) => post.id !== postId)
+    pinnedPosts.value = pinnedPosts.value.filter((post) => post.id !== postId)
     resetDeleteConfirm()
     showToast('Post deleted.')
   } catch (error) {
@@ -194,12 +268,23 @@ watch(
   { immediate: true },
 )
 
+// Điểm cuối chỉ tồn tại khi còn trang sau, nên theo dõi ref để gắn hoặc gỡ observer đúng lúc.
+watch(feedEnd, observeFeedEnd)
+
 onMounted(() => {
   authStore.initialize()
+  feedEndObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) loadMore()
+    },
+    { rootMargin: '400px' },
+  )
+  observeFeedEnd()
 })
 
 onBeforeUnmount(() => {
   if (toastTimer) window.clearTimeout(toastTimer)
+  feedEndObserver?.disconnect()
 })
 </script>
 
@@ -249,30 +334,31 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="activeTab === 'posts'" role="tabpanel" aria-labelledby="tab-posts" class="posts">
-              <PinnedPosts :posts="pinnedPosts" />
+              <PinnedPosts :posts="pinnedPosts" :can-pin="canPinPosts" @unpin="togglePin" />
               <PostList
                 :posts="posts"
                 :loading="postsLoading"
                 :error="postsError"
                 :current-user-id="currentUserId"
+                :can-remove-others="canRemoveContent"
+                :can-pin="canPinPosts"
                 @retry="loadFeed"
                 @edit="handleEdit"
                 @delete="requestDelete"
+                @pin="togglePin"
               />
+              <div v-if="nextCursor !== null && !postsLoading && !postsError" ref="feedEnd" class="feed-end" aria-hidden="true"></div>
+              <p v-if="loadingMore" class="feed-status" role="status">Loading more posts…</p>
+              <div v-if="loadMoreError" class="feed-status" role="alert">
+                {{ loadMoreError }}
+                <button type="button" class="btn" @click="loadMore">Try again</button>
+              </div>
             </div>
 
-            <div v-else-if="activeTab === 'puzzles' || activeTab === 'contests'" role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
+            <div v-else role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
               <p>{{ activeTab === 'puzzles' ? 'Puzzles' : 'Contests' }} for this community are coming soon.</p>
             </div>
 
-            <ul v-else class="members" role="tabpanel" aria-labelledby="tab-members">
-              <li v-for="member in members" :key="member.userId">
-                <Avatar :src="member.imageUrl" :name="member.name" :size="36" :round="true" :show-name="false" />
-                <b>{{ member.name }}</b>
-                <span v-if="member.isOwner" class="badge">owner</span>
-                <small>Joined {{ dateFormat.format(new Date(member.joinedAt)) }}</small>
-              </li>
-            </ul>
           </section>
 
           <aside class="side" aria-label="About this community">
@@ -285,17 +371,16 @@ onBeforeUnmount(() => {
             <section class="card">
               <h2>Moderators</h2>
               <ul class="mods">
-                <li v-for="owner in owners" :key="owner.userId">
-                  <Avatar :src="owner.imageUrl" :name="owner.name" :size="28" :round="true" :show-name="false" />
-                  {{ owner.name }}
-                  <svg class="crown" viewBox="0 0 24 24" aria-label="Owner"><path d="M3 18 5 7l5 5 2-7 2 7 5-5 2 11z" /></svg>
+                <li v-for="moderator in moderators" :key="moderator.userId">
+                  <Avatar :src="moderator.imageUrl" :name="moderator.name" :size="28" :round="true" :show-name="false" />
+                  {{ moderator.name }}
+                  <svg v-if="moderator.isOwner" class="crown" viewBox="0 0 24 24" aria-label="Owner"><path d="M3 18 5 7l5 5 2-7 2 7 5-5 2 11z" /></svg>
                 </li>
               </ul>
             </section>
 
-            <RoleList :owners="owners" />
+            <RoleList :community-name="community.name" :members="members" :can-manage-members="canManageMembers" @members-changed="refreshMembers" />
             <CommunitySideCards />
-            <p class="sample-note">Roles, contest, solvers and topics are sample data for illustration</p>
           </aside>
         </div>
       </template>

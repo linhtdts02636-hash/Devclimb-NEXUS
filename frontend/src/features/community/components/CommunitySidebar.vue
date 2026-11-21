@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import Avatar from '../../../components/common/Avatar.vue'
 import { fetchCommunitiesByIds, fetchMyCommunities } from '../communityApi'
+import { FAVORITE_COMMUNITIES_KEY, RECENT_COMMUNITIES_KEY } from '../storageKeys'
 import { RESOURCES } from '../resources'
 
 const props = defineProps({
@@ -9,8 +10,8 @@ const props = defineProps({
 })
 
 // Lưu theo id (không đổi) kèm tên để hiển thị ngay; tên được làm mới từ server nên vẫn đúng sau khi đổi tên.
-const RECENT_KEY = 'dc-recent-communities'
-const FAVORITE_KEY = 'dc-favorite-communities'
+const RECENT_KEY = RECENT_COMMUNITIES_KEY
+const FAVORITE_KEY = FAVORITE_COMMUNITIES_KEY
 // Lưu 6 để sau khi ẩn cộng đồng đang xem, Recent vẫn hiện đủ 5 mục.
 const MAXIMUM_RECENT = 6
 
@@ -148,7 +149,6 @@ onMounted(() => {
           </RouterLink>
         </li>
       </ul>
-      <p class="note">Kept in this browser only</p>
     </section>
 
     <section class="group">
@@ -172,6 +172,8 @@ onMounted(() => {
 
 .list {
   display: grid;
+  /* Cột auto trần sẽ giãn theo tên dài không ngắt, khiến .name không bao giờ hiện dấu "...". */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1px;
   margin: 0;
   padding: 0;
@@ -295,9 +297,4 @@ a.item.router-link-exact-active {
   background: var(--s2);
 }
 
-.note {
-  padding: var(--s-2);
-  font: 400 11px var(--f-mono);
-  color: var(--tx2);
-}
 </style>

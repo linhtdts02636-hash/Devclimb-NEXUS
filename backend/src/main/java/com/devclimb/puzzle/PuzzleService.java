@@ -21,6 +21,8 @@ import com.devclimb.common.exception.ErrorCode;
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
 import com.devclimb.community.Community;
 import com.devclimb.community.CommunityRepository;
+import com.devclimb.role.CommunityAccessService;
+import com.devclimb.role.CommunityPermission;
 import com.devclimb.tag.PtagPuzzleRepository;
 import com.devclimb.user.User;
 
@@ -34,13 +36,16 @@ public class PuzzleService {
 	private final PtagPuzzleRepository ptagPuzzleRepository;
 	private final CommunityRepository communityRepository;
 	private final AuthenticationService authenticationService;
+	private final CommunityAccessService communityAccessService;
 
 	public PuzzleService(
 			PuzzleRepository puzzleRepository,
 			PuzzleLanguageRepository puzzleLanguageRepository,
 			PtagPuzzleRepository ptagPuzzleRepository,
 			CommunityRepository communityRepository,
-			AuthenticationService authenticationService) {
+			AuthenticationService authenticationService,
+			CommunityAccessService communityAccessService) {
+		this.communityAccessService = communityAccessService;
 		this.puzzleRepository = puzzleRepository;
 		this.puzzleLanguageRepository = puzzleLanguageRepository;
 		this.ptagPuzzleRepository = ptagPuzzleRepository;
@@ -132,6 +137,7 @@ public class PuzzleService {
 		Community community = communityRepository.findById(request.communityId())
 				.filter(Community::isActive)
 				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
+		communityAccessService.requirePermission(author.getId(), community.getId(), CommunityPermission.CREATE_PUZZLES);
 		Puzzle puzzle = new Puzzle(
 				author,
 				community,

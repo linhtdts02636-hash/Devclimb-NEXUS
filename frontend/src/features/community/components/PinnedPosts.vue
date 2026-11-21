@@ -1,12 +1,19 @@
 <script setup>
 import { ref, useId } from 'vue'
 
-const props = defineProps({
+defineProps({
   posts: { type: Array, required: true },
+  canPin: { type: Boolean, default: false },
 })
+defineEmits(['unpin'])
 
 const idPrefix = useId()
-const openPostIds = ref(props.posts.slice(0, 1).map((post) => post.id))
+const openPostIds = ref([])
+
+// Bài viết có thể không có tiêu đề nên lấy phần đầu nội dung thay thế.
+function headline(post) {
+  return post.title || post.content.slice(0, 80)
+}
 
 function toggle(postId) {
   openPostIds.value = openPostIds.value.includes(postId)
@@ -29,15 +36,14 @@ function toggle(postId) {
         :aria-controls="`${idPrefix}-${post.id}`"
         @click="toggle(post.id)"
       >
-        <span class="title">{{ post.title }}</span>
-        <small>{{ post.author }}</small>
+        <span class="title">{{ headline(post) }}</span>
+        <span v-if="post.author.role" class="role" :style="{ '--role-color': post.author.role.color }"><i></i>{{ post.author.role.name }}</span>
+        <small>{{ post.author.name }}</small>
         <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
       </button>
       <div v-show="openPostIds.includes(post.id)" :id="`${idPrefix}-${post.id}`" class="body">
-        <p>{{ post.text }}</p>
-        <ul v-if="post.files.length" class="files">
-          <li v-for="file in post.files" :key="file.name" class="file">{{ file.name }}<small>{{ file.size }}</small></li>
-        </ul>
+        <p class="text">{{ post.content }}</p>
+        <button v-if="canPin" type="button" class="unpin" @click="$emit('unpin', post)">Unpin</button>
       </div>
     </div>
   </section>
@@ -90,6 +96,25 @@ h2 {
   white-space: nowrap;
 }
 
+.role {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 1px 8px 1px 6px;
+  font: 500 var(--t-xs) var(--f-mono);
+  color: var(--role-color);
+  white-space: nowrap;
+  border: 1px solid var(--role-color);
+  border-radius: 999px;
+}
+
+.role i {
+  width: 6px;
+  height: 6px;
+  background: var(--role-color);
+  border-radius: 50%;
+}
+
 small {
   font: 400 var(--t-xs) var(--f-mono);
   color: var(--tx2);
@@ -123,24 +148,23 @@ svg {
   color: var(--tx2);
 }
 
-.files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
-.file {
-  display: inline-flex;
-  gap: var(--s-2);
-  align-items: center;
-  height: 36px;
+.unpin {
+  justify-self: start;
+  height: 28px;
   padding: 0 var(--s-3);
-  color: var(--tx);
-  background: var(--s2);
+  font-size: var(--t-xs);
+  color: var(--tx2);
   border: 1px solid var(--line2);
   border-radius: var(--r-sm);
+}
+
+.unpin:hover {
+  color: var(--tx);
+  background: var(--s2);
 }
 </style>

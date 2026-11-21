@@ -18,13 +18,21 @@ defineProps({
     type: Number,
     default: null,
   },
+  canRemoveOthers: {
+    type: Boolean,
+    default: false,
+  },
+  canPin: {
+    type: Boolean,
+    default: false,
+  },
   images: {
     type: Array,
     default: () => [],
   },
 })
 
-defineEmits(['retry', 'edit', 'delete'])
+defineEmits(['retry', 'edit', 'delete', 'pin'])
 </script>
 
 <template>
@@ -62,8 +70,11 @@ defineEmits(['retry', 'edit', 'delete'])
         :post="post"
         :images="post.images?.length ? post.images : images"
         :current-user-id="currentUserId"
+        :can-remove-others="canRemoveOthers"
+        :can-pin="canPin"
         @edit="$emit('edit', $event)"
         @delete="$emit('delete', $event)"
+        @pin="$emit('pin', $event)"
       />
     </template>
   </div>

@@ -52,6 +52,9 @@ public class Post {
 	@Column(name = "post_updatedat")
 	private Instant updatedAt;
 
+	@Column(name = "post_ispinned", nullable = false)
+	private boolean pinned;
+
 	protected Post() {
 	}
 
@@ -66,6 +69,10 @@ public class Post {
 		this.title = title;
 		this.content = content;
 		this.updatedAt = Instant.now();
+	}
+
+	public void setPinned(boolean pinned) {
+		this.pinned = pinned;
 	}
 
 	public Integer getId() {
@@ -98,5 +105,9 @@ public class Post {
 
 	public Instant getUpdatedAt() {
 		return updatedAt;
+	}
+
+	public boolean isPinned() {
+		return pinned;
 	}
 }

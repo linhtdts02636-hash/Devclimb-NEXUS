@@ -129,7 +129,7 @@ function closeDeleteDialog() {
           </div>
         </section>
 
-        <RoleManager v-if="activeSection === 'roles'" :owner-count="1" />
+        <RoleManager v-if="activeSection === 'roles'" :community-name="communityName" />
 
         <section v-show="activeSection === 'danger'" class="panel" aria-labelledby="danger-heading">
           <header>

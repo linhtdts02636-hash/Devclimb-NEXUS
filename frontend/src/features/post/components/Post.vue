@@ -14,6 +14,16 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  // True khi người xem có quyền PIN_POSTS: được ghim/bỏ ghim bài của bất kỳ ai.
+  canPin: {
+    type: Boolean,
+    default: false,
+  },
+  // True khi người xem có quyền REMOVE_CONTENT trong cộng đồng: được xoá bài của người khác nhưng không được sửa.
+  canRemoveOthers: {
+    type: Boolean,
+    default: false,
+  },
   // Ảnh của bài viết, lấy từ PostDTO.images.
   images: {
     type: Array,
@@ -21,7 +31,7 @@ const props = defineProps({
   },
 })
 
-defineEmits(['edit', 'delete'])
+defineEmits(['edit', 'delete', 'pin'])
 
 const menuOpen = ref(false)
 const rootElement = ref(null)
@@ -50,12 +60,15 @@ const fullDate = computed(() => formatFullDate(props.post.createdAt))
 const editedAt = computed(() => props.post.updatedAt || null)
 const editedLabel = computed(() => (editedAt.value ? formatFullDate(editedAt.value) : ''))
 
-const canManage = computed(
+const isAuthor = computed(
   () =>
     Number.isInteger(props.currentUserId) &&
     props.currentUserId > 0 &&
     props.currentUserId === props.post.author?.userId,
 )
+const canDelete = computed(() => isAuthor.value || props.canRemoveOthers)
+const hasActions = computed(() => canDelete.value || props.canPin)
+const authorRole = computed(() => props.post.author?.role ?? null)
 </script>
 
 <template>
@@ -63,23 +76,25 @@ const canManage = computed(
     <header class="post__header">
       <Avatar :src="avatarUrl" :name="authorName" :size="26" type="user" :show-name="false" />
       <strong class="post__name">{{ authorName }}</strong>
+      <span v-if="authorRole" class="post__role" :style="{ '--role-color': authorRole.color }"><i></i>{{ authorRole.name }}</span>
       <time class="post__time" :datetime="post.createdAt" :title="fullDate">· {{ relativeTime }}</time>
       <span v-if="editedAt" class="post__edited" :title="editedLabel">edited</span>
 
-      <div v-if="canManage" ref="rootElement" class="post__menu-anchor">
+      <div v-if="hasActions" ref="rootElement" class="post__menu-anchor">
         <button
           type="button"
           class="post__menu-button"
           aria-haspopup="menu"
           :aria-expanded="menuOpen"
           aria-label="Post actions"
-          @click.stop="menuOpen = !menuOpen"
+          @click="menuOpen = !menuOpen"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2" /><circle cx="12" cy="12" r="1.2" /><circle cx="19" cy="12" r="1.2" /></svg>
         </button>
         <div v-show="menuOpen" class="post__menu" role="menu">
-          <button type="button" role="menuitem" @click="menuOpen = false; $emit('edit', post)">Edit</button>
-          <button type="button" role="menuitem" class="post__menu-danger" @click="menuOpen = false; $emit('delete', post)">Delete</button>
+          <button v-if="canPin" type="button" role="menuitem" @click="menuOpen = false; $emit('pin', post)">{{ post.isPinned ? 'Unpin' : 'Pin' }}</button>
+          <button v-if="isAuthor" type="button" role="menuitem" @click="menuOpen = false; $emit('edit', post)">Edit</button>
+          <button v-if="canDelete" type="button" role="menuitem" class="post__menu-danger" @click="menuOpen = false; $emit('delete', post)">Delete</button>
         </div>
       </div>
     </header>
@@ -118,6 +133,25 @@ const canManage = computed(
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.post__role {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 1px 8px 1px 6px;
+  font: 500 var(--t-xs) var(--f-mono);
+  color: var(--role-color);
+  white-space: nowrap;
+  border: 1px solid var(--role-color);
+  border-radius: 999px;
+}
+
+.post__role i {
+  width: 6px;
+  height: 6px;
+  background: var(--role-color);
+  border-radius: 50%;
 }
 
 .post__time,

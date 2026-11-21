@@ -133,38 +133,6 @@ h1 {
   border-radius: var(--r);
 }
 
-.sample-note {
-  text-align: center;
-  font: 400 var(--t-xs) var(--f-mono);
-  color: var(--tx2);
-}
-
-.members {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  background: var(--s1);
-  border: 1px solid var(--line2);
-  border-radius: var(--r);
-}
-
-.members li {
-  display: flex;
-  gap: var(--s-3);
-  align-items: center;
-  padding: var(--s-3) var(--s-4);
-}
-
-.members li + li {
-  border-top: 1px solid var(--line);
-}
-
-.members small {
-  margin-left: auto;
-  font: 400 var(--t-xs) var(--f-mono);
-  color: var(--tx2);
-}
-
 .side {
   position: sticky;
   top: 84px;
@@ -345,4 +313,18 @@ h1 {
   .header {
     margin-inline: var(--s-2);
   }
+}
+
+.feed-end {
+  height: 1px;
+}
+
+.feed-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0;
+  color: var(--tx2);
+  font-size: 14px;
 }

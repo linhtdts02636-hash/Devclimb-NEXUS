@@ -77,18 +77,6 @@ export const samplePosts = [
   },
 ]
 
-export const sampleRoles = [
-  { name: 'Moderator', color: 'var(--ac)', count: 3, description: 'Reviews contributions, pins posts and removes posts.' },
-  { name: 'Problem setter', color: 'var(--ok)', count: 6, description: 'Can write puzzles for the library.' },
-  { name: 'Contest judge', color: 'var(--bad)', count: 2, description: 'Runs and scores contests.' },
-  { name: 'Member', color: 'var(--tx2)', count: 143, description: 'Can solve puzzles and join discussions.' },
-]
-
-export const sampleMemberNames = [
-  'minh.tran', 'linh_cp', 'hung.dev', 'byte_me', 'sigma.loop', 'an.nguyen', 'thao.le', 'quang.vo', 'mai.pham',
-  'duc.ng', 'vy.tran', 'bao.ha', 'huy.do', 'tien.bui', 'lan.chu', 'nam.dang', 'trang.vu',
-]
-
 export const sampleContest = {
   title: 'Weekly round 12',
   description: '90 minutes, 4 puzzles. Starts Saturday 20:00.',

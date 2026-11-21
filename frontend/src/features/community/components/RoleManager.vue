@@ -1,30 +1,31 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { describeApiError } from '../../../config/apiClient'
+import { createRole, deleteRole, fetchRoles, updateRole } from '../communityApi'
+import { describePermission, PERMISSIONS } from '../permissions'
 
 const PRESET_COLORS = ['#e7b44c', '#6f93ff', '#4ad08a', '#f08a6c', '#c58bf2', '#5ec9d6', '#e86fa0', '#9c9b93']
 const PALETTE_KEY = 'dc-role-colors'
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
-const PERMISSIONS = [
-  { id: 'pin', label: 'Pin posts', hint: 'Pin and unpin posts at the top of the community.' },
-  { id: 'remove', label: 'Remove posts and comments', hint: 'Take down content that breaks the rules.' },
-  { id: 'puzzle', label: 'Create puzzles', hint: 'Add problems to the community library.' },
-  { id: 'contest', label: 'Run contests', hint: 'Create, edit and judge contests.' },
-  { id: 'members', label: 'Manage members', hint: 'Assign roles and remove members.' },
-]
 
 const props = defineProps({
-  ownerCount: { type: Number, default: 1 },
+  communityName: { type: String, required: true },
 })
 
-// Roles have no backend yet, so this list lives only in this page and resets on reload.
-const roles = ref([
-  { id: 1, name: 'Owner', color: '#e7b44c', count: props.ownerCount, permissions: ['all'], isBuiltIn: true },
-  { id: 2, name: 'Moderator', color: '#6f93ff', count: 3, permissions: ['pin', 'remove', 'members'] },
-  { id: 3, name: 'Problem setter', color: '#4ad08a', count: 6, permissions: ['puzzle'] },
-  { id: 4, name: 'Contest judge', color: '#c58bf2', count: 2, permissions: ['contest'] },
-  { id: 5, name: 'Member', color: '#9c9b93', count: 143, permissions: [], isBuiltIn: true },
-])
-let nextRoleId = 6
+const roles = ref([])
+const loadError = ref('')
+const isSaving = ref(false)
+
+async function loadRoles() {
+  try {
+    roles.value = await fetchRoles(props.communityName)
+    loadError.value = ''
+  } catch (error) {
+    loadError.value = describeApiError(error).message
+  }
+}
+
+onMounted(loadRoles)
 
 function readSavedColors() {
   try {
@@ -54,11 +55,12 @@ const draftColor = ref(PRESET_COLORS[1])
 const draftHex = ref(PRESET_COLORS[1])
 const draftPermissions = ref([])
 const nameError = ref('')
+const deleteError = ref('')
 
 const isEditing = computed(() => editingRoleId.value !== null)
 
-function describePermission(permissionId) {
-  return permissionId === 'all' ? 'All permissions' : PERMISSIONS.find((permission) => permission.id === permissionId).label
+function describeBuiltInRole(role) {
+  return role.type === 'OWNER' ? 'Owner of the community. Can do everything.' : 'Default for new members. Always grey.'
 }
 
 function chooseColor(color) {
@@ -91,31 +93,45 @@ function openRoleDialog(role = null) {
   roleDialog.value.showModal()
 }
 
-function saveRole() {
+async function saveRole() {
   const name = draftName.value.trim()
-  const isDuplicate = roles.value.some((role) => role.id !== editingRoleId.value && role.name.toLowerCase() === name.toLowerCase())
-  nameError.value = !name ? 'Enter a role name.' : isDuplicate ? 'A role with this name already exists.' : ''
-  if (!nameError.value && !HEX_COLOR.test(draftColor.value)) nameError.value = 'Enter a colour like #6f93ff.'
+  nameError.value = !name ? 'Enter a role name.' : !HEX_COLOR.test(draftColor.value) ? 'Enter a colour like #6f93ff.' : ''
   if (nameError.value) return
 
   const details = { name, color: draftColor.value, permissions: [...draftPermissions.value] }
-  if (isEditing.value) {
-    Object.assign(roles.value.find((role) => role.id === editingRoleId.value), details)
-  } else {
-    // Insert before the last row so the built-in Member role stays at the bottom.
-    roles.value.splice(roles.value.length - 1, 0, { id: nextRoleId++, count: 0, ...details })
+  isSaving.value = true
+  try {
+    if (isEditing.value) {
+      await updateRole(props.communityName, editingRoleId.value, details)
+    } else {
+      await createRole(props.communityName, details)
+    }
+    await loadRoles()
+    roleDialog.value.close()
+  } catch (error) {
+    nameError.value = describeApiError(error).message
+  } finally {
+    isSaving.value = false
   }
-  roleDialog.value.close()
 }
 
 function askDeleteRole(role) {
   roleToDelete.value = role
+  deleteError.value = ''
   deleteDialog.value.showModal()
 }
 
-function confirmDeleteRole() {
-  roles.value = roles.value.filter((role) => role.id !== roleToDelete.value.id)
-  deleteDialog.value.close()
+async function confirmDeleteRole() {
+  isSaving.value = true
+  try {
+    await deleteRole(props.communityName, roleToDelete.value.id)
+    await loadRoles()
+    deleteDialog.value.close()
+  } catch (error) {
+    deleteError.value = describeApiError(error).message
+  } finally {
+    isSaving.value = false
+  }
 }
 
 function closeOnBackdropClick(event) {
@@ -131,28 +147,31 @@ function closeOnBackdropClick(event) {
     </header>
 
     <div class="toolbar">
-      <span class="sample">sample data for illustration</span>
       <button type="button" class="btn p" @click="openRoleDialog()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create role
       </button>
     </div>
+    <p v-if="loadError" class="error" role="alert">{{ loadError }}</p>
 
     <ul class="roles">
       <li v-for="role in roles" :key="role.id" class="role" :style="{ '--role-color': role.color }">
         <span class="dot"></span>
         <div>
-          <div class="name">{{ role.name }}<span v-if="role.isBuiltIn" class="chip">built-in</span></div>
+          <div class="name">{{ role.name }}<span v-if="role.type !== 'CUSTOM'" class="chip">built-in</span></div>
           <div class="permissions">
-            <span v-for="permissionId in role.permissions" :key="permissionId" class="chip">{{ describePermission(permissionId) }}</span>
-            <span v-if="!role.permissions.length" class="chip">No extra permissions</span>
+            <span v-if="role.type !== 'CUSTOM'" class="chip">{{ describeBuiltInRole(role) }}</span>
+            <template v-else>
+              <span v-for="permissionId in role.permissions" :key="permissionId" class="chip">{{ describePermission(permissionId) }}</span>
+              <span v-if="!role.permissions.length" class="chip">No extra permissions</span>
+            </template>
           </div>
         </div>
-        <span class="count">{{ role.count }} {{ role.count === 1 ? 'member' : 'members' }}</span>
+        <span class="count">{{ role.memberCount }} {{ role.memberCount === 1 ? 'member' : 'members' }}</span>
         <div class="operations">
-          <button type="button" class="icon-button" :disabled="role.isBuiltIn" :aria-label="`Edit ${role.name}`" :title="role.isBuiltIn ? 'Built-in roles cannot be edited' : undefined" @click="openRoleDialog(role)">
+          <button type="button" class="icon-button" :disabled="role.type !== 'CUSTOM'" :aria-label="`Edit ${role.name}`" :title="role.type !== 'CUSTOM' ? 'Built-in roles cannot be edited' : undefined" @click="openRoleDialog(role)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" /></svg>
           </button>
-          <button type="button" class="icon-button" :disabled="role.isBuiltIn" :aria-label="`Delete ${role.name}`" :title="role.isBuiltIn ? 'Built-in roles cannot be deleted' : undefined" @click="askDeleteRole(role)">
+          <button type="button" class="icon-button" :disabled="role.type !== 'CUSTOM'" :aria-label="`Delete ${role.name}`" :title="role.type !== 'CUSTOM' ? 'Built-in roles cannot be deleted' : undefined" @click="askDeleteRole(role)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
           </button>
         </div>
@@ -171,7 +190,7 @@ function closeOnBackdropClick(event) {
         <div class="dialog-body">
           <div class="field">
             <label for="role-name">Role name</label>
-            <input id="role-name" v-model="draftName" class="text-input" maxlength="30" autocomplete="off" placeholder="e.g. Teaching assistant" />
+            <input id="role-name" v-model="draftName" class="text-input" maxlength="50" autocomplete="off" placeholder="e.g. Teaching assistant" />
             <p v-if="nameError" class="error" role="alert">{{ nameError }}</p>
           </div>
 
@@ -206,7 +225,7 @@ function closeOnBackdropClick(event) {
             <div class="permission-list">
               <label v-for="permission in PERMISSIONS" :key="permission.id" class="permission">
                 <input v-model="draftPermissions" type="checkbox" :value="permission.id" />
-                <span><b>{{ permission.label }}</b><small>{{ permission.hint }}</small></span>
+                <span><b>{{ permission.label }}<span v-if="permission.comingSoon" class="chip">coming soon</span></b><small>{{ permission.hint }}</small></span>
               </label>
             </div>
           </div>
@@ -214,7 +233,7 @@ function closeOnBackdropClick(event) {
 
         <div class="dialog-foot">
           <button type="button" class="btn" @click="roleDialog.close()">Cancel</button>
-          <button type="submit" class="btn p">{{ isEditing ? 'Save role' : 'Create role' }}</button>
+          <button type="submit" class="btn p" :disabled="isSaving">{{ isEditing ? 'Save role' : 'Create role' }}</button>
         </div>
       </form>
     </dialog>
@@ -223,14 +242,15 @@ function closeOnBackdropClick(event) {
       <div class="dialog-head"><h2 id="delete-role-title">Delete role</h2></div>
       <div class="dialog-body">
         <p v-if="roleToDelete">
-          {{ roleToDelete.count
-            ? `${roleToDelete.count} ${roleToDelete.count === 1 ? 'member' : 'members'} with "${roleToDelete.name}" will go back to the Member role.`
+          {{ roleToDelete.memberCount
+            ? `${roleToDelete.memberCount} ${roleToDelete.memberCount === 1 ? 'member' : 'members'} will lose "${roleToDelete.name}". They keep the Member role.`
             : `Delete "${roleToDelete.name}"? No one has this role.` }}
         </p>
+        <p v-if="deleteError" class="error" role="alert">{{ deleteError }}</p>
       </div>
       <div class="dialog-foot">
         <button type="button" class="btn" @click="deleteDialog.close()">Cancel</button>
-        <button type="button" class="btn danger" @click="confirmDeleteRole">Delete role</button>
+        <button type="button" class="btn danger" :disabled="isSaving" @click="confirmDeleteRole">Delete role</button>
       </div>
     </dialog>
   </section>
@@ -285,11 +305,6 @@ svg {
   gap: var(--s-3);
   align-items: center;
   justify-content: space-between;
-}
-
-.sample {
-  font: 400 var(--t-xs) var(--f-mono);
-  color: var(--tx2);
 }
 
 .chip {
@@ -598,7 +613,9 @@ svg {
 }
 
 .permission b {
-  display: block;
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
   font-size: var(--t-sm);
   font-weight: 500;
 }
