@@ -35,6 +35,7 @@ import {
 } from '@codemirror/autocomplete'
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search'
 import { tags as t } from '@lezer/highlight'
+import { DEFAULT_FUNCTION_HEADERS } from './defaultHeaders'
 import { java } from '@codemirror/lang-java'
 import { javascript } from '@codemirror/lang-javascript'
 import { php } from '@codemirror/lang-php'
@@ -363,10 +364,11 @@ export function getEditorLanguage(id) {
   return getLanguage(id)
 }
 
-// Header chỉ là chữ ký nên phải thêm thân hàm tối thiểu để code chạy được ngay.
 export function buildStarter(languageId, functionHeader) {
-  const header = functionHeader?.trim()
-  if (!header) return getLanguage(languageId).starter
+  // Header chỉ là chữ ký hàm; phải thêm thân hàm tối thiểu để code chạy được ngay.
+  // Nếu API không trả header, dùng placeholder chung thay vì sample "two sum".
+  const header = functionHeader?.trim() || DEFAULT_FUNCTION_HEADERS[languageId]?.trim()
+  if (!header) return ''
   if (header.includes('\n') || header.endsWith('}')) return header
 
   switch (languageId) {
@@ -377,6 +379,6 @@ export function buildStarter(languageId, functionHeader) {
     case 'java':
       return `import java.util.*;\n\nclass Solution {\n    ${header}\n        // TODO\n        throw new UnsupportedOperationException("Not implemented");\n    }\n}`
     default:
-      return getLanguage(languageId).starter
+      return header
   }
 }

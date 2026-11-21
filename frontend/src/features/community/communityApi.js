@@ -37,6 +37,12 @@ export async function fetchMembers(name) {
   return response.data
 }
 
+// Lấy danh sách puzzle thuộc về cộng đồng từ backend
+export async function fetchCommunityPuzzles(name) {
+  const response = await apiClient.get(`${communityPath(name)}/puzzles`)
+  return response.data
+}
+
 export async function joinCommunity(name) {
   const response = await apiClient.post(`${communityPath(name)}/members`)
   return response.data

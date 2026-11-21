@@ -1,4 +1,4 @@
-package com.devclimb.puzzle;
+package com.devclimb.language;
 
 import java.util.List;
 

@@ -5,15 +5,19 @@ import Avatar from '../../components/common/Avatar.vue'
 import BaseModal from '../../components/common/BaseModal.vue'
 import PostComposerModal from '../../features/post/components/PostComposerModal.vue'
 import PostList from '../../features/post/components/PostList.vue'
+import ContestCatalog from '../../components/common/ContestCatalog.vue'
+import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
-import { fetchCommunity, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
+import { fetchCommunity, fetchCommunityPuzzles, fetchMembers, joinCommunity, leaveCommunity } from '../../features/community/communityApi'
+import { fetchContests } from '../../features/contest/contestApi'
 import CommunityHeaderActions from '../../features/community/components/CommunityHeaderActions.vue'
 import CommunitySideCards from '../../features/community/components/CommunitySideCards.vue'
 import CommunitySidebar from '../../features/community/components/CommunitySidebar.vue'
 import PinnedPosts from '../../features/community/components/PinnedPosts.vue'
 import RoleList from '../../features/community/components/RoleList.vue'
 import { deletePost, getPinnedPosts, getPosts, setPostPinned } from '../../features/post/postApi'
+import { toPuzzleCard } from '../../features/puzzle/puzzleMapper'
 import { useAuthStore } from '../../stores/authStore'
 
 const route = useRoute()
@@ -62,6 +66,52 @@ const isMember = computed(() => Boolean(community.value?.isMember))
 const canPost = computed(() => isAuthenticated.value && isMember.value && Number.isInteger(community.value?.id))
 
 const byNewest = (first, second) => second.id - first.id
+const puzzles = ref([])
+const puzzlesLoading = ref(false)
+const puzzlesError = ref('')
+
+const contests = ref([])
+const contestsLoading = ref(false)
+const contestsError = ref('')
+
+// Tải danh sách puzzle của cộng đồng từ backend API
+async function loadCommunityPuzzles() {
+  if (!route.params.name) return
+  puzzlesLoading.value = true
+  puzzlesError.value = ''
+  try {
+    const data = await fetchCommunityPuzzles(route.params.name)
+    puzzles.value = data.map(toPuzzleCard)
+  } catch (error) {
+    puzzles.value = []
+    puzzlesError.value = describeApiError(error).message
+  } finally {
+    puzzlesLoading.value = false
+  }
+}
+
+// Tải danh sách cuộc thi của cộng đồng hiện tại từ backend API
+async function loadCommunityContests() {
+  if (!community.value?.id && !route.params.name) return
+  contestsLoading.value = true
+  contestsError.value = ''
+  try {
+    const data = await fetchContests()
+    const currentId = community.value?.id
+    const currentName = (route.params.name || '').toLowerCase()
+    // Chỉ hiển thị các cuộc thi thuộc về cộng đồng này
+    contests.value = (Array.isArray(data) ? data : []).filter((c) => {
+      if (currentId != null && c.communityId === currentId) return true
+      if (c.communityName && c.communityName.toLowerCase() === currentName) return true
+      return false
+    })
+  } catch (error) {
+    contests.value = []
+    contestsError.value = describeApiError(error).message
+  } finally {
+    contestsLoading.value = false
+  }
+}
 
 async function loadFeed() {
   posts.value = []
@@ -262,11 +312,23 @@ watch(
     actionError.value = ''
     composerOpen.value = false
     editingPost.value = null
+    puzzles.value = []
+    puzzlesError.value = ''
+    contests.value = []
+    contestsError.value = ''
     resetDeleteConfirm()
     loadCommunity()
   },
   { immediate: true },
 )
+
+watch(activeTab, (tab) => {
+  if (tab === 'puzzles') {
+    loadCommunityPuzzles()
+  } else if (tab === 'contests') {
+    loadCommunityContests()
+  }
+})
 
 // Điểm cuối chỉ tồn tại khi còn trang sau, nên theo dõi ref để gắn hoặc gỡ observer đúng lúc.
 watch(feedEnd, observeFeedEnd)
@@ -315,7 +377,7 @@ onBeforeUnmount(() => {
         </div>
 
         <header class="header">
-          <Avatar class="community-avatar" :src="community.imageUrl" :name="community.name" :size="96" :show-name="false" />
+          <Avatar class="community-avatar" :src="community.imageUrl" :name="community.name" :size="96" :show-name="false" :clickable="false" />
           <div class="identity">
             <h1><span class="prefix">c/</span>{{ community.name }}</h1>
             <p class="meta">
@@ -355,8 +417,25 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-else role="tabpanel" :aria-labelledby="`tab-${activeTab}`" class="empty-tab">
-              <p>{{ activeTab === 'puzzles' ? 'Puzzles' : 'Contests' }} for this community are coming soon.</p>
+            <div v-else-if="activeTab === 'puzzles'" role="tabpanel" aria-labelledby="tab-puzzles" class="puzzles-tab">
+              <PuzzleCatalog
+                :items="puzzles"
+                :columns="1"
+                :loading="puzzlesLoading"
+                :error="puzzlesError"
+                @retry="loadCommunityPuzzles"
+              />
+            </div>
+
+            <div v-else-if="activeTab === 'contests'" role="tabpanel" aria-labelledby="tab-contests" class="contests-tab">
+              <ContestCatalog
+                :items="contests"
+                :columns="1"
+                :loading="contestsLoading"
+                :error="contestsError"
+                :editable-community-name="community.permissions?.includes('RUN_CONTESTS') ? community.name : ''"
+                @retry="loadCommunityContests"
+              />
             </div>
 
           </section>

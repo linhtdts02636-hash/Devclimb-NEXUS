@@ -1,4 +1,4 @@
-package com.devclimb.puzzle;
+package com.devclimb.contest;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -6,31 +6,32 @@ import java.util.Objects;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
+// Khóa phức hợp gồm puzz_id và cont_id cho bảng liên kết puzzle_contest
 @Embeddable
-public class PuzzleLanguageId implements Serializable {
+public class PuzzleContestId implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	@Column(name = "puzz_id")
 	private Integer puzzleId;
 
-	@Column(name = "lang_id")
-	private Integer languageId;
+	@Column(name = "cont_id")
+	private Integer contestId;
 
-	protected PuzzleLanguageId() {
+	protected PuzzleContestId() {
 	}
 
-	public PuzzleLanguageId(Integer puzzleId, Integer languageId) {
+	public PuzzleContestId(Integer puzzleId, Integer contestId) {
 		this.puzzleId = puzzleId;
-		this.languageId = languageId;
+		this.contestId = contestId;
 	}
 
 	public Integer getPuzzleId() {
 		return puzzleId;
 	}
 
-	public Integer getLanguageId() {
-		return languageId;
+	public Integer getContestId() {
+		return contestId;
 	}
 
 	@Override
@@ -38,15 +39,15 @@ public class PuzzleLanguageId implements Serializable {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof PuzzleLanguageId that)) {
+		if (!(other instanceof PuzzleContestId that)) {
 			return false;
 		}
 		return Objects.equals(puzzleId, that.puzzleId)
-				&& Objects.equals(languageId, that.languageId);
+				&& Objects.equals(contestId, that.contestId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(puzzleId, languageId);
+		return Objects.hash(puzzleId, contestId);
 	}
 }

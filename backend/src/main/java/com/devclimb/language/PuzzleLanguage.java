@@ -1,6 +1,6 @@
-package com.devclimb.puzzle;
+package com.devclimb.language;
 
-import com.devclimb.language.Language;
+import com.devclimb.puzzle.Puzzle;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;

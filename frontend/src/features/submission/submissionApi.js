@@ -7,8 +7,17 @@ const backendLanguageIds = {
   java: 2,
 }
 
+// Map ngược để chuyển languageId của API puzzle về ID mà editor đang dùng.
+const editorLanguageIds = Object.fromEntries(
+  Object.entries(backendLanguageIds).map(([editorId, backendId]) => [backendId, editorId]),
+)
+
 export function getBackendLanguageId(editorLanguageId) {
   return backendLanguageIds[editorLanguageId] ?? null
+}
+
+export function getEditorLanguageId(backendLanguageId) {
+  return editorLanguageIds[backendLanguageId] ?? null
 }
 
 export async function submitSolution({ puzzleId, languageId, code }) {

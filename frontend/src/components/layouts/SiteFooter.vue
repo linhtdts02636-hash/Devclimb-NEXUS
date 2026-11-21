@@ -133,7 +133,7 @@ onBeforeUnmount(() => stopWordmark?.())
       </div>
     </div>
     <canvas ref="wordmarkCanvas" class="wordmark" aria-label="DEVCLIMB" role="img"></canvas>
-    <div class="legal"><span>© 2026 LKH Studio</span><span>version 0.2.0</span></div>
+    <div class="legal"><span>© 2026 LKH Studio</span><span>version 0.3.0</span></div>
   </footer>
 </template>
 

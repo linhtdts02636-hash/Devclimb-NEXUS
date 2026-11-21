@@ -2,11 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ContestCard from '../../features/contest/components/ContestCard.vue'
-import PuzzleCard from '../../features/puzzle/components/PuzzleCard.vue'
+import { fetchContests } from '../../features/contest/contestApi'
+import { toContestCard } from '../../features/contest/contestMapper'
+import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
 import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
-import CreatePuzzleModal from '../../features/puzzle/components/CreatePuzzleModal.vue'
-import { fetchCommunity, fetchMyCommunities } from '../../features/community/communityApi'
 import { fetchPuzzles } from '../../features/puzzle/puzzleApi'
 import { toPuzzleCard } from '../../features/puzzle/puzzleMapper'
 import { useAuthStore } from '../../stores/authStore'
@@ -14,53 +14,24 @@ import { useAuthStore } from '../../stores/authStore'
 const authStore = useAuthStore()
 const router = useRouter()
 const contestTrack = ref(null)
-const isCreateOpen = ref(false)
 
-const community = ref({ src: '/favicon.svg', name: 'fpt-algo-club', type: 'community' })
-const communityId = ref(null)
+// Danh sách các cuộc thi được tải từ backend
+const contests = ref([])
+const contestsLoading = ref(true)
+const contestsError = ref('')
 
-const contests = [
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-  {
-    title: 'Weekly Contest 389',
-    status: 'Open',
-    statusTone: 'easy',
-    countdownLabel: 'Starts In',
-    countdown: '01d 14:32:08',
-    registeredCount: '12,480 devs',
-    puzzleCount: 4,
-    actionLabel: 'Register Now',
-  },
-]
+async function loadContests() {
+  contestsLoading.value = true
+  contestsError.value = ''
+  try {
+    const data = await fetchContests()
+    contests.value = (Array.isArray(data) ? data : []).map(toContestCard)
+  } catch (err) {
+    contestsError.value = 'Failed to load contests.'
+  } finally {
+    contestsLoading.value = false
+  }
+}
 
 const difficultyOptions = [
   { label: 'All', value: '' },
@@ -118,13 +89,11 @@ watch(query, () => {
   searchTimer = setTimeout(applySearch, 300)
 })
 
-function setDifficulty(value) {
-  if (difficulty.value === value) return
+watch(difficulty, () => {
   clearTimeout(searchTimer)
-  difficulty.value = value
   page.value = 0
   loadPuzzles()
-}
+})
 
 function onSizeChange() {
   clearTimeout(searchTimer)
@@ -139,49 +108,14 @@ function goToPage(target) {
   loadPuzzles()
 }
 
-function applyCommunity(data) {
-  community.value = {
-    src: data.imageUrl || '/favicon.svg',
-    name: data.name || 'Community',
-    type: 'community',
-  }
-  communityId.value = data.id ?? null
-}
-
-// this function is actually very ass, it hard selects the fpt-algo-club to create puzzles.
-//create puzzles should exist in community page instead. So it's Khoa's responsibility later.
-async function loadCommunity() {
-  try {
-    applyCommunity(await fetchCommunity('fpt-algo-club'))
-    return
-  } catch {
-  }
-
-  try {
-    const [first] = await fetchMyCommunities()
-    if (first) {
-      applyCommunity(first)
-      return
-    }
-  } catch {
-  }
-  communityId.value = null
-}
-
-function handlePuzzleCreated() {
-  isCreateOpen.value = false
-  page.value = 0
-  loadPuzzles()
-}
-
 onMounted(async () => {
   await authStore.initialize()
   if (authStore.status !== 'authenticated') {
     router.push('/login')
     return
   }
-  loadCommunity()
   loadPuzzles()
+  loadContests()
 })
 
 onBeforeUnmount(() => clearTimeout(searchTimer))
@@ -224,128 +158,76 @@ function scrollContests(direction) {
     <UserNavbar />
 
     <main class="puzzles">
-      <div class="contest-carousel">
+      <div v-if="contests.length > 0" class="contest-carousel">
         <button class="carousel-arrow prev" type="button" aria-label="Previous contests" @click="scrollContests(-1)">
           <svg class="ic"><use href="#ic-chevron-left" /></svg>
         </button>
         <section ref="contestTrack" class="top-cards" aria-label="Contests">
           <ContestCard
-            v-for="(contest, index) in contests"
-            :key="index"
+            v-for="contest in contests"
+            :key="contest.id"
             v-bind="contest"
-            :community="community"
           />
         </section>
         <button class="carousel-arrow next" type="button" aria-label="Next contests" @click="scrollContests(1)">
           <svg class="ic"><use href="#ic-chevron-right" /></svg>
         </button>
       </div>
-      <section class="toolbar" aria-label="Filter puzzles">
-        <div class="create-bar">
-
-        </div>
-
-        <div class="toolbar-row">
-          <div class="search">
-            <svg class="ic search-icon"><use href="#ic-search" /></svg>
-            <input
-              v-model="query"
-              type="search"
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Search puzzles"
-              placeholder="Search puzzles by name, #tag or by :language..."
-              @keyup.enter="applySearch"
-              @search="applySearch"
-            />
-          </div>
-
-          <div class="toolbar-controls">
-            <div class="segmented" role="group" aria-label="Filter by difficulty">
-              <button
-                v-for="option in difficultyOptions"
-                :key="option.value"
-                type="button"
-                class="seg"
-                :class="[option.tone, { active: difficulty === option.value }]"
-                :aria-pressed="difficulty === option.value"
-                @click="setDifficulty(option.value)"
-              >
-                {{ option.label }}
-              </button>
+      <PuzzleCatalog
+        v-model:query="query"
+        v-model:difficulty="difficulty"
+        :puzzles="puzzles"
+        :columns="2"
+        :loading="loading"
+        :error="error"
+        @retry="loadPuzzles"
+        @search="applySearch"
+      >
+        <template #footer>
+          <div class="table-foot">
+            <div class="foot-left">
+              <span v-if="puzzles.length">
+                Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> puzzles
+              </span>
+              <span v-else>No puzzles</span>
+              <span class="dot">•</span>
+              <label class="rows-control">
+                Rows:
+                <select v-model.number="size" aria-label="Puzzles per page" @change="onSizeChange">
+                  <option :value="10">10 / page</option>
+                  <option :value="30">30 / page</option>
+                  <option :value="50">50 / page</option>
+                </select>
+              </label>
             </div>
+
+            <nav class="pager" aria-label="Page navigation">
+              <button
+                class="page-btn"
+                type="button"
+                aria-label="Previous page"
+                :disabled="page === 0 || loading"
+                @click="goToPage(page - 1)"
+              >
+                <svg class="ic"><use href="#ic-chevron-left" /></svg>
+              </button>
+              <span class="page-status">Page {{ page + 1 }}</span>
+              <button
+                class="page-btn"
+                type="button"
+                aria-label="Next page"
+                :disabled="!hasNext || loading"
+                @click="goToPage(page + 1)"
+              >
+                <svg class="ic"><use href="#ic-chevron-right" /></svg>
+              </button>
+            </nav>
           </div>
-        </div>
-      </section>
-
-      <section class="table-card" aria-label="Puzzle list" :aria-busy="loading">
-        <div v-if="error" class="empty">
-          <p>{{ error }}</p>
-          <button class="retry-btn" type="button" @click="loadPuzzles">Try again</button>
-        </div>
-
-        <div v-else-if="loading && !puzzles.length" class="empty">
-          <p>Loading puzzles...</p>
-        </div>
-
-        <div v-else-if="!puzzles.length" class="empty">
-          <p>No puzzles found.</p>
-        </div>
-
-        <div v-else class="puzzle-grid" :class="{ 'is-loading': loading }">
-          <PuzzleCard v-for="puzzle in puzzles" :key="puzzle.index" v-bind="puzzle" />
-        </div>
-
-        <div class="table-foot">
-          <div class="foot-left">
-            <span v-if="puzzles.length">
-              Showing <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> puzzles
-            </span>
-            <span v-else>No puzzles</span>
-            <span class="dot">•</span>
-            <label class="rows-control">
-              Rows:
-              <select v-model.number="size" aria-label="Puzzles per page" @change="onSizeChange">
-                <option :value="10">10 / page</option>
-                <option :value="30">30 / page</option>
-                <option :value="50">50 / page</option>
-              </select>
-            </label>
-          </div>
-
-          <nav class="pager" aria-label="Page navigation">
-            <button
-              class="page-btn"
-              type="button"
-              aria-label="Previous page"
-              :disabled="page === 0 || loading"
-              @click="goToPage(page - 1)"
-            >
-              <svg class="ic"><use href="#ic-chevron-left" /></svg>
-            </button>
-            <span class="page-status">Page {{ page + 1 }}</span>
-            <button
-              class="page-btn"
-              type="button"
-              aria-label="Next page"
-              :disabled="!hasNext || loading"
-              @click="goToPage(page + 1)"
-            >
-              <svg class="ic"><use href="#ic-chevron-right" /></svg>
-            </button>
-          </nav>
-        </div>
-      </section>
+        </template>
+      </PuzzleCatalog>
     </main>
 
     <SiteFooter />
-
-    <CreatePuzzleModal
-      :open="isCreateOpen"
-      :community-id="communityId"
-      @close="isCreateOpen = false"
-      @created="handlePuzzleCreated"
-    />
   </div>
 </template>
 
@@ -451,39 +333,6 @@ function scrollContests(direction) {
   background: var(--s1);
   border: 1px solid var(--line2);
   border-radius: var(--r);
-}
-
-.create-bar {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.create-btn {
-margin-left:auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  height: 36px;
-  width:fit-content;
-  padding: 0 var(--s-4);
-  color: var(--ac-ink);
-  background: var(--ac);
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font: 600 13px var(--f-head);
-}
-
-.create-btn:hover {
-  filter: brightness(1.08);
-}
-
-.create-plus {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
 }
 
 .toolbar-row {

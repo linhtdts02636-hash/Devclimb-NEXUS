@@ -1,4 +1,4 @@
-package com.devclimb.tag;
+package com.devclimb.ptag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
