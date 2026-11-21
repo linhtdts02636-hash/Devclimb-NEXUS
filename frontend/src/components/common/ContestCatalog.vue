@@ -9,6 +9,8 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
   placeholder: { type: String, default: 'Search contests...' },
+  // Tên cộng đồng mà người xem được phép chỉnh sửa cuộc thi; rỗng thì ẩn nút Edit
+  editableCommunityName: { type: String, default: '' },
 })
 
 const emit = defineEmits(['retry'])
@@ -137,6 +139,7 @@ const displayedContests = computed(() => {
         v-for="contest in displayedContests"
         :key="contest.id"
         v-bind="contest"
+        :edit-to="editableCommunityName ? `/community/${editableCommunityName}/contests/${contest.id}/edit` : ''"
       />
     </div>
   </div>

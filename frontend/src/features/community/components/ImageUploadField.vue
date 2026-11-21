@@ -14,10 +14,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const MAXIMUM_BYTES = { IMAGE: 2 * 1024 * 1024, BANNER: 5 * 1024 * 1024 }
+const MAXIMUM_BYTES = { IMAGE: 2 * 1024 * 1024, BANNER: 5 * 1024 * 1024, CONTEST_BANNER: 5 * 1024 * 1024 }
 // Ảnh chọn từ máy được cắt và thu về đúng kích thước này trong hộp thoại cắt trước khi tải lên, nên ảnh gốc có thể lớn hơn giới hạn của server.
 const MAXIMUM_SOURCE_BYTES = 20 * 1024 * 1024
-const TARGET_SIZES = { IMAGE: { width: 256, height: 256 }, BANNER: { width: 1200, height: 176 } }
+const TARGET_SIZES = { IMAGE: { width: 256, height: 256 }, BANNER: { width: 1200, height: 176 }, CONTEST_BANNER: { width: 1200, height: 280 } }
 const SIZE_HINT = `Any size works. You choose the visible part, and it is saved as ${TARGET_SIZES[props.purpose].width} × ${TARGET_SIZES[props.purpose].height}.`
 
 const inputId = useId()
@@ -59,7 +59,7 @@ async function uploadCroppedImage(croppedImage) {
   <div class="upload-field">
     <span class="label">{{ label }}</span>
     <div class="row">
-      <div class="preview" :class="purpose.toLowerCase()">
+      <div class="preview" :class="purpose === 'IMAGE' ? 'image' : 'banner'">
         <img v-if="modelValue" :src="modelValue" alt="" />
       </div>
       <div class="actions">

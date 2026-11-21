@@ -103,11 +103,11 @@ async function loadCommunity() {
   try {
     const loaded = await fetchCommunity(route.params.name)
     community.value = loaded
-    if (!loaded.isMember) {
+    if (!loaded.permissions?.includes('CREATE_PUZZLES')) {
       // Backend vẫn kiểm tra lại quyền này. Ẩn form ở client để người không
-      // phải member không mất thời gian điền một draft không thể gửi.
+      // có quyền không mất thời gian điền một draft không thể gửi.
       communityStatus.value = 'blocked'
-      communityError.value = `Only members of c/${loaded.name} can create puzzles. Join the community first.`
+      communityError.value = `You need the Create puzzles permission in c/${loaded.name}. Ask the owner for a role that grants it.`
       return
     }
     communityStatus.value = 'ready'

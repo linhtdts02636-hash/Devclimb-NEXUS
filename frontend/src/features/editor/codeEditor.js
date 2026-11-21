@@ -146,6 +146,9 @@ const codeTheme = EditorView.theme(
     },
     '.cm-scroller': {
       overflow: 'auto',
+      // Thanh cuộn thừa hưởng màu --line2 (tối) từ .editor-scroll nên hiện thành vệt tối trên nền code.
+      scrollbarColor: 'color-mix(in srgb, var(--code-tx) 25%, transparent) transparent',
+      scrollbarWidth: 'thin',
       fontFamily: 'var(--f-mono)',
       fontSize: '13px',
       lineHeight: '1.65',
@@ -174,11 +177,16 @@ const codeTheme = EditorView.theme(
       color: 'var(--tx2)',
       backgroundColor: 'transparent',
     },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
       backgroundColor: 'color-mix(in srgb, var(--ac) 30%, transparent) !important',
     },
+    // ::selection toàn cục (base.css) tô chữ theo --tx, tối ở theme sáng; nền editor luôn tối nên phải ép chữ sáng.
+    '.cm-content ::selection, .cm-content::selection': {
+      backgroundColor: 'color-mix(in srgb, var(--ac) 30%, transparent) !important',
+      color: 'var(--code-tx) !important',
+    },
     '.cm-cursor, .cm-dropCursor': {
-      borderLeftColor: 'var(--tx)',
+      borderLeftColor: 'var(--code-tx)',
     },
     '.cm-panels': {
       color: 'var(--tx)',

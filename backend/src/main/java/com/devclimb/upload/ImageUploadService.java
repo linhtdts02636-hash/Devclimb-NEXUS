@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 public class ImageUploadService {
 
 	public static final String COMMUNITY_IMAGE_FOLDER = "communities/";
+	public static final String CONTEST_IMAGE_FOLDER = "contests/";
 
 	private static final Map<String, String> EXTENSION_BY_CONTENT_TYPE = Map.of(
 			"image/jpeg", "jpg",
@@ -38,12 +39,13 @@ public class ImageUploadService {
 
 	public ImageUploadDTO createCommunityImageUpload(User user, ImageUploadRequest request) {
 		String extension = request.contentType() == null ? null : EXTENSION_BY_CONTENT_TYPE.get(request.contentType());
-		long maximumBytes = request.purpose() == ImageUploadRequest.Purpose.BANNER ? MAXIMUM_BANNER_BYTES : MAXIMUM_IMAGE_BYTES;
+		long maximumBytes = request.purpose() == ImageUploadRequest.Purpose.IMAGE ? MAXIMUM_IMAGE_BYTES : MAXIMUM_BANNER_BYTES;
+		String folder = request.purpose() == ImageUploadRequest.Purpose.CONTEST_BANNER ? CONTEST_IMAGE_FOLDER : COMMUNITY_IMAGE_FOLDER;
 		if (extension == null || request.size() <= 0 || request.size() > maximumBytes) {
 			throw new ApiException(ErrorCode.UPLOAD_REJECTED);
 		}
 
-		String objectKey = COMMUNITY_IMAGE_FOLDER + user.getId() + "/" + UUID.randomUUID() + "." + extension;
+		String objectKey = folder + user.getId() + "/" + UUID.randomUUID() + "." + extension;
 		PutObjectRequest putRequest = PutObjectRequest.builder()
 				.bucket(r2Properties.bucket())
 				.key(objectKey)
@@ -55,5 +57,16 @@ public class ImageUploadService {
 				.putObjectRequest(putRequest)
 				.build()).url().toString();
 		return new ImageUploadDTO(uploadUrl, r2Properties.publicUrlOf(objectKey));
+	}
+
+	// Chỉ nhận URL do chính DevClimb cấp trong thư mục tương ứng, tránh lưu ảnh từ nguồn ngoài.
+	public String requireOwnedUrl(String url, String folder) {
+		if (url == null || url.isBlank()) {
+			return null;
+		}
+		if (!url.startsWith(r2Properties.publicUrlOf(folder))) {
+			throw new ApiException(ErrorCode.IMAGE_URL_INVALID);
+		}
+		return url;
 	}
 }

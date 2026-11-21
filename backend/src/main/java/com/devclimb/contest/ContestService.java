@@ -17,13 +17,14 @@ import com.devclimb.common.exception.ErrorCode;
 import com.devclimb.common.security.AuthenticatedFirebaseUser;
 import com.devclimb.community.Community;
 import com.devclimb.community.CommunityRepository;
-import com.devclimb.community.UserCommunityId;
-import com.devclimb.community.UserCommunityRepository;
 import com.devclimb.language.PuzzleLanguage;
 import com.devclimb.language.PuzzleLanguageDTO;
 import com.devclimb.language.PuzzleLanguageRepository;
 import com.devclimb.ptag.PtagPuzzleRepository;
+import com.devclimb.role.CommunityAccessService;
+import com.devclimb.role.CommunityPermission;
 import com.devclimb.submission.SubmissionRepository;
+import com.devclimb.upload.ImageUploadService;
 import com.devclimb.user.User;
 
 // Service xử lý nghiệp vụ và giao dịch cơ sở dữ liệu cho cuộc thi
@@ -38,7 +39,8 @@ public class ContestService {
 	private final PtagPuzzleRepository ptagPuzzleRepository;
 	private final SubmissionRepository submissionRepository;
 	private final CommunityRepository communityRepository;
-	private final UserCommunityRepository userCommunityRepository;
+	private final CommunityAccessService communityAccessService;
+	private final ImageUploadService imageUploadService;
 
 	public ContestService(
 			ContestRepository contestRepository,
@@ -49,7 +51,8 @@ public class ContestService {
 			PtagPuzzleRepository ptagPuzzleRepository,
 			SubmissionRepository submissionRepository,
 			CommunityRepository communityRepository,
-			UserCommunityRepository userCommunityRepository) {
+			CommunityAccessService communityAccessService,
+			ImageUploadService imageUploadService) {
 		this.contestRepository = contestRepository;
 		this.puzzleContestRepository = puzzleContestRepository;
 		this.userContestRepository = userContestRepository;
@@ -58,7 +61,8 @@ public class ContestService {
 		this.ptagPuzzleRepository = ptagPuzzleRepository;
 		this.submissionRepository = submissionRepository;
 		this.communityRepository = communityRepository;
-		this.userCommunityRepository = userCommunityRepository;
+		this.communityAccessService = communityAccessService;
+		this.imageUploadService = imageUploadService;
 	}
 
 	@Transactional(readOnly = true)
@@ -98,7 +102,7 @@ public class ContestService {
 		Community community = communityRepository.findById(request.communityId())
 				.filter(Community::isActive)
 				.orElseThrow(() -> new ApiException(ErrorCode.COMMUNITY_NOT_FOUND));
-		requireCommunityMember(user.getId(), community.getId());
+		communityAccessService.requirePermission(user.getId(), community.getId(), CommunityPermission.RUN_CONTESTS);
 		validateContestSchedule(request.startTime(), request.endTime());
 
 		Contest contest = new Contest(
@@ -118,7 +122,7 @@ public class ContestService {
 		User user = authenticationService.findCurrentUser(firebaseUser);
 		Contest contest = contestRepository.findByIdWithCommunity(id)
 				.orElseThrow(() -> new ApiException(ErrorCode.CONTEST_NOT_FOUND));
-		requireCommunityMember(user.getId(), contest.getCommunity().getId());
+		communityAccessService.requirePermission(user.getId(), contest.getCommunity().getId(), CommunityPermission.RUN_CONTESTS);
 		validateContestSchedule(request.startTime(), request.endTime());
 
 		contest.setTitle(request.title().trim());
@@ -225,12 +229,6 @@ public class ContestService {
 				.toList();
 	}
 
-	private void requireCommunityMember(Integer userId, Integer communityId) {
-		if (!userCommunityRepository.existsById(new UserCommunityId(userId, communityId))) {
-			throw new ApiException(ErrorCode.NOT_A_MEMBER);
-		}
-	}
-
 	private void validateContestSchedule(Instant startTime, Instant endTime) {
 		if (!endTime.isAfter(startTime)) {
 			throw new ApiException(ErrorCode.CONTEST_SCHEDULE_INVALID);
@@ -238,6 +236,6 @@ public class ContestService {
 	}
 
 	private String normalizeBanner(String banner) {
-		return banner != null && !banner.isBlank() ? banner.trim() : null;
+		return imageUploadService.requireOwnedUrl(banner == null ? null : banner.trim(), ImageUploadService.CONTEST_IMAGE_FOLDER);
 	}
 }

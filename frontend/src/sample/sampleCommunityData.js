@@ -77,12 +77,6 @@ export const samplePosts = [
   },
 ]
 
-export const sampleContest = {
-  title: 'Weekly round 12',
-  description: '90 minutes, 4 puzzles. Starts Saturday 20:00.',
-  startsAt: Date.now() + (24 * 3600 + 4 * 3600 + 12 * 60) * 1000,
-}
-
 export const sampleSolvers = [
   { name: 'minh.tran', solves: 41 },
   { name: 'linh_cp', solves: 38 },

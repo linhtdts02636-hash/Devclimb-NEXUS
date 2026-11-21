@@ -48,14 +48,14 @@ onBeforeUnmount(() => {
 <template>
   <div ref="rootElement" class="actions">
     <RouterLink
-      v-if="community.isMember && activeTab === 'puzzles'"
+      v-if="community.permissions?.includes('CREATE_PUZZLES') && activeTab === 'puzzles'"
       class="btn p"
       :to="`/community/${community.name}/puzzles/new`"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Create puzzle
     </RouterLink>
     <RouterLink
-      v-else-if="community.isMember && activeTab === 'contests'"
+      v-else-if="community.permissions?.includes('RUN_CONTESTS') && activeTab === 'contests'"
       class="btn p"
       :to="`/community/${community.name}/contests/new`"
     >

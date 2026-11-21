@@ -20,6 +20,8 @@ const props = defineProps({
   actionLabel: { type: String, default: '' },
   // Đường dẫn hoặc data URL ảnh bìa cho cuộc thi
   image: { type: String, default: '' },
+  // Đường dẫn trang chỉnh sửa; chỉ truyền khi người xem có quyền RUN_CONTESTS
+  editTo: { type: String, default: '' },
 })
 
 // Ánh xạ trạng thái cuộc thi (OPEN, UPCOMING, CLOSED) sang bảng màu badge chuẩn của DevClimb
@@ -87,6 +89,7 @@ function handleAction() {
         <span class="dot">•</span>
         <span>{{ puzzleCount }} Puzzles</span>
       </div>
+      <RouterLink v-if="editTo" class="register-btn" :to="editTo">Edit</RouterLink>
       <button class="register-btn" type="button" :disabled="status?.toUpperCase() === 'CLOSED' && !actionLabel" @click="handleAction">
         <span>{{ resolvedActionLabel }}</span>
         <svg class="ic accent" viewBox="0 0 24 24" aria-hidden="true">
@@ -309,6 +312,12 @@ function handleAction() {
   letter-spacing: -0.01em;
   white-space: nowrap;
   transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.12s var(--ease);
+}
+
+/* Nút Edit đứng cạnh nút hành động, đẩy sát bên phải thay vì nằm giữa chân thẻ. */
+a.register-btn {
+  margin-left: auto;
+  text-decoration: none;
 }
 
 .register-btn:hover:not(:disabled) {

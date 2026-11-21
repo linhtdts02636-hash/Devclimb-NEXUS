@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Avatar from '../../components/common/Avatar.vue'
 import PuzzleCatalog from '../../components/common/PuzzleCatalog.vue'
@@ -7,6 +7,7 @@ import SiteFooter from '../../components/layouts/SiteFooter.vue'
 import UserNavbar from '../../components/layouts/user/UserNavbar.vue'
 import { describeApiError } from '../../config/apiClient'
 import { fetchCommunity } from '../../features/community/communityApi'
+import ImageUploadField from '../../features/community/components/ImageUploadField.vue'
 import {
   createContest,
   fetchContest,
@@ -49,7 +50,6 @@ const form = reactive({
   bannerUrl: '',
 })
 
-const bannerInputRef = ref(null)
 const contestPuzzles = ref([])
 const puzzlesLoading = ref(false)
 const submitting = ref(false)
@@ -71,20 +71,6 @@ const maxScoreLabel = computed(() => {
   return `${total.toLocaleString()} pts max`
 })
 
-// Mở hộp thoại chọn ảnh bìa (chỉ xem trước cục bộ, chưa nối upload backend)
-function triggerBannerUpload() {
-  bannerInputRef.value?.click()
-}
-
-function handleBannerChange(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-  if (form.bannerUrl && form.bannerUrl.startsWith('blob:')) {
-    URL.revokeObjectURL(form.bannerUrl)
-  }
-  form.bannerUrl = URL.createObjectURL(file)
-}
-
 // Tải thông tin cộng đồng và dữ liệu cuộc thi (nếu đang ở chế độ chỉnh sửa)
 async function loadPageData() {
   submitError.value = ''
@@ -93,6 +79,11 @@ async function loadPageData() {
   if (route.params.name) {
     try {
       community.value = await fetchCommunity(route.params.name)
+      // Backend vẫn kiểm tra lại quyền này; chuyển hướng để người không có quyền không điền một form không thể gửi.
+      if (!community.value.permissions?.includes('RUN_CONTESTS')) {
+        router.replace(`/community/${route.params.name}`)
+        return
+      }
     } catch (error) {
       submitError.value = describeApiError(error).message
     }
@@ -152,9 +143,7 @@ async function handleSubmit() {
     return
   }
 
-  // Không gửi blob URL cục bộ lên backend khi chưa nối upload
-  const bannerPayload =
-    form.bannerUrl && !form.bannerUrl.startsWith('blob:') ? form.bannerUrl : null
+  const bannerPayload = form.bannerUrl || null
 
   submitting.value = true
   try {
@@ -201,11 +190,6 @@ onMounted(() => {
   loadPageData()
 })
 
-onBeforeUnmount(() => {
-  if (form.bannerUrl && form.bannerUrl.startsWith('blob:')) {
-    URL.revokeObjectURL(form.bannerUrl)
-  }
-})
 </script>
 
 <template>
@@ -213,19 +197,13 @@ onBeforeUnmount(() => {
     <UserNavbar />
 
     <main class="contest-shell">
+      <RouterLink class="back" :to="`/community/${communityName}`">&larr; Back to c/{{ communityName }}</RouterLink>
+
       <!-- Thẻ Hero Banner Cuộc thi -->
       <section class="contest-hero-card" :class="{ 'has-image': Boolean(form.bannerUrl) }">
         <div class="hero-body">
           <img v-if="form.bannerUrl" :src="form.bannerUrl" alt="Contest banner preview" class="hero-bg-img" />
           <div v-if="form.bannerUrl" class="hero-bg-scrim" aria-hidden="true"></div>
-
-          <input
-            ref="bannerInputRef"
-            type="file"
-            accept="image/*"
-            hidden
-            @change="handleBannerChange"
-          />
 
           <div class="hero-content">
             <!-- Hàng đầu: Avatar cộng đồng bên trái; 2 ô chọn ngày Start và End date bên phải -->
@@ -266,20 +244,6 @@ onBeforeUnmount(() => {
                 placeholder="Contest title"
                 aria-label="Contest title"
               />
-
-              <button
-                type="button"
-                class="banner-upload-btn"
-                aria-label="Upload contest banner"
-                @click="triggerBannerUpload"
-              >
-                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <span>{{ form.bannerUrl ? 'Change banner' : 'Upload banner' }}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -307,6 +271,8 @@ onBeforeUnmount(() => {
 
           <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>
 
+          <ImageUploadField v-model="form.bannerUrl" label="Contest banner" purpose="CONTEST_BANNER" />
+
           <textarea
             v-model="form.description"
             class="contest-description-input"
@@ -326,7 +292,7 @@ onBeforeUnmount(() => {
               <span class="catalog-count">{{ contestPuzzles.length }} Puzzles</span>
             </div>
 
-            <RouterLink class="btn p" :to="createPuzzleRoute">
+            <RouterLink v-if="community?.permissions?.includes('CREATE_PUZZLES')" class="btn p" :to="createPuzzleRoute">
               <svg class="ic" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
               </svg>
@@ -360,6 +326,17 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   padding: var(--s-5) var(--s-6) var(--s-8);
   border-inline: 1px solid var(--line);
+}
+
+.back {
+  align-self: flex-start;
+  margin-bottom: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--tx2);
+}
+
+.back:hover {
+  color: var(--tx);
 }
 
 /* Thẻ Hero Banner Cuộc thi */
@@ -494,30 +471,6 @@ onBeforeUnmount(() => {
 
 .contest-hero-card.has-image .hero-title-input::placeholder {
   color: rgba(255, 255, 255, 0.55);
-}
-
-.banner-upload-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  background: var(--s2);
-  border: 1px solid var(--line2);
-  border-radius: var(--r-sm);
-  color: var(--tx);
-  font: 500 12px/1 var(--f-head);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s var(--ease), transform 0.12s var(--ease);
-}
-
-.banner-upload-btn:hover {
-  background: var(--s3);
-}
-
-.banner-upload-btn:active {
-  transform: translateY(1px);
 }
 
 /* Chân thẻ Hero */

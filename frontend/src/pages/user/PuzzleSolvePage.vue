@@ -778,12 +778,19 @@ onBeforeUnmount(() => {
   letter-spacing: 0.08em;
 }
 
+/* ::selection toàn cục (base.css) tô chữ theo --tx, tối ở theme sáng; nền ô này luôn tối nên phải ép chữ sáng. */
+.result-output pre::selection {
+  color: var(--code-tx);
+  background: color-mix(in srgb, var(--ac) 30%, transparent);
+}
+
 .result-output pre {
   max-height: 180px;
   margin: 0;
   padding: 10px;
   overflow: auto;
-  color: var(--tx);
+  /* Nền code luôn tối ở cả hai theme nên chữ phải dùng token code, không dùng --tx (đổi theo theme). */
+  color: var(--code-tx);
   background: var(--code-bg);
   border: 1px solid var(--line2);
   border-radius: var(--r-sm);
